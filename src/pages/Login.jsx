@@ -3,8 +3,6 @@ import { Eye, EyeOff, LogIn, AlertCircle, Loader2, Building2, User, Lock } from 
 import { useNavigate } from 'react-router-dom';
 import { BASE_URL } from '../url/BaseUrl';
 
-const BASE_URL= `${BASE_URL}`
-
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
