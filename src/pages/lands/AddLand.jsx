@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BASE_URL } from '../../url/BaseUrl';
+import {
+  Home, ChevronRight, Maximize2,
+  PlusCircle, Users, CheckSquare, Search,
+  PenLine, CircleDot, Eye, FileText,
+  LayoutGrid, UserCheck, CalendarCheck
+} from 'lucide-react';
 
 const INITIAL_FARMER_DETAILS = {
   name: '',
@@ -92,14 +98,30 @@ const COMPLAINT_OPTIONS = [
 const MEDIA_CATEGORIES = ['farmer_photo', 'land_soil', 'fencing', 'farm_pond', 'residence', 'shed', 'water_source', 'trees', 'rocks', 'electric_poles', 'others', 'video'];
 const DOC_TYPES = ['PASSBOOK', 'AADHAR', 'TITLE_DEED'];
 
+const MEDIA_LABELS = {
+  farmer_photo: 'Farmer Photo',
+  land_soil: 'Land Soil',
+  fencing: 'Fencing',
+  farm_pond: 'Farm Pond',
+  residence: 'Residence',
+  shed: 'Shed',
+  water_source: 'Water Source',
+  trees: 'Trees',
+  rocks: 'Rocks',
+  electric_poles: 'Electric Poles',
+  others: 'Others',
+  video: 'Full Site Video',
+};
+
 const API_BASE_URL = `${BASE_URL}/api`;
 
 const AddLand = () => {
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
-  const [currentSection, setCurrentSection] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [dontShowPhotos, setDontShowPhotos] = useState(false);
+  const [activeNavItem, setActiveNavItem] = useState(null);
 
   // Location states
   const [states, setStates] = useState([]);
@@ -111,6 +133,9 @@ const AddLand = () => {
   const [uploading, setUploading] = useState(false);
   const [selectedMediaCategory, setSelectedMediaCategory] = useState('');
   const [selectedDocType, setSelectedDocType] = useState('');
+
+  // Boundary points state
+  const [boundaryPoints, setBoundaryPoints] = useState([{ lat: '', lng: '' }]);
 
   // Fetch all locations on mount
   useEffect(() => {
@@ -359,7 +384,6 @@ const AddLand = () => {
         setSuccess(`Land ${status === 'draft' ? 'saved as draft' : 'submitted successfully'}!`);
         if (status !== 'draft') {
           setFormData(INITIAL_FORM_DATA);
-          setCurrentSection(0);
         }
       }
     } catch (err) {
@@ -370,890 +394,996 @@ const AddLand = () => {
     }
   };
 
-  const sections = [
-    { title: 'Basic Information', description: 'Location and land status' },
-    { title: 'Farmer Details', description: 'Information about the farmer' },
-    { title: 'Land Details', description: 'Physical characteristics of the land' },
-    { title: 'GPS & Utilities', description: 'Coordinates and amenities' },
-    { title: 'Media & Documents', description: 'Photos, videos and legal documents' },
-  ];
+  // Reset form
+  const handleReset = () => {
+    setFormData(INITIAL_FORM_DATA);
+    setDistricts([]);
+    setMandals([]);
+    setVillages([]);
+    setBoundaryPoints([{ lat: '', lng: '' }]);
+    setError(null);
+    setSuccess(null);
+  };
 
-  const renderBasicInfo = () => (
-    <div className="space-y-6">
-      {/* Location Hierarchy */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  // Get media count for a category
+  const getMediaCount = (category) => {
+    return formData.media.filter(m => m.category === category).length;
+  };
+
+  // Handle photo grid item click
+  const handlePhotoGridClick = (category) => {
+    setSelectedMediaCategory(category);
+    // Trigger hidden file input
+    document.getElementById('media-file-input')?.click();
+  };
+
+  // Add boundary point
+  const addBoundaryPoint = () => {
+    setBoundaryPoints(prev => [...prev, { lat: '', lng: '' }]);
+  };
+
+  // ========================
+  // CARD COMPONENTS
+  // ========================
+
+  const CardWrapper = ({ color, icon, title, watermark, children }) => (
+    <div className={`land-card land-card--${color}`}>
+      <div className={`land-card__header land-card__header--${color}`}>
+        <div className="land-card__watermark">{watermark}</div>
+        <div className={`land-card__badge land-card__badge--${color}`}>{icon}</div>
+        <div className={`land-card__title land-card__title--${color}`}>{title}</div>
+      </div>
+      <div className="land-card__body">
+        {children}
+      </div>
+    </div>
+  );
+
+  const ToggleSwitch = ({ checked, onChange, label }) => (
+    <label className="toggle-switch">
+      <input type="checkbox" checked={checked} onChange={onChange} />
+      <span className="toggle-slider"></span>
+    </label>
+  );
+
+  // ========================
+  // RENDER SECTIONS
+  // ========================
+
+  const renderLandAddressCard = () => (
+    <CardWrapper color="red" icon="📍" title="LAND ADDRESS" watermark="🌍">
+      <div className="field-row">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
+          <label className="land-label">State</label>
           <select
             value={formData.state}
             onChange={(e) => {
               const selectedState = states.find(s => s.name === e.target.value);
               handleStateChange(e.target.value, selectedState?.id);
             }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="land-select"
             required
           >
-            <option value="">Select State</option>
+            <option value="">Select</option>
             {states.map(state => (
               <option key={state.id} value={state.name}>{state.name}</option>
             ))}
           </select>
         </div>
-
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">District *</label>
+          <label className="land-label">District</label>
           <select
             value={formData.district}
             onChange={(e) => {
               const selectedDistrict = districts.find(d => d.name === e.target.value);
               handleDistrictChange(e.target.value, selectedDistrict?.id);
             }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="land-select"
             disabled={!formData.state}
             required
           >
-            <option value="">Select District</option>
+            <option value="">Select</option>
             {districts.map(district => (
               <option key={district.id} value={district.name}>{district.name}</option>
             ))}
           </select>
         </div>
-
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Mandal *</label>
+          <label className="land-label">Mandal</label>
           <select
             value={formData.mandal}
             onChange={(e) => {
               const selectedMandal = mandals.find(m => m.name === e.target.value);
               handleMandalChange(e.target.value, selectedMandal?.id);
             }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="land-select"
             disabled={!formData.district}
             required
           >
-            <option value="">Select Mandal</option>
+            <option value="">Select</option>
             {mandals.map(mandal => (
               <option key={mandal.id} value={mandal.name}>{mandal.name}</option>
             ))}
           </select>
         </div>
-
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Village *</label>
+          <label className="land-label">Village</label>
           <select
             value={formData.village}
             onChange={(e) => setFormData(prev => ({ ...prev, village: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="land-select"
             disabled={!formData.mandal}
             required
           >
-            <option value="">Select Village</option>
+            <option value="">Select</option>
             {villages.map(village => (
               <option key={village.id} value={village.name}>{village.name}</option>
             ))}
           </select>
         </div>
       </div>
-
-      {/* Location Coordinates */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Location Latitude</label>
-          <input
-            type="text"
-            name="location_latitude"
-            value={formData.location_latitude}
-            onChange={handleInputChange}
-            placeholder="e.g., 17.2403"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Location Longitude</label>
-          <input
-            type="text"
-            name="location_longitude"
-            value={formData.location_longitude}
-            onChange={handleInputChange}
-            placeholder="e.g., 78.4294"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-      </div>
-
-      {/* Status Fields */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Land Sale Available Status</label>
-        <div className="flex flex-wrap gap-3">
-          {LAND_SALE_STATUS_OPTIONS.map(status => (
-            <label key={status} className="inline-flex items-center">
-              <input
-                type="checkbox"
-                value={status}
-                checked={formData.land_sale_available_status.includes(status)}
-                onChange={(e) => handleArrayChange('land_sale_available_status', status, e.target.checked)}
-                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-              />
-              <span className="ml-2 text-sm text-gray-700">{status}</span>
-            </label>
-          ))}
+      <div className="field-group">
+        <label className="land-label">GPS Location</label>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div className="gps-input-group" style={{ flex: 1 }}>
+            <input
+              type="text"
+              value={formData.location_latitude && formData.location_longitude
+                ? `${formData.location_latitude}, ${formData.location_longitude}` : ''}
+              onChange={(e) => {
+                const parts = e.target.value.split(',').map(s => s.trim());
+                setFormData(prev => ({
+                  ...prev,
+                  location_latitude: parts[0] || '',
+                  location_longitude: parts[1] || ''
+                }));
+              }}
+              placeholder="Lat, Lon"
+            />
+          </div>
+          <button
+            type="button"
+            className="fetch-btn"
+            onClick={() => {
+              if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    location_latitude: position.coords.latitude.toString(),
+                    location_longitude: position.coords.longitude.toString()
+                  }));
+                });
+              }
+            }}
+          >
+            ✈ FETCH
+          </button>
         </div>
       </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Mortgage Availability Status</label>
-        <div className="flex flex-wrap gap-3">
-          {MORTGAGE_STATUS_OPTIONS.map(status => (
-            <label key={status} className="inline-flex items-center">
-              <input
-                type="checkbox"
-                value={status}
-                checked={formData.mortage_availability_status.includes(status)}
-                onChange={(e) => handleArrayChange('mortage_availability_status', status, e.target.checked)}
-                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-              />
-              <span className="ml-2 text-sm text-gray-700">{status}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Urgency Listing</label>
-        <div className="flex flex-wrap gap-3">
-          {URGENCY_OPTIONS.map(urgency => (
-            <label key={urgency} className="inline-flex items-center">
-              <input
-                type="checkbox"
-                value={urgency}
-                checked={formData.urgency_listing.includes(urgency)}
-                onChange={(e) => handleArrayChange('urgency_listing', urgency, e.target.checked)}
-                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-              />
-              <span className="ml-2 text-sm text-gray-700">{urgency}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex items-center">
-        <input
-          type="checkbox"
-          name="verification_package"
-          checked={formData.verification_package}
-          onChange={handleInputChange}
-          className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-        />
-        <label className="ml-2 text-sm text-gray-700">Verification Package</label>
-      </div>
-    </div>
+    </CardWrapper>
   );
 
-  const renderFarmerDetails = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  const renderAcresPriceCard = () => (
+    <CardWrapper color="green" icon="🏗️" title="ACRES & PRICE" watermark="🌾">
+      <div className="field-row">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Farmer Name *</label>
-          <input
-            type="text"
-            name="farmerDetails.name"
-            value={formData.farmerDetails.name}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
-          <input
-            type="tel"
-            name="farmerDetails.phone"
-            value={formData.farmerDetails.phone}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number</label>
-          <input
-            type="tel"
-            name="farmerDetails.whatsapp"
-            value={formData.farmerDetails.whatsapp}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Ownership Type</label>
-          <select
-            name="farmerDetails.ownership_type"
-            value={formData.farmerDetails.ownership_type}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            {OWNERSHIP_TYPE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Locality</label>
-          <select
-            name="farmerDetails.locality"
-            value={formData.farmerDetails.locality}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            {LOCALITY_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Ownership Status</label>
-          <select
-            name="farmerDetails.ownership_status"
-            value={formData.farmerDetails.ownership_status}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            {OWNERSHIP_STATUS_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Age Group</label>
-          <select
-            name="farmerDetails.age"
-            value={formData.farmerDetails.age}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            {AGE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Literacy</label>
-          <select
-            name="farmerDetails.literacy"
-            value={formData.farmerDetails.literacy}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            {LITERACY_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Nature</label>
-          <select
-            name="farmerDetails.nature"
-            value={formData.farmerDetails.nature}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            {NATURE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-          </select>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderLandDetails = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Total Acres</label>
+          <label className="land-label">Acres</label>
           <input
             type="number"
             name="landDetails.total_acres"
             value={formData.landDetails.total_acres}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="land-input"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Guntas</label>
+          <label className="land-label">Guntas</label>
           <input
             type="number"
             name="landDetails.guntas"
             value={formData.landDetails.guntas}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="land-input"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Price per Acre</label>
-          <input
-            type="number"
-            name="landDetails.price_per_acres"
-            value={formData.landDetails.price_per_acres}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+      </div>
+      <div className="field-group">
+        <label className="land-label">Price Per Acre (In Lakhs)</label>
+        <input
+          type="number"
+          name="landDetails.price_per_acres"
+          value={formData.landDetails.price_per_acres}
+          onChange={handleInputChange}
+          className="land-input"
+        />
+      </div>
+      <div className="field-group">
+        <div className="total-value-pill">
+          <span className="total-value-pill__label">TOTAL VALUE (₹)</span>
+          <span>₹{formData.landDetails.total_value || 0}</span>
+        </div>
+      </div>
+    </CardWrapper>
+  );
+
+  const renderResidencesShedsCard = () => (
+    <CardWrapper color="green" icon="🏠" title="RESIDENCES & SHEDS" watermark="🏘️">
+      <div>
+        <label className="land-label">Residence</label>
+        <select
+          value={formData.landDetails.residence[0] || ''}
+          onChange={(e) => {
+            setFormData(prev => ({
+              ...prev,
+              landDetails: { ...prev.landDetails, residence: e.target.value ? [e.target.value] : [] }
+            }));
+          }}
+          className="land-select"
+        >
+          <option value="">Select</option>
+          {RESIDENCE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+        </select>
+      </div>
+      <div className="field-row">
+        <div className="toggle-row" style={{ flex: 1 }}>
+          <span className="toggle-row__label">Poultry Shed</span>
+          <ToggleSwitch
+            checked={formData.landDetails.poultry_shed_number > 0}
+            onChange={(e) => setFormData(prev => ({
+              ...prev,
+              landDetails: { ...prev.landDetails, poultry_shed_number: e.target.checked ? 1 : 0 }
+            }))}
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Total Value</label>
-          <input
-            type="number"
-            name="landDetails.total_value"
-            value={formData.landDetails.total_value}
-            disabled
-            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+        <div className="toggle-row" style={{ flex: 1 }}>
+          <span className="toggle-row__label">Cow Shed</span>
+          <ToggleSwitch
+            checked={formData.landDetails.cow_shed_number > 0}
+            onChange={(e) => setFormData(prev => ({
+              ...prev,
+              landDetails: { ...prev.landDetails, cow_shed_number: e.target.checked ? 1 : 0 }
+            }))}
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Nearest Road Type</label>
-          <input
-            type="text"
-            name="landDetails.nearest_road_type"
-            value={formData.landDetails.nearest_road_type}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+      </div>
+    </CardWrapper>
+  );
+
+  const renderUrgencyListingCard = () => (
+    <CardWrapper color="teal" icon="⚡" title="URGENCY & LISTING" watermark="🔔">
+      <div>
+        <div className="toggle-row">
+          <span className="toggle-row__label">Urgent Sale</span>
+          <ToggleSwitch
+            checked={formData.urgency_listing.includes('urgent sale')}
+            onChange={(e) => handleArrayChange('urgency_listing', 'urgent sale', e.target.checked)}
           />
         </div>
+        <div className="toggle-row">
+          <span className="toggle-row__label">Premium Listing</span>
+          <ToggleSwitch
+            checked={formData.urgency_listing.includes('premium listing')}
+            onChange={(e) => handleArrayChange('urgency_listing', 'premium listing', e.target.checked)}
+          />
+        </div>
+        <div className="toggle-row">
+          <div>
+            <span className="toggle-row__label">Verification Package</span>
+            <div className="toggle-row__desc">Opt for land verification</div>
+          </div>
+          <ToggleSwitch
+            checked={formData.verification_package}
+            onChange={(e) => setFormData(prev => ({ ...prev, verification_package: e.target.checked }))}
+          />
+        </div>
+      </div>
+    </CardWrapper>
+  );
+
+  const renderFarmerDetailsCard = () => (
+    <CardWrapper color="red" icon="👤" title="FARMER DETAILS" watermark="🧑‍🌾">
+      <div className="field-group">
+        <label className="land-label">Name</label>
+        <input
+          type="text"
+          name="farmerDetails.name"
+          value={formData.farmerDetails.name}
+          onChange={handleInputChange}
+          className="land-input"
+          placeholder="Farmer Name"
+          required
+        />
+      </div>
+      <div className="field-group">
+        <label className="land-label">Phone No</label>
+        <input
+          type="tel"
+          name="farmerDetails.phone"
+          value={formData.farmerDetails.phone}
+          onChange={handleInputChange}
+          className="land-input"
+          placeholder="98XXXXXXXX"
+          required
+        />
+      </div>
+      <div className="field-group" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+        <label className="land-radio">
+          <input type="radio" name="whatsapp_same" value="yes" defaultChecked /> YES
+        </label>
+        <label className="land-radio">
+          <input type="radio" name="whatsapp_same" value="no" /> NO
+        </label>
+      </div>
+      <div className="field-group">
+        <label className="land-label">WhatsApp No</label>
+        <input
+          type="tel"
+          name="farmerDetails.whatsapp"
+          value={formData.farmerDetails.whatsapp}
+          onChange={handleInputChange}
+          className="land-input"
+          placeholder="98XXXXXXXX"
+        />
+      </div>
+      <div className="field-row">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Land Attached to Road</label>
+          <label className="land-label">Land Ownership</label>
           <select
-            name="landDetails.land_attached_to_road"
-            value={formData.landDetails.land_attached_to_road}
+            name="farmerDetails.ownership_type"
+            value={formData.farmerDetails.ownership_type}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="land-select"
           >
-            <option value="yes">Yes</option>
-            <option value="no">No</option>
+            {OWNERSHIP_TYPE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Path Ownership</label>
-          <input
-            type="text"
-            name="landDetails.path_ownership"
-            value={formData.landDetails.path_ownership}
+          <label className="land-label">Locality</label>
+          <select
+            name="farmerDetails.locality"
+            value={formData.farmerDetails.locality}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
+            className="land-select"
+          >
+            {LOCALITY_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+          </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Soil Type</label>
-          <input
-            type="text"
-            name="landDetails.soil_type"
-            value={formData.landDetails.soil_type}
+          <label className="land-label">Ownership Status</label>
+          <select
+            name="farmerDetails.ownership_status"
+            value={formData.farmerDetails.ownership_status}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
+            className="land-select"
+          >
+            {OWNERSHIP_STATUS_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+          </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Fencing Status</label>
-          <input
-            type="text"
-            name="landDetails.fencing_status"
-            value={formData.landDetails.fencing_status}
+          <label className="land-label">Age</label>
+          <select
+            name="farmerDetails.age"
+            value={formData.farmerDetails.age}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
+            className="land-select"
+          >
+            {AGE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+          </select>
         </div>
       </div>
-
-      {/* Boundary Coordinates */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Land Entry Latitude</label>
-          <input
-            type="text"
-            name="landDetails.land_entry_latitude"
-            value={formData.landDetails.land_entry_latitude}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Land Entry Longitude</label>
-          <input
-            type="text"
-            name="landDetails.land_entry_longitude"
-            value={formData.landDetails.land_entry_longitude}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Land Boundary Latitude</label>
-          <input
-            type="text"
-            name="landDetails.land_boundary_latitude"
-            value={formData.landDetails.land_boundary_latitude}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Land Boundary Longitude</label>
-          <input
-            type="text"
-            name="landDetails.land_boundary_longitude"
-            value={formData.landDetails.land_boundary_longitude}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-      </div>
-
-      {/* Checkbox groups */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Electricity Available</label>
-        <div className="flex flex-wrap gap-3">
-          {ELECTRICITY_OPTIONS.map(opt => (
-            <label key={opt} className="inline-flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.landDetails.electricity.includes(opt)}
-                onChange={(e) => handleNestedArrayChange('electricity', opt, e.target.checked)}
-                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-              />
-              <span className="ml-2 text-sm text-gray-700">{opt}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Residence Type</label>
-        <div className="flex flex-wrap gap-3">
-          {RESIDENCE_OPTIONS.map(opt => (
-            <label key={opt} className="inline-flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.landDetails.residence.includes(opt)}
-                onChange={(e) => handleNestedArrayChange('residence', opt, e.target.checked)}
-                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-              />
-              <span className="ml-2 text-sm text-gray-700">{opt}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Water Source</label>
-        <div className="flex flex-wrap gap-3">
-          {WATER_SOURCE_OPTIONS.map(opt => (
-            <label key={opt} className="inline-flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.landDetails.water_source.includes(opt)}
-                onChange={(e) => handleNestedArrayChange('water_source', opt, e.target.checked)}
-                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-              />
-              <span className="ml-2 text-sm text-gray-700">{opt}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Complaints/Issues</label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {COMPLAINT_OPTIONS.map(opt => (
-            <label key={opt} className="inline-flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.landDetails.complaints.includes(opt)}
-                onChange={(e) => handleNestedArrayChange('complaints', opt, e.target.checked)}
-                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-              />
-              <span className="ml-2 text-sm text-gray-700">{opt}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Number of Poultry Sheds</label>
-          <input
-            type="number"
-            name="landDetails.poultry_shed_number"
-            value={formData.landDetails.poultry_shed_number}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Number of Cow Sheds</label>
-          <input
-            type="number"
-            name="landDetails.cow_shed_number"
-            value={formData.landDetails.cow_shed_number}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Number of Bores</label>
-          <input
-            type="number"
-            name="landDetails.number_of_bores"
-            value={formData.landDetails.number_of_bores}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-      </div>
-
-      <div className="flex items-center">
-        <input
-          type="checkbox"
-          name="landDetails.farm_pond"
-          checked={formData.landDetails.farm_pond}
+      <div className="field-group">
+        <label className="land-label">Literacy</label>
+        <select
+          name="farmerDetails.literacy"
+          value={formData.farmerDetails.literacy}
           onChange={handleInputChange}
-          className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-        />
-        <label className="ml-2 text-sm text-gray-700">Farm Pond Available</label>
+          className="land-select"
+        >
+          {LITERACY_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+        </select>
       </div>
-
-      {/* Trees Information */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Mango Trees (e.g., mango-10)</label>
-          <input
-            type="text"
-            name="landDetails.mango_trees_number"
-            value={formData.landDetails.mango_trees_number}
-            onChange={handleInputChange}
-            placeholder="mango-10"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Coconut Trees</label>
-          <input
-            type="text"
-            name="landDetails.coconut_trees_number"
-            value={formData.landDetails.coconut_trees_number}
-            onChange={handleInputChange}
-            placeholder="coconut-10"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Neem Trees</label>
-          <input
-            type="text"
-            name="landDetails.neem_trees_number"
-            value={formData.landDetails.neem_trees_number}
-            onChange={handleInputChange}
-            placeholder="neem-10"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Baniyan Trees</label>
-          <input
-            type="text"
-            name="landDetails.baniyan_trees_number"
-            value={formData.landDetails.baniyan_trees_number}
-            onChange={handleInputChange}
-            placeholder="baniyan-10"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Tamarind Trees</label>
-          <input
-            type="text"
-            name="landDetails.tamarind_trees_number"
-            value={formData.landDetails.tamarind_trees_number}
-            onChange={handleInputChange}
-            placeholder="tamarind-10"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Sapota Trees</label>
-          <input
-            type="text"
-            name="landDetails.sapoto_trees_number"
-            value={formData.landDetails.sapoto_trees_number}
-            onChange={handleInputChange}
-            placeholder="sapoto-10"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Guava Trees</label>
-          <input
-            type="text"
-            name="landDetails.guava_trees_number"
-            value={formData.landDetails.guava_trees_number}
-            onChange={handleInputChange}
-            placeholder="guava-10"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Teak Trees</label>
-          <input
-            type="text"
-            name="landDetails.teak_trees_number"
-            value={formData.landDetails.teak_trees_number}
-            onChange={handleInputChange}
-            placeholder="teak-10"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Other Trees</label>
-          <input
-            type="text"
-            name="landDetails.other_trees_number"
-            value={formData.landDetails.other_trees_number}
-            onChange={handleInputChange}
-            placeholder="banana-10"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
+      <div className="field-group">
+        <label className="land-label">Nature</label>
+        <select
+          name="farmerDetails.nature"
+          value={formData.farmerDetails.nature}
+          onChange={handleInputChange}
+          className="land-select"
+        >
+          {NATURE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+        </select>
       </div>
-    </div>
+    </CardWrapper>
   );
 
-  const renderGPSAndUtilities = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">GPS Latitude</label>
-          <input
-            type="text"
-            name="gps.latitude"
-            value={formData.gps.latitude}
-            onChange={handleInputChange}
-            placeholder="e.g., 17.2403"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">GPS Longitude</label>
-          <input
-            type="text"
-            name="gps.longitude"
-            value={formData.gps.longitude}
-            onChange={handleInputChange}
-            placeholder="e.g., 78.4294"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
+  const renderWaterSourceCard = () => (
+    <CardWrapper color="green" icon="💧" title="WATER SOURCE DETAILS" watermark="🌊">
+      <div>
+        <label className="land-label">Water Source</label>
+        <select
+          value={formData.landDetails.water_source[0] || ''}
+          onChange={(e) => {
+            setFormData(prev => ({
+              ...prev,
+              landDetails: { ...prev.landDetails, water_source: e.target.value ? [e.target.value] : [] }
+            }));
+          }}
+          className="land-select"
+        >
+          <option value="">Select</option>
+          {WATER_SOURCE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+        </select>
+      </div>
+      <div className="field-group">
+        <label className="land-label">No of Bores</label>
+        <input
+          type="number"
+          name="landDetails.number_of_bores"
+          value={formData.landDetails.number_of_bores}
+          onChange={handleInputChange}
+          className="land-input"
+        />
+      </div>
+      <div className="toggle-row field-group">
+        <span className="toggle-row__label">Farm Pond</span>
+        <ToggleSwitch
+          checked={formData.landDetails.farm_pond}
+          onChange={(e) => setFormData(prev => ({
+            ...prev,
+            landDetails: { ...prev.landDetails, farm_pond: e.target.checked }
+          }))}
+        />
+      </div>
+    </CardWrapper>
+  );
+
+  const renderPathDetailsCard = () => (
+    <CardWrapper color="green" icon="🛤️" title="PATH DETAILS" watermark="🚧">
+      <div>
+        <label className="land-label">Nearest Road Type</label>
+        <input
+          type="text"
+          name="landDetails.nearest_road_type"
+          value={formData.landDetails.nearest_road_type}
+          onChange={handleInputChange}
+          className="land-input"
+          placeholder="e.g., National Highway"
+        />
+      </div>
+      <div className="field-group">
+        <label className="land-label">Land Attached to Road</label>
+        <select
+          name="landDetails.land_attached_to_road"
+          value={formData.landDetails.land_attached_to_road}
+          onChange={handleInputChange}
+          className="land-select"
+        >
+          <option value="yes">Yes</option>
+          <option value="no">No</option>
+        </select>
+      </div>
+      <div className="field-group">
+        <label className="land-label">Path Ownership</label>
+        <input
+          type="text"
+          name="landDetails.path_ownership"
+          value={formData.landDetails.path_ownership}
+          onChange={handleInputChange}
+          className="land-input"
+        />
+      </div>
+    </CardWrapper>
+  );
+
+  const renderLandDetailsCard = () => (
+    <CardWrapper color="green" icon="✅" title="LAND DETAILS" watermark="🌿">
+      <div>
+        <label className="land-label">Soil Type</label>
+        <select
+          name="landDetails.soil_type"
+          value={formData.landDetails.soil_type}
+          onChange={handleInputChange}
+          className="land-select"
+        >
+          <option value="">Select</option>
+          <option value="Red Soil">Red Soil</option>
+          <option value="Black Soil">Black Soil</option>
+          <option value="Sandy Soil">Sandy Soil</option>
+          <option value="Clay Soil">Clay Soil</option>
+          <option value="Loamy Soil">Loamy Soil</option>
+        </select>
+      </div>
+      <div className="field-group">
+        <label className="land-label">Fencing Status</label>
+        <select
+          name="landDetails.fencing_status"
+          value={formData.landDetails.fencing_status}
+          onChange={handleInputChange}
+          className="land-select"
+        >
+          <option value="">Select</option>
+          <option value="Fully Fenced">Fully Fenced</option>
+          <option value="Partially Fenced">Partially Fenced</option>
+          <option value="Not Fenced">Not Fenced</option>
+        </select>
+      </div>
+      <div className="field-group">
+        <label className="land-label">Electricity</label>
+        <div style={{ display: 'flex', gap: '16px', marginTop: '6px' }}>
+          {ELECTRICITY_OPTIONS.map(opt => (
+            <label key={opt} className="land-radio">
+              <input
+                type="radio"
+                name="electricity_option"
+                checked={formData.landDetails.electricity.includes(opt)}
+                onChange={() => {
+                  setFormData(prev => ({
+                    ...prev,
+                    landDetails: { ...prev.landDetails, electricity: [opt] }
+                  }));
+                }}
+              />
+              {opt.toUpperCase()}
+            </label>
+          ))}
         </div>
       </div>
+    </CardWrapper>
+  );
 
-      {/* Get current location button */}
-      <button
-        type="button"
-        onClick={() => {
-          if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((position) => {
+  const renderTreesCard = () => (
+    <CardWrapper color="orange" icon="⚠️" title="TREES" watermark="🌳">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+        {[
+          { label: 'Mango', field: 'mango_trees_number' },
+          { label: 'Coconut', field: 'coconut_trees_number' },
+          { label: 'Neem', field: 'neem_trees_number' },
+          { label: 'Banyan', field: 'baniyan_trees_number' },
+          { label: 'Tamarind', field: 'tamarind_trees_number' },
+          { label: 'Sapota', field: 'sapoto_trees_number' },
+          { label: 'Guava', field: 'guava_trees_number' },
+          { label: 'Teak', field: 'teak_trees_number' },
+        ].map(tree => (
+          <div key={tree.field}>
+            <label className="land-label" style={{ fontSize: '8px' }}>{tree.label}</label>
+            <input
+              type="number"
+              name={`landDetails.${tree.field}`}
+              value={formData.landDetails[tree.field]}
+              onChange={handleInputChange}
+              className="land-input"
+              style={{ padding: '6px 8px', fontSize: '12px' }}
+              placeholder="0"
+            />
+          </div>
+        ))}
+      </div>
+      <div className="field-group">
+        <label className="land-label">Other Trees</label>
+        <input
+          type="text"
+          name="landDetails.other_trees_number"
+          value={formData.landDetails.other_trees_number}
+          onChange={handleInputChange}
+          className="land-input"
+          placeholder="e.g. Eucalyptus - 10"
+        />
+      </div>
+    </CardWrapper>
+  );
+
+  const renderMortgageCard = () => (
+    <CardWrapper color="teal" icon="🏦" title="MORTGAGE AVAILABILITY STATUS" watermark="💳">
+      <div>
+        {MORTGAGE_STATUS_OPTIONS.map(status => (
+          <label key={status} className="land-checkbox">
+            <input
+              type="checkbox"
+              checked={formData.mortage_availability_status.includes(status)}
+              onChange={(e) => handleArrayChange('mortage_availability_status', status, e.target.checked)}
+            />
+            {status}
+          </label>
+        ))}
+      </div>
+    </CardWrapper>
+  );
+
+  const renderLandGPSCard = () => (
+    <CardWrapper color="green" icon="✅" title="LAND GPS" watermark="📡">
+      <div>
+        <label className="land-label">Land Entry Point</label>
+        <div className="gps-input-group">
+          <input
+            type="text"
+            value={formData.landDetails.land_entry_latitude && formData.landDetails.land_entry_longitude
+              ? `${formData.landDetails.land_entry_latitude}, ${formData.landDetails.land_entry_longitude}` : ''}
+            onChange={(e) => {
+              const parts = e.target.value.split(',').map(s => s.trim());
               setFormData(prev => ({
                 ...prev,
-                gps: {
-                  latitude: position.coords.latitude.toString(),
-                  longitude: position.coords.longitude.toString()
+                landDetails: {
+                  ...prev.landDetails,
+                  land_entry_latitude: parts[0] || '',
+                  land_entry_longitude: parts[1] || ''
                 }
               }));
-            });
-          }
-        }}
-        className="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-      >
-        Get Current Location
-      </button>
-    </div>
-  );
-
-  const renderMediaAndDocuments = () => (
-    <div className="space-y-8">
-      {/* Media Section */}
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Media (Photos & Videos)</h3>
-        <div className="flex flex-wrap gap-4 mb-4">
-          <select
-            value={selectedMediaCategory}
-            onChange={(e) => setSelectedMediaCategory(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md"
-          >
-            <option value="">Select Category</option>
-            {MEDIA_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat.replace('_', ' ')}</option>)}
-          </select>
-          <input
-            type="file"
-            accept="image/*,video/*"
-            onChange={handleAddMedia}
-            disabled={uploading || !selectedMediaCategory}
-            className="px-3 py-2 border border-gray-300 rounded-md"
+            }}
+            placeholder="GPS Entry Point"
           />
-          {uploading && <span className="text-sm text-gray-500">Uploading...</span>}
-        </div>
-
-        {/* Media List */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          {formData.media.map((item, idx) => (
-            <div key={idx} className="relative border rounded-lg p-2">
-              {item.type === 'image' ? (
-                <img src={item.url} alt={item.category} className="w-full h-32 object-cover rounded" />
-              ) : (
-                <video src={item.url} className="w-full h-32 object-cover rounded" controls />
-              )}
-              <p className="text-xs text-gray-600 mt-1">{item.category}</p>
-              <button
-                type="button"
-                onClick={() => handleRemoveMedia(idx)}
-                className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
-              >
-                ×
-              </button>
-            </div>
-          ))}
+          <button type="button" onClick={() => {
+            if (navigator.geolocation) {
+              navigator.geolocation.getCurrentPosition((position) => {
+                setFormData(prev => ({
+                  ...prev,
+                  landDetails: {
+                    ...prev.landDetails,
+                    land_entry_latitude: position.coords.latitude.toString(),
+                    land_entry_longitude: position.coords.longitude.toString()
+                  }
+                }));
+              });
+            }
+          }}>📍</button>
         </div>
       </div>
+      <div className="field-group">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+          <label className="land-label" style={{ margin: 0 }}>Land Boundary Points</label>
+          <button type="button" className="add-point-btn" onClick={addBoundaryPoint}>+ ADD POINT</button>
+        </div>
+        {boundaryPoints.map((point, idx) => (
+          <div key={idx} className="gps-input-group" style={{ marginBottom: '8px' }}>
+            <input
+              type="text"
+              value={idx === 0
+                ? (formData.landDetails.land_boundary_latitude && formData.landDetails.land_boundary_longitude
+                  ? `${formData.landDetails.land_boundary_latitude}, ${formData.landDetails.land_boundary_longitude}` : '')
+                : `${point.lat}${point.lat && point.lng ? ', ' : ''}${point.lng}`}
+              onChange={(e) => {
+                const parts = e.target.value.split(',').map(s => s.trim());
+                if (idx === 0) {
+                  setFormData(prev => ({
+                    ...prev,
+                    landDetails: {
+                      ...prev.landDetails,
+                      land_boundary_latitude: parts[0] || '',
+                      land_boundary_longitude: parts[1] || ''
+                    }
+                  }));
+                } else {
+                  setBoundaryPoints(prev => {
+                    const newPoints = [...prev];
+                    newPoints[idx] = { lat: parts[0] || '', lng: parts[1] || '' };
+                    return newPoints;
+                  });
+                }
+              }}
+              placeholder={`Point ${idx + 1} GPS`}
+            />
+            <button type="button" onClick={() => {
+              if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                  if (idx === 0) {
+                    setFormData(prev => ({
+                      ...prev,
+                      landDetails: {
+                        ...prev.landDetails,
+                        land_boundary_latitude: position.coords.latitude.toString(),
+                        land_boundary_longitude: position.coords.longitude.toString()
+                      }
+                    }));
+                  } else {
+                    setBoundaryPoints(prev => {
+                      const newPoints = [...prev];
+                      newPoints[idx] = {
+                        lat: position.coords.latitude.toString(),
+                        lng: position.coords.longitude.toString()
+                      };
+                      return newPoints;
+                    });
+                  }
+                });
+              }
+            }}>📍</button>
+          </div>
+        ))}
+      </div>
+    </CardWrapper>
+  );
 
-      {/* Documents Section */}
+  const renderComplaintsCard = () => (
+    <CardWrapper color="orange" icon="⚠️" title="COMPLAINTS" watermark="📋">
       <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Legal Documents</h3>
-        <div className="flex flex-wrap gap-4 mb-4">
-          <select
-            value={selectedDocType}
-            onChange={(e) => setSelectedDocType(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md"
-          >
-            <option value="">Select Document Type</option>
-            {DOC_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
-          </select>
+        {COMPLAINT_OPTIONS.map(opt => (
+          <label key={opt} className="land-checkbox">
+            <input
+              type="checkbox"
+              checked={formData.landDetails.complaints.includes(opt)}
+              onChange={(e) => handleNestedArrayChange('complaints', opt, e.target.checked)}
+            />
+            {opt}
+          </label>
+        ))}
+      </div>
+    </CardWrapper>
+  );
+
+  const renderLandSaleStatusCard = () => (
+    <CardWrapper color="teal" icon="🟢" title="LAND SALE AVAILABLE STATUS" watermark="💰">
+      <div>
+        {LAND_SALE_STATUS_OPTIONS.map(status => (
+          <label key={status} className="land-checkbox">
+            <input
+              type="checkbox"
+              checked={formData.land_sale_available_status.includes(status)}
+              onChange={(e) => handleArrayChange('land_sale_available_status', status, e.target.checked)}
+            />
+            {status}
+          </label>
+        ))}
+      </div>
+    </CardWrapper>
+  );
+
+  const renderSuggestedFarmerCard = () => (
+    <CardWrapper color="teal" icon="🏠" title="SUGGESTED FARMER DETAILS" watermark="👨‍🌾">
+      <div className="field-group">
+        <label className="land-label">Name</label>
+        <input type="text" className="land-input" placeholder="Farmer Name" />
+      </div>
+      <div className="field-group">
+        <label className="land-label">Phone No</label>
+        <input type="tel" className="land-input" placeholder="98XXXXXXXX" />
+      </div>
+      <div>
+        <label className="land-label">State</label>
+        <select className="land-select">
+          <option value="">Select</option>
+          {states.map(state => (
+            <option key={state.id} value={state.name}>{state.name}</option>
+          ))}
+        </select>
+      </div>
+    </CardWrapper>
+  );
+
+  const renderDocumentsCard = () => (
+    <CardWrapper color="green" icon="📄" title="DOCUMENTS" watermark="📁">
+      {DOC_TYPES.map(docType => (
+        <div key={docType} className="field-group">
+          <label className="land-label">{docType.replace('_', ' ')}</label>
           <input
             type="file"
             accept="image/*,application/pdf"
-            onChange={handleAddDocument}
-            disabled={uploading || !selectedDocType}
-            className="px-3 py-2 border border-gray-300 rounded-md"
+            onChange={(e) => {
+              setSelectedDocType(docType);
+              handleAddDocument(e);
+            }}
+            className="land-input"
+            style={{ padding: '4px 8px' }}
           />
-        </div>
-
-        {/* Documents List */}
-        <div className="space-y-2">
-          {formData.documents.map((doc, idx) => (
-            <div key={idx} className="flex items-center justify-between border rounded-lg p-3">
-              <div>
-                <span className="font-medium">{doc.doc_type}</span>
-                <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="ml-4 text-blue-600 hover:underline text-sm">
-                  View Document
-                </a>
-              </div>
+          {formData.documents.filter(d => d.doc_type === docType).map((doc, idx) => (
+            <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px', padding: '6px 10px', background: '#f0fdf4', borderRadius: '6px', fontSize: '11px' }}>
+              <a href={doc.file_url} target="_blank" rel="noopener noreferrer" style={{ color: '#16a34a' }}>View</a>
               <button
                 type="button"
-                onClick={() => handleRemoveDocument(idx)}
-                className="bg-red-500 text-white rounded-md px-3 py-1 text-sm"
+                onClick={() => handleRemoveDocument(formData.documents.indexOf(doc))}
+                style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px', padding: '2px 8px', fontSize: '10px', cursor: 'pointer' }}
               >
-                Remove
+                ✕
               </button>
             </div>
           ))}
         </div>
+      ))}
+    </CardWrapper>
+  );
+
+  const renderNearestTownsCard = () => (
+    <CardWrapper color="teal" icon="🏙️" title="NEAREST TOWNS" watermark="🌆">
+      <div className="field-group">
+        <label className="land-label">Mandal</label>
+        <input type="text" className="land-input" placeholder="Mandal" value={formData.mandal} readOnly />
+      </div>
+      <div className="field-group">
+        <label className="land-label">Village</label>
+        <input type="text" className="land-input" placeholder="Village" value={formData.village} readOnly />
+      </div>
+      <div className="field-group">
+        <label className="land-label">Town</label>
+        <input type="text" className="land-input" placeholder="Town" />
+      </div>
+      <div className="field-group">
+        <label className="land-label">Primary Urban Hub</label>
+        <select className="land-select">
+          <option value="">Pick Primary Town</option>
+        </select>
+      </div>
+      <div className="field-group">
+        <label className="land-label">Secondary Node</label>
+        <select className="land-select">
+          <option value="">Pick Secondary Town</option>
+        </select>
+      </div>
+      <div>
+        <label className="land-label">Tertiary Node</label>
+        <select className="land-select">
+          <option value="">Pick Tertiary Town</option>
+        </select>
+      </div>
+    </CardWrapper>
+  );
+
+  const renderPhotosVideoCard = () => (
+    <CardWrapper color="green" icon="📸" title="LAND PHOTOS & VIDEO" watermark="🖼️">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {/* Media List */}
+        {formData.media.length > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            {formData.media.map((item, idx) => (
+              <div key={idx} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e5e7eb' }}>
+                {item.type === 'image' ? (
+                  <img src={item.url} alt={item.category} style={{ width: '100%', height: '80px', objectFit: 'cover' }} />
+                ) : (
+                  <video src={item.url} style={{ width: '100%', height: '80px', objectFit: 'cover' }} controls />
+                )}
+                <div style={{ padding: '4px 6px', fontSize: '9px', fontWeight: '600', color: '#6b7280', textTransform: 'uppercase' }}>{item.category.replace('_', ' ')}</div>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveMedia(idx)}
+                  style={{ position: 'absolute', top: '4px', right: '4px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: '18px', height: '18px', fontSize: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        {uploading && <div style={{ textAlign: 'center', fontSize: '12px', color: '#94a3b8' }}>Uploading...</div>}
+      </div>
+    </CardWrapper>
+  );
+
+  const renderPhotoGridCard = () => (
+    <div className="photo-grid-wrapper">
+      <div className="dont-show-toggle">
+        <span className="dont-show-toggle__text">DONT SHOW PHOTOS ON LISTING</span>
+        <ToggleSwitch
+          checked={dontShowPhotos}
+          onChange={(e) => setDontShowPhotos(e.target.checked)}
+        />
+      </div>
+      <div className="photo-grid">
+        {MEDIA_CATEGORIES.map(cat => {
+          const count = getMediaCount(cat);
+          return (
+            <div
+              key={cat}
+              className={`photo-grid__item ${selectedMediaCategory === cat ? 'photo-grid__item--active' : ''} ${count > 0 ? 'photo-grid__item--has-media' : ''}`}
+              onClick={() => handlePhotoGridClick(cat)}
+            >
+              {count > 0 && <span className="photo-grid__count">{count}</span>}
+              <div className="photo-grid__icon">📷</div>
+              <div className="photo-grid__label">{MEDIA_LABELS[cat]}</div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 
+  // ========================
+  // MAIN RETURN
+  // ========================
+
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          {/* Header */}
-          <div className="bg-green-600 px-6 py-4">
-            <h1 className="text-2xl font-bold text-white">Add New Land Listing</h1>
-            <p className="text-green-100 text-sm mt-1">Fill in the details below to list a new land property</p>
-          </div>
+    <div className="land-form-container" style={{ minHeight: '100vh', background: '#f1f5f9' }}>
+      {/* Hidden file input for photo grid */}
+      <input
+        id="media-file-input"
+        type="file"
+        accept="image/*,video/*"
+        onChange={handleAddMedia}
+        disabled={uploading || !selectedMediaCategory}
+        style={{ display: 'none' }}
+      />
 
-          {/* Progress Steps */}
-          <div className="border-b border-gray-200 px-6 pt-4">
-            <div className="flex flex-wrap">
-              {sections.map((section, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentSection(idx)}
-                  className={`mr-8 pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
-                    currentSection === idx
-                      ? 'border-green-500 text-green-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  {section.title}
-                </button>
-              ))}
-            </div>
-          </div>
+      {/* Breadcrumb Bar */}
+      <div className="land-breadcrumb">
+        <div className="land-breadcrumb__left">
+          <Home size={14} />
+          <span className="land-breadcrumb__text">REGISTRY</span>
+          <ChevronRight size={12} className="land-breadcrumb__sep" />
+          <span className="land-breadcrumb__text">lands</span>
+          <ChevronRight size={12} className="land-breadcrumb__sep" />
+          <span className="land-breadcrumb__text land-breadcrumb__text--bold">new</span>
+        </div>
+        <button className="land-breadcrumb__expand">
+          <Maximize2 size={14} />
+        </button>
+      </div>
 
-          {/* Form Body */}
-          <form onSubmit={(e) => e.preventDefault()} className="p-6">
-            {error && (
-              <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-                {error}
-              </div>
-            )}
-            {success && (
-              <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
-                {success}
-              </div>
-            )}
+      {/* Pill Navigation Bar */}
+      <nav className="pill-nav">
+        {[
+          { label: 'Add land', icon: <PlusCircle size={13} /> },
+          { label: 'Crew', icon: <Users size={13} /> },
+          { label: 'Work allotment', icon: <CheckSquare size={13} /> },
+          { label: 'Verification', icon: <Search size={13} /> },
+          { label: 'Edit data', icon: <PenLine size={13} /> },
+          { label: 'Publish', icon: <CircleDot size={13} /> },
+          { label: 'Trainee observation', icon: <Eye size={13} /> },
+          { label: 'Farmer sheet', icon: <FileText size={13} /> },
+          { label: 'Dashboard', icon: <LayoutGrid size={13} /> },
+          { label: 'Farmers allotment', icon: <UserCheck size={13} /> },
+          { label: 'Attendance', icon: <CalendarCheck size={13} /> },
+        ].map((item) => (
+          <button
+            key={item.label}
+            className={`pill-nav__item${activeNavItem === item.label ? ' pill-nav__item--active' : ''}`}
+            onClick={() => setActiveNavItem(item.label)}
+          >
+            {item.icon} {item.label}
+          </button>
+        ))}
+      </nav>
 
-            <div className="mb-6">
-              {currentSection === 0 && renderBasicInfo()}
-              {currentSection === 1 && renderFarmerDetails()}
-              {currentSection === 2 && renderLandDetails()}
-              {currentSection === 3 && renderGPSAndUtilities()}
-              {currentSection === 4 && renderMediaAndDocuments()}
-            </div>
+      {/* Page Header */}
+      <div className="land-page-header" style={{ padding: '0 24px' }}>
+        <div>
+          <h1 className="land-page-header__title">ADD NEW LAND</h1>
+          <p className="land-page-header__subtitle">REGISTRY CORE • HIGH-PRECISION ACQUISITION</p>
+        </div>
+        <div className="land-page-header__actions">
+          <button type="button" className="btn-reset" onClick={handleReset}>
+            ↺ RESET
+          </button>
+          <button
+            type="button"
+            className="btn-save"
+            onClick={(e) => handleSubmit(e, 'complete')}
+            disabled={loading}
+          >
+            {loading ? 'SAVING...' : 'SAVE LAND'}
+          </button>
+        </div>
+      </div>
 
-            {/* Navigation Buttons */}
-            <div className="flex justify-between pt-4 border-t border-gray-200">
-              <button
-                type="button"
-                onClick={() => setCurrentSection(prev => Math.max(0, prev - 1))}
-                disabled={currentSection === 0}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <div className="space-x-3">
-                <button
-                  type="button"
-                  onClick={(e) => handleSubmit(e, 'draft')}
-                  disabled={loading}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  {loading ? 'Saving...' : 'Save as Draft'}
-                </button>
-                {currentSection === sections.length - 1 ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={(e) => handleSubmit(e, 'complete')}
-                      disabled={loading}
-                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
-                    >
-                      {loading ? 'Submitting...' : 'Submit'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => handleSubmit(e, 'review')}
-                      disabled={loading}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-                    >
-                      {loading ? 'Submitting...' : 'Submit for Review'}
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setCurrentSection(prev => Math.min(sections.length - 1, prev + 1))}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-                  >
-                    Next
-                  </button>
-                )}
-              </div>
-            </div>
-          </form>
+      {/* Alerts */}
+      {error && <div className="land-alert land-alert--error" style={{ margin: '0 24px 16px' }}>{error}</div>}
+      {success && <div className="land-alert land-alert--success" style={{ margin: '0 24px 16px' }}>{success}</div>}
+
+      {/* 3-Column Grid */}
+      <div className="land-grid" style={{ padding: '0 24px 24px' }}>
+        {/* COLUMN 1 — Left */}
+        <div className="land-column">
+          {renderLandAddressCard()}
+          {renderFarmerDetailsCard()}
+          {renderDocumentsCard()}
+          {renderPhotosVideoCard()}
+        </div>
+
+        {/* COLUMN 2 — Center */}
+        <div className="land-column">
+          {renderAcresPriceCard()}
+          {renderResidencesShedsCard()}
+          {renderWaterSourceCard()}
+          {renderPathDetailsCard()}
+          {renderLandDetailsCard()}
+          {renderTreesCard()}
+          {renderLandGPSCard()}
+          {renderComplaintsCard()}
+        </div>
+
+        {/* COLUMN 3 — Right */}
+        <div className="land-column">
+          {renderUrgencyListingCard()}
+          {renderMortgageCard()}
+          {renderLandSaleStatusCard()}
+          {renderSuggestedFarmerCard()}
+          {renderNearestTownsCard()}
+          {renderPhotoGridCard()}
         </div>
       </div>
     </div>

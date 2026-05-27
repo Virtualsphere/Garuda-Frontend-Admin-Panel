@@ -1,4 +1,6 @@
-const API_BASE = "http://localhost:5000";
+import { BASE_URL } from "../url/BaseUrl";
+
+const API_BASE = BASE_URL;
 
 let refreshPromise = null;
 

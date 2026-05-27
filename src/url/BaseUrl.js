@@ -1,7 +1,4 @@
-const isLocal =
-  ['localhost', '127.0.0.1'].includes(window.location.hostname) ||
-  window.location.hostname.startsWith('192.168.');
-
-export const BASE_URL = isLocal
-  ? 'http://localhost:5000' // local backend
-  : ''; // in production, rely on Vercel's rewrite (/api/proxy)
+// In development, Vite proxy handles /api/* forwarding to the backend.
+// In production, Vercel's rewrite rules handle it.
+// So BASE_URL is always empty — all API calls use relative paths like /api/...
+export const BASE_URL = '';
