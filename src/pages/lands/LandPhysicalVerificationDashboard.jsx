@@ -429,7 +429,7 @@ const LandPhysicalVerificationDashboard = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/land/pending-physical-verification/${statusFilter}`, {
+      const response = await fetch(`${API_BASE_URL}/land/pending-call-verification/${statusFilter}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
