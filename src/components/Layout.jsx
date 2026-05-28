@@ -37,8 +37,6 @@ export default function Layout() {
       label: "Operations",
       items: [
         { icon: LayoutDashboard, name: "Dashboard", path: "/dashboard" },
-        { icon: FilePenLine, name: "Lands Call Verification", path: "/call/verification" },
-        { icon: FilePenLine, name: "Lands Physical Verification", path: "/physical/verification" },
         { icon: FilePenLine, name: "Lands Final Verification", path: "/final/verification" },
         { icon: Phone, name: "Land", path: "/add/land" },
         { icon: Users, name: "Employees", path: "/employees" },

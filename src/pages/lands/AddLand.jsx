@@ -7,6 +7,7 @@ import {
   PenLine, CircleDot, Eye, FileText,
   LayoutGrid, UserCheck, CalendarCheck
 } from 'lucide-react';
+import LandVerificationDashboard from './LandVerificationDashboard';
 
 const INITIAL_FARMER_DETAILS = {
   name: '',
@@ -121,7 +122,7 @@ const AddLand = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [dontShowPhotos, setDontShowPhotos] = useState(false);
-  const [activeNavItem, setActiveNavItem] = useState(null);
+  const [activeNavItem, setActiveNavItem] = useState('Add land');
 
   // Location states
   const [states, setStates] = useState([]);
@@ -1329,63 +1330,70 @@ const AddLand = () => {
         ))}
       </nav>
 
-      {/* Page Header */}
-      <div className="land-page-header" style={{ padding: '0 24px' }}>
-        <div>
-          <h1 className="land-page-header__title">ADD NEW LAND</h1>
-          <p className="land-page-header__subtitle">REGISTRY CORE • HIGH-PRECISION ACQUISITION</p>
-        </div>
-        <div className="land-page-header__actions">
-          <button type="button" className="btn-reset" onClick={handleReset}>
-            ↺ RESET
-          </button>
-          <button
-            type="button"
-            className="btn-save"
-            onClick={(e) => handleSubmit(e, 'complete')}
-            disabled={loading}
-          >
-            {loading ? 'SAVING...' : 'SAVE LAND'}
-          </button>
-        </div>
-      </div>
+      {/* Conditionally render based on active nav item */}
+      {activeNavItem === 'Verification' ? (
+        <LandVerificationDashboard />
+      ) : (
+        <>
+          {/* Page Header */}
+          <div className="land-page-header" style={{ padding: '0 24px' }}>
+            <div>
+              <h1 className="land-page-header__title">ADD NEW LAND</h1>
+              <p className="land-page-header__subtitle">REGISTRY CORE • HIGH-PRECISION ACQUISITION</p>
+            </div>
+            <div className="land-page-header__actions">
+              <button type="button" className="btn-reset" onClick={handleReset}>
+                ↺ RESET
+              </button>
+              <button
+                type="button"
+                className="btn-save"
+                onClick={(e) => handleSubmit(e, 'complete')}
+                disabled={loading}
+              >
+                {loading ? 'SAVING...' : 'SAVE LAND'}
+              </button>
+            </div>
+          </div>
 
-      {/* Alerts */}
-      {error && <div className="land-alert land-alert--error" style={{ margin: '0 24px 16px' }}>{error}</div>}
-      {success && <div className="land-alert land-alert--success" style={{ margin: '0 24px 16px' }}>{success}</div>}
+          {/* Alerts */}
+          {error && <div className="land-alert land-alert--error" style={{ margin: '0 24px 16px' }}>{error}</div>}
+          {success && <div className="land-alert land-alert--success" style={{ margin: '0 24px 16px' }}>{success}</div>}
 
-      {/* 3-Column Grid */}
-      <div className="land-grid" style={{ padding: '0 24px 24px' }}>
-        {/* COLUMN 1 — Left */}
-        <div className="land-column">
-          {renderLandAddressCard()}
-          {renderFarmerDetailsCard()}
-          {renderDocumentsCard()}
-          {renderPhotosVideoCard()}
-        </div>
+          {/* 3-Column Grid */}
+          <div className="land-grid" style={{ padding: '0 24px 24px' }}>
+            {/* COLUMN 1 — Left */}
+            <div className="land-column">
+              {renderLandAddressCard()}
+              {renderFarmerDetailsCard()}
+              {renderDocumentsCard()}
+              {renderPhotosVideoCard()}
+            </div>
 
-        {/* COLUMN 2 — Center */}
-        <div className="land-column">
-          {renderAcresPriceCard()}
-          {renderResidencesShedsCard()}
-          {renderWaterSourceCard()}
-          {renderPathDetailsCard()}
-          {renderLandDetailsCard()}
-          {renderTreesCard()}
-          {renderLandGPSCard()}
-          {renderComplaintsCard()}
-        </div>
+            {/* COLUMN 2 — Center */}
+            <div className="land-column">
+              {renderAcresPriceCard()}
+              {renderResidencesShedsCard()}
+              {renderWaterSourceCard()}
+              {renderPathDetailsCard()}
+              {renderLandDetailsCard()}
+              {renderTreesCard()}
+              {renderLandGPSCard()}
+              {renderComplaintsCard()}
+            </div>
 
-        {/* COLUMN 3 — Right */}
-        <div className="land-column">
-          {renderUrgencyListingCard()}
-          {renderMortgageCard()}
-          {renderLandSaleStatusCard()}
-          {renderSuggestedFarmerCard()}
-          {renderNearestTownsCard()}
-          {renderPhotoGridCard()}
-        </div>
-      </div>
+            {/* COLUMN 3 — Right */}
+            <div className="land-column">
+              {renderUrgencyListingCard()}
+              {renderMortgageCard()}
+              {renderLandSaleStatusCard()}
+              {renderSuggestedFarmerCard()}
+              {renderNearestTownsCard()}
+              {renderPhotoGridCard()}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

@@ -1,0 +1,302 @@
+  // Render edit form INLINE (not modal)
+  const renderInlineEditForm = () => {
+    if (!selectedLand || !isEditing) return null;
+
+    const FormCard = ({ title, icon: Icon, colorTheme, children }) => {
+      const themes = {
+        red: { bg: 'bg-red-50', border: 'border-t-red-500', text: 'text-red-600', iconBg: 'bg-red-500' },
+        green: { bg: 'bg-green-50', border: 'border-t-green-500', text: 'text-green-600', iconBg: 'bg-green-500' },
+        blue: { bg: 'bg-blue-50', border: 'border-t-blue-500', text: 'text-blue-600', iconBg: 'bg-blue-500' },
+        orange: { bg: 'bg-orange-50', border: 'border-t-orange-500', text: 'text-orange-600', iconBg: 'bg-orange-500' },
+        teal: { bg: 'bg-teal-50', border: 'border-t-teal-500', text: 'text-teal-600', iconBg: 'bg-teal-500' },
+      };
+      const theme = themes[colorTheme] || themes.blue;
+
+      return (
+        <div className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden border-t-4 ${theme.border}`}>
+          <div className={`pt-4 pb-3 px-6 flex flex-col items-center justify-center border-b border-gray-100 ${theme.bg}`}>
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white mb-2 shadow-sm ${theme.iconBg}`}>
+              <Icon size={16} />
+            </div>
+            <h3 className={`text-[10px] font-bold uppercase tracking-wider ${theme.text}`}>
+              {title}
+            </h3>
+          </div>
+          <div className="p-5 space-y-4">
+            {children}
+          </div>
+        </div>
+      );
+    };
+
+    return (
+      <div className="pb-10 bg-[#f8f9fb]">
+        {/* Dark Header */}
+        <div className="bg-[#0B1120] rounded-xl p-4 flex flex-col md:flex-row justify-between items-center mb-6 shadow-lg mx-6 mt-2 gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-gray-600 border-2 border-gray-400 overflow-hidden flex items-center justify-center text-xl font-bold text-white">
+               {selectedLand.farmerDetails?.name?.charAt(0).toUpperCase() || 'U'}
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-0.5 tracking-tight leading-none">L{String(selectedLand.id).padStart(3, '0')}</h2>
+              <div className="text-[9px] font-bold text-orange-500 tracking-widest uppercase mt-1">
+                TECHNICAL VERIFY WORKFLOW • {selectedLand.farmerDetails?.name || 'UNKNOWN'}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={cancelEditing}
+              className="px-4 py-2 bg-transparent border border-gray-600 text-gray-300 rounded-lg text-xs font-bold tracking-wide hover:bg-gray-800 transition-colors flex items-center gap-2"
+            >
+              <ChevronLeft size={14} /> BACK TO REGISTRY
+            </button>
+            <button 
+              onClick={() => updateLand(selectedLand.id, editFormData)}
+              className="px-5 py-2 bg-[#f97316] text-white rounded-lg text-xs font-bold tracking-wide hover:bg-[#ea580c] transition-colors shadow-lg shadow-orange-500/30 flex items-center gap-2"
+              disabled={updating}
+            >
+              {updating ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+              COMMIT AUDIT
+            </button>
+          </div>
+        </div>
+
+        {/* 4-Column Masonry Grid */}
+        <div className="px-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
+          
+          {/* COLUMN 1 */}
+          <div className="flex flex-col gap-6">
+            <FormCard title="1. ADDRESS REGISTRY" icon={MapPin} colorTheme="red">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">State</label>
+                  <input type="text" value={editFormData.state || ''} onChange={(e) => handleEditChange('state', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">District</label>
+                  <input type="text" value={editFormData.district || ''} onChange={(e) => handleEditChange('district', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Mandal</label>
+                  <input type="text" value={editFormData.mandal || ''} onChange={(e) => handleEditChange('mandal', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Village</label>
+                  <input type="text" value={editFormData.village || ''} onChange={(e) => handleEditChange('village', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" />
+                </div>
+              </div>
+              
+              <div className="mt-4">
+                <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">GPS COORDINATES</label>
+                <div className="flex items-center bg-[#0B1120] rounded-lg overflow-hidden border border-gray-800">
+                  <input type="text" className="bg-transparent border-none text-white px-3 py-2 text-xs w-full outline-none font-medium" value={`${editFormData.location_latitude || ''}, ${editFormData.location_longitude || ''}`} placeholder="17.4486, 78.1345" readOnly />
+                  <button className="bg-[#1e293b] p-2.5 text-blue-400 hover:text-blue-300 transition-colors">
+                    <MapPin size={14} />
+                  </button>
+                </div>
+                <div className="text-[7px] text-gray-400 mt-1.5 uppercase font-bold tracking-wider">CLICK GPS TO SUGGEST NEAREST VILLAGE</div>
+              </div>
+            </FormCard>
+
+            <FormCard title="2. FARMER DETAILS" icon={User} colorTheme="red">
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Name</label>
+                  <input type="text" value={editFormData.farmerDetails?.name || ''} onChange={(e) => handleEditChange('farmerDetails.name', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 text-green-600 font-bold" />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Phone No</label>
+                  <input type="text" value={editFormData.farmerDetails?.phone || ''} onChange={(e) => handleEditChange('farmerDetails.phone', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">WhatsApp</label>
+                  <input type="text" value={editFormData.farmerDetails?.whatsapp || ''} onChange={(e) => handleEditChange('farmerDetails.whatsapp', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" />
+                </div>
+                <div className="grid grid-cols-2 gap-3 mt-4">
+                  <div>
+                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Ownership Type</label>
+                    <select value={editFormData.farmerDetails?.ownership_type || 'Ancestral'} onChange={(e) => handleEditChange('farmerDetails.ownership_type', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[11px] outline-none focus:border-red-400 bg-white font-medium">
+                      {OWNERSHIP_TYPE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Locality</label>
+                    <select value={editFormData.farmerDetails?.locality || 'Local'} onChange={(e) => handleEditChange('farmerDetails.locality', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[11px] outline-none focus:border-red-400 bg-white font-medium">
+                      {LOCALITY_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Status</label>
+                    <select value={editFormData.farmerDetails?.ownership_status || 'Own'} onChange={(e) => handleEditChange('farmerDetails.ownership_status', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[11px] outline-none focus:border-red-400 bg-white font-medium">
+                      {OWNERSHIP_STATUS_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Age</label>
+                    <select value={editFormData.farmerDetails?.age || 'Upto 30'} onChange={(e) => handleEditChange('farmerDetails.age', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[11px] outline-none focus:border-red-400 bg-white font-medium">
+                      {AGE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </FormCard>
+          </div>
+
+          {/* COLUMN 2 */}
+          <div className="flex flex-col gap-6">
+            <FormCard title="3. ACRES & PRICE" icon={Building2} colorTheme="green">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Acres</label>
+                  <input type="number" value={editFormData.landDetails?.total_acres || 0} onChange={(e) => handleEditChange('landDetails.total_acres', parseFloat(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-bold" />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Guntas (0-39)</label>
+                  <input type="number" value={editFormData.landDetails?.guntas || 0} onChange={(e) => handleEditChange('landDetails.guntas', parseFloat(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-bold" />
+                </div>
+              </div>
+              <div className="mt-4">
+                <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Price per Acre (Lakhs)</label>
+                <input type="number" value={editFormData.landDetails?.price_per_acres || 0} onChange={(e) => handleEditChange('landDetails.price_per_acres', parseFloat(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm text-orange-500 font-bold outline-none focus:border-green-400" />
+              </div>
+              
+              <div className="bg-[#0B1120] rounded-xl p-4 mt-5">
+                <div className="text-[8px] font-bold text-orange-500 uppercase tracking-widest mb-1">TOTAL CALCULATED VALUE</div>
+                <div className="text-2xl font-bold text-white mb-1 tracking-tight">₹{editFormData.landDetails?.total_value ? formatPrice(editFormData.landDetails?.total_value).replace('₹', '').replace('.00', '') : '0'}</div>
+                <div className="text-[7px] text-gray-400 uppercase tracking-wider font-bold">CALCULATED BASED ON AREA AND PRICE PER ACRE</div>
+              </div>
+            </FormCard>
+
+            <FormCard title="4. PATH DETAILS" icon={MapPin} colorTheme="green">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Road Type</label>
+                  <input type="text" value={editFormData.landDetails?.nearest_road_type || ''} onChange={(e) => handleEditChange('landDetails.nearest_road_type', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Attached to Road</label>
+                    <select value={editFormData.landDetails?.land_attached_to_road || 'yes'} onChange={(e) => handleEditChange('landDetails.land_attached_to_road', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[11px] outline-none focus:border-green-400 bg-white font-medium">
+                      <option value="yes">Yes</option>
+                      <option value="no">No</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Path Ownership</label>
+                    <input type="text" value={editFormData.landDetails?.path_ownership || ''} onChange={(e) => handleEditChange('landDetails.path_ownership', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium" />
+                  </div>
+                </div>
+              </div>
+            </FormCard>
+          </div>
+
+          {/* COLUMN 3 */}
+          <div className="flex flex-col gap-6">
+            <FormCard title="7. LAND GPS" icon={MapPin} colorTheme="blue">
+              <div className="space-y-5">
+                <div>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">ENTRY POINT GPS</label>
+                  <div className="flex items-center bg-[#0B1120] rounded-lg overflow-hidden border border-gray-800">
+                    <input type="text" className="bg-transparent border-none text-white px-3 py-2 text-xs font-bold w-full outline-none" value={`${editFormData.landDetails?.land_entry_latitude || ''}, ${editFormData.landDetails?.land_entry_longitude || ''}`} placeholder="Lat, Lng" readOnly />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-wider">BOUNDARY POINTS</label>
+                    <button className="text-orange-500 hover:text-orange-600 border border-orange-200 rounded-full p-0.5"><CheckCircle size={10} /></button>
+                  </div>
+                  <div className="flex items-center bg-[#0B1120] rounded-lg overflow-hidden border border-gray-800">
+                    <input type="text" className="bg-transparent border-none text-gray-400 px-3 py-2 text-xs font-bold w-full outline-none" value={`${editFormData.landDetails?.land_boundary_latitude || ''}, ${editFormData.landDetails?.land_boundary_longitude || ''}`} placeholder="Point 1 GPS" readOnly />
+                    <button className="bg-[#1e293b] p-2 text-blue-400 hover:text-blue-300 transition-colors">
+                      <MapPin size={12} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </FormCard>
+
+            <FormCard title="8. MULTIMEDIA REGISTRY" icon={ImageIcon} colorTheme="blue">
+              <div className="flex items-center justify-between p-3 bg-blue-50/50 rounded-lg border border-blue-100 mb-5">
+                <span className="text-[9px] font-bold text-blue-800 tracking-wider">SHOW PHOTOS ON LISTING</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <div className="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-orange-500"></div>
+                </label>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                {[1,2,3,4,5,6].map((i) => (
+                  <div key={i} className="aspect-square bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-300 hover:bg-gray-100 cursor-pointer transition-colors relative">
+                    {editFormData.media && editFormData.media[i-1] ? (
+                       <img src={editFormData.media[i-1].url} className="w-full h-full object-cover rounded-lg" alt="" />
+                    ) : (
+                       <ImageIcon size={16} />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4">
+                 <select value={selectedMediaCategory} onChange={(e) => setSelectedMediaCategory(e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[9px] outline-none focus:border-blue-400 bg-white mb-2 uppercase font-bold text-gray-600 tracking-wide">
+                    <option value="">SELECT CATEGORY...</option>
+                    {MEDIA_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat.replace('_', ' ')}</option>)}
+                 </select>
+                 <input type="file" accept="image/*,video/*" onChange={handleAddMedia} disabled={uploading || !selectedMediaCategory} className="w-full text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+              </div>
+            </FormCard>
+          </div>
+
+          {/* COLUMN 4 */}
+          <div className="flex flex-col gap-6">
+            <FormCard title="10. SALE STATUS" icon={CheckCircle} colorTheme="green">
+              <div className="space-y-4">
+                {LAND_SALE_STATUS_OPTIONS.map(status => (
+                  <label key={status} className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative flex items-center justify-center">
+                      <input type="checkbox" value={status} checked={(editFormData.land_sale_available_status || []).includes(status)} onChange={(e) => handleArrayChange('land_sale_available_status', status, e.target.checked)} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-sm checked:bg-white checked:border-orange-500 transition-all cursor-pointer" />
+                      <div className="pointer-events-none absolute opacity-0 peer-checked:opacity-100 text-orange-500">
+                        <CheckCircle size={14} className="stroke-[3]" />
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold text-gray-600 tracking-wider uppercase group-hover:text-gray-900 transition-colors">{status}</span>
+                  </label>
+                ))}
+              </div>
+            </FormCard>
+
+            <FormCard title="11. MORTGAGE STATUS" icon={CheckCircle} colorTheme="blue">
+              <div className="space-y-4">
+                {MORTGAGE_STATUS_OPTIONS.map(status => (
+                  <label key={status} className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative flex items-center justify-center">
+                      <input type="checkbox" value={status} checked={(editFormData.mortage_availability_status || []).includes(status)} onChange={(e) => handleArrayChange('mortage_availability_status', status, e.target.checked)} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-sm checked:bg-white checked:border-orange-500 transition-all cursor-pointer" />
+                      <div className="pointer-events-none absolute opacity-0 peer-checked:opacity-100 text-orange-500">
+                        <CheckCircle size={14} className="stroke-[3]" />
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold text-gray-600 tracking-wider uppercase group-hover:text-gray-900 transition-colors">{status}</span>
+                  </label>
+                ))}
+              </div>
+            </FormCard>
+            
+            <FormCard title="12. URGENCY LISTING" icon={CheckCircle} colorTheme="orange">
+              <div className="space-y-4">
+                {URGENCY_OPTIONS.map(status => (
+                  <label key={status} className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative flex items-center justify-center">
+                      <input type="checkbox" value={status} checked={(editFormData.urgency_listing || []).includes(status)} onChange={(e) => handleArrayChange('urgency_listing', status, e.target.checked)} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-sm checked:bg-white checked:border-orange-500 transition-all cursor-pointer" />
+                      <div className="pointer-events-none absolute opacity-0 peer-checked:opacity-100 text-orange-500">
+                        <CheckCircle size={14} className="stroke-[3]" />
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold text-gray-600 tracking-wider uppercase group-hover:text-gray-900 transition-colors">{status}</span>
+                  </label>
+                ))}
+              </div>
+            </FormCard>
+          </div>
+        </div>
+      </div>
+    );
+  };
