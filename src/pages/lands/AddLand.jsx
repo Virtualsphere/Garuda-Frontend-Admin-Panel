@@ -269,12 +269,15 @@ const AddLand = () => {
   // File upload handler
   const handleFileUpload = async (file, type) => {
     setUploading(true);
+    const token = localStorage.getItem('token');
     const formDataUpload = new FormData();
     formDataUpload.append(type, file);
 
     try {
       const response = await axios.post(`${API_BASE_URL}/upload-files`, formDataUpload, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        }
       });
 
       if (type === 'photo') {

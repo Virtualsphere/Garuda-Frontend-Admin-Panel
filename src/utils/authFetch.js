@@ -84,12 +84,15 @@ export const authFetch = async (url, options = {}) => {
   let token = localStorage.getItem("token");
 
   const request = async (accessToken) => {
+    const isFormData =
+      typeof FormData !== "undefined" && options?.body instanceof FormData;
+
     return fetch(url, {
       ...options,
       headers: {
         ...(options.headers || {}),
         Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
+        ...(isFormData ? {} : { "Content-Type": "application/json" }),
       },
     });
   };
