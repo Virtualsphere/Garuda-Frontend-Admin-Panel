@@ -27,8 +27,6 @@ import {
   Bell
 } from 'lucide-react';
 import { BASE_URL } from '../../url/BaseUrl';
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import { fixUrl } from "../../utils/fixUrl";
 
 const API_BASE_URL = `${BASE_URL}/api`;
