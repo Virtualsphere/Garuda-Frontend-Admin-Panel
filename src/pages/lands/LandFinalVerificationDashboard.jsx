@@ -150,12 +150,14 @@ const LandFinalVerificationDashboard = () => {
   // File upload handler
   const handleFileUpload = async (file, type) => {
     setUploading(true);
+    const token = localStorage.getItem('token');
     const formDataUpload = new FormData();
     formDataUpload.append(type, file);
 
     try {
       const response = await fetch(`${API_BASE_URL}/upload-files`, {
         method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : undefined,
         body: formDataUpload
       });
 

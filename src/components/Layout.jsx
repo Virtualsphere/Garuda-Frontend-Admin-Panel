@@ -147,7 +147,7 @@ export default function Layout() {
 
       {/* MOBILE MENU BUTTON */}
       <button
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-gray-800 text-white rounded-md"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-slate-900 text-white rounded-md"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
       >
         {isSidebarOpen ? <X size={24} /> : <PanelRight size={24} />}
@@ -164,7 +164,7 @@ export default function Layout() {
       {/* SIDEBAR */}
       <div className={`
         fixed lg:static
-        w-72 h-full bg-black text-white flex flex-col p-4 space-y-6
+        w-72 h-full bg-slate-900 text-white flex flex-col p-4 space-y-6
         transition-transform duration-300 ease-in-out z-40
         ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}>
@@ -180,7 +180,7 @@ export default function Layout() {
           </div>
 
           {/* USER */}
-          <div className="flex items-center space-x-3 p-2 bg-gray-800 rounded-xl">
+          <div className="flex items-center space-x-3 p-2 bg-slate-800 rounded-xl">
 
             {userImage ? (
               <img
@@ -225,8 +225,8 @@ export default function Layout() {
                     className={`
                       w-full flex items-center space-x-3 py-2 px-2 rounded-lg transition-all text-left
                       ${active === item.name
-                        ? "bg-gray-700"
-                        : "hover:bg-gray-800"}
+                        ? "bg-indigo-600 shadow-md shadow-indigo-900/50"
+                        : "hover:bg-slate-800 hover:text-indigo-300"}
                     `}
                   >
                     <item.icon size={18} />
@@ -240,10 +240,10 @@ export default function Layout() {
         </div>
 
         {/* LOGOUT */}
-        <div className="pt-4 border-t border-gray-800">
+        <div className="pt-4 border-t border-slate-800">
           <button
             onClick={logoutUser}
-            className="w-full flex items-center space-x-3 py-2 px-2 rounded-lg hover:bg-gray-800 text-red-400"
+            className="w-full flex items-center space-x-3 py-2 px-2 rounded-lg hover:bg-slate-800 text-red-400 hover:text-red-300 transition-colors"
           >
             <LogOut size={18} />
             <span className="text-sm">Logout</span>
