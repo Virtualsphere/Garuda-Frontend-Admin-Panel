@@ -588,6 +588,7 @@ export default function EmployeeManagementAdvanced() {
         >
           <option value="all">All Roles</option>
           <option value="FIELD_AGENT">Field Agent</option>
+          <option value="FIELD_EXECUTIVE">Field Executive</option>
           <option value="MANAGER">Manager</option>
           <option value="SUPERVISOR">Supervisor</option>
           <option value="ADMIN">Admin</option>
@@ -945,6 +946,7 @@ export default function EmployeeManagementAdvanced() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option>FIELD_AGENT</option>
+                <option>FIELD_EXECUTIVE</option>
                 <option>MANAGER</option>
                 <option>SUPERVISOR</option>
                 <option>ADMIN</option>
