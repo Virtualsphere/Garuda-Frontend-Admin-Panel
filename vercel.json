@@ -5,6 +5,10 @@
       "destination": "/api/proxy"
     },
     {
+      "source": "/public/:path*",
+      "destination": "http://72.61.169.226:5000/public/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
