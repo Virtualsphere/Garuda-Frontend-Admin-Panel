@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BASE_URL } from '../../url/BaseUrl';
+import { fixUrl } from '../../utils/fixUrl';
 import {
   Home, ChevronRight, Maximize2,
   PlusCircle, Users, CheckSquare, Search,
   PenLine, CircleDot, Eye, FileText,
-  LayoutGrid, UserCheck, CalendarCheck
+  LayoutGrid, UserCheck, CalendarCheck,
+  UploadCloud, MapPin, CheckCircle, Save, 
+  IndianRupee, Layers, Image as ImageIcon, 
+  Video, Trash2, Camera, Compass
 } from 'lucide-react';
 import LandVerificationDashboard from './LandVerificationDashboard';
 
@@ -1166,7 +1170,7 @@ const AddLand = () => {
           />
           {formData.documents.filter(d => d.doc_type === docType).map((doc, idx) => (
             <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px', padding: '6px 10px', background: '#f0fdf4', borderRadius: '6px', fontSize: '11px' }}>
-              <a href={doc.file_url} target="_blank" rel="noopener noreferrer" style={{ color: '#16a34a' }}>View</a>
+              <a href={fixUrl(doc.file_url)} target="_blank" rel="noopener noreferrer" style={{ color: '#16a34a' }}>View</a>
               <button
                 type="button"
                 onClick={() => handleRemoveDocument(formData.documents.indexOf(doc))}
@@ -1225,9 +1229,9 @@ const AddLand = () => {
             {formData.media.map((item, idx) => (
               <div key={idx} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e5e7eb' }}>
                 {item.type === 'image' ? (
-                  <img src={item.url} alt={item.category} style={{ width: '100%', height: '80px', objectFit: 'cover' }} />
+                  <img src={fixUrl(item.url)} alt={item.category} style={{ width: '100%', height: '80px', objectFit: 'cover' }} />
                 ) : (
-                  <video src={item.url} style={{ width: '100%', height: '80px', objectFit: 'cover' }} controls />
+                  <video src={fixUrl(item.url)} style={{ width: '100%', height: '80px', objectFit: 'cover' }} controls />
                 )}
                 <div style={{ padding: '4px 6px', fontSize: '9px', fontWeight: '600', color: '#6b7280', textTransform: 'uppercase' }}>{item.category.replace('_', ' ')}</div>
                 <button

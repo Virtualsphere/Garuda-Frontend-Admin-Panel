@@ -28,6 +28,9 @@ import {
 } from 'lucide-react';
 import { BASE_URL } from '../../url/BaseUrl';
 import LandPhysicalVerificationDashboard from './LandPhysicalVerificationDashboard';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { fixUrl } from "../../utils/fixUrl";
 
 const API_BASE_URL = `${BASE_URL}/api`;
 
@@ -683,15 +686,16 @@ const LandVerificationDashboard = () => {
                 <div key={i} className="border rounded-lg overflow-hidden">
                   {item.type === 'image' ? (
                     <img 
-                      src={item.url} 
+                      src={fixUrl(item.url)} 
                       alt={category} 
                       className="w-full h-40 object-cover"
                       onError={(e) => {
+                        e.target.onerror = null;
                         e.target.src = 'https://via.placeholder.com/400x300?text=Image+Not+Found';
                       }}
                     />
                   ) : item.type === 'video' ? (
-                    <video src={item.url} className="w-full h-40 object-cover" controls />
+                    <video src={fixUrl(item.url)} className="w-full h-40 object-cover" controls />
                   ) : (
                     <div className="w-full h-40 bg-gray-100 flex items-center justify-center">
                       <FileText className="w-12 h-12 text-gray-400" />
@@ -1050,7 +1054,7 @@ const LandVerificationDashboard = () => {
                 {[1,2,3,4,5,6,7,8,9].map((i) => (
                   <div key={i} className="aspect-square bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-300 hover:bg-gray-100 cursor-pointer transition-colors relative">
                     {editFormData.media && editFormData.media[i-1] ? (
-                       <img src={editFormData.media[i-1].url} className="w-full h-full object-cover rounded-lg" alt="" />
+                       <img src={fixUrl(editFormData.media[i-1].url)} className="w-full h-full object-cover rounded-lg" alt="" />
                     ) : (
                        i === 6 ? <Video size={16} className="text-orange-400" /> : <ImageIcon size={16} />
                     )}
@@ -1077,7 +1081,7 @@ const LandVerificationDashboard = () => {
                       <span className="text-[10px] font-bold text-blue-800 tracking-wider uppercase">{docType}</span>
                       <div className="flex items-center gap-2">
                         {existingDoc ? (
-                           <a href={existingDoc.file_url} target="_blank" rel="noopener noreferrer" className="text-green-500 hover:text-green-600"><CheckCircle size={16} /></a>
+                           <a href={fixUrl(existingDoc.file_url)} target="_blank" rel="noopener noreferrer" className="text-green-500 hover:text-green-600"><CheckCircle size={16} /></a>
                         ) : null}
                         <label className="cursor-pointer text-gray-300 hover:text-blue-500 transition-colors">
                           <input type="file" className="hidden" accept="image/*,application/pdf" onChange={(e) => uploadSpecificDocument(e, docType)} disabled={uploading} />
@@ -1373,7 +1377,7 @@ const LandVerificationDashboard = () => {
                     {selectedLand.documents.map((doc, i) => (
                       <a
                         key={i}
-                        href={doc.file_url}
+                        href={fixUrl(doc.file_url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition"
