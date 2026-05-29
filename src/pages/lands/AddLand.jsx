@@ -121,7 +121,7 @@ const AddLand = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  const [dontShowPhotos, setDontShowPhotos] = useState(false);
+
   const [activeNavItem, setActiveNavItem] = useState('Add land');
 
   // Location states
@@ -1248,13 +1248,7 @@ const AddLand = () => {
 
   const renderPhotoGridCard = () => (
     <div className="photo-grid-wrapper">
-      <div className="dont-show-toggle">
-        <span className="dont-show-toggle__text">DONT SHOW PHOTOS ON LISTING</span>
-        <ToggleSwitch
-          checked={dontShowPhotos}
-          onChange={(e) => setDontShowPhotos(e.target.checked)}
-        />
-      </div>
+
       <div className="photo-grid">
         {MEDIA_CATEGORIES.map(cat => {
           const count = getMediaCount(cat);
