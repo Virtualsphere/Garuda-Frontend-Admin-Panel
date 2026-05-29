@@ -22,7 +22,9 @@ import {
   Building2,
   TreePine,
   Droplets,
-  Zap
+  Zap,
+  ArrowRight,
+  Bell
 } from 'lucide-react';
 import { BASE_URL } from '../../url/BaseUrl';
 
@@ -43,7 +45,7 @@ const RESIDENCE_OPTIONS = ['developed farm', 'rcc house', 'asbestos shelter', 'h
 const WATER_SOURCE_OPTIONS = ['borewell', 'cheruvu', 'canal', 'not available'];
 const COMPLAINT_OPTIONS = [
   'Siblings Issue (own Brother or Sister)',
-  'Cousins Issue (of uncles family)',
+  'Cousins Issue (of uncels family)',
   'Boundary',
   'Rocks In Land',
   'Electric Poles',
@@ -51,10 +53,35 @@ const COMPLAINT_OPTIONS = [
   'path issue',
   'No Path at all'
 ];
-const MEDIA_CATEGORIES = ['farmer_photo', 'land_soil', 'fencing', 'farm_pond', 'residence', 'shed', 'water_source', 'trees', 'rocks', 'electric_poles', 'farmer_aggrement', 'others', 'video'];
+const MEDIA_CATEGORIES = ['farmer_photo', 'land_soil', 'fencing', 'farm_pond', 'residence', 'shed', 'water_source', 'trees', 'rocks', 'electric_poles', 'others', 'video'];
 const DOC_TYPES = ['PASSBOOK', 'AADHAR', 'TITLE_DEED'];
 
-// Status badge component
+// Avatar colors for farmer initials
+const AVATAR_COLORS = [
+  '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e',
+  '#f97316', '#eab308', '#22c55e', '#14b8a6',
+  '#06b6d4', '#3b82f6', '#6d28d9', '#be185d'
+];
+
+const getAvatarColor = (name) => {
+  if (!name) return AVATAR_COLORS[0];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+};
+
+// Format price in lakhs
+const formatPriceShort = (price) => {
+  if (!price) return '₹0';
+  if (price >= 10000000) return `₹${(price / 10000000).toFixed(1)}Cr`;
+  if (price >= 100000) return `₹${(price / 100000).toFixed(0)}L`;
+  if (price >= 1000) return `₹${(price / 1000).toFixed(0)}K`;
+  return `₹${price}`;
+};
+
+// Status badge component (kept for modals)
 const StatusBadge = ({ status, type }) => {
   const getStyles = () => {
     switch (status?.toLowerCase()) {
@@ -95,6 +122,288 @@ const formatPrice = (price) => {
   }).format(price);
 };
 
+// ============================================
+// INLINE STYLES
+// ============================================
+const styles = {
+  container: {
+    minHeight: '100vh',
+    background: '#f8f9fb',
+    fontFamily: "'Inter', sans-serif",
+  },
+  // Header Section
+  header: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    padding: '28px 32px 0',
+  },
+  headerLeft: {},
+  headerTitle: {
+    fontSize: '24px',
+    fontWeight: 900,
+    color: '#0f172a',
+    letterSpacing: '-0.5px',
+    lineHeight: 1.2,
+    margin: 0,
+  },
+  headerSubtitle: {
+    fontSize: '11px',
+    fontWeight: 600,
+    letterSpacing: '3px',
+    textTransform: 'uppercase',
+    color: '#94a3b8',
+    marginTop: '4px',
+  },
+  // Search
+  searchContainer: {
+    position: 'relative',
+  },
+  searchIcon: {
+    position: 'absolute',
+    left: '14px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    color: '#94a3b8',
+  },
+  searchInput: {
+    padding: '10px 16px 10px 40px',
+    border: '1.5px solid #e2e8f0',
+    borderRadius: '10px',
+    fontSize: '13px',
+    fontWeight: 500,
+    color: '#334155',
+    background: '#ffffff',
+    width: '320px',
+    outline: 'none',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
+    fontFamily: "'Inter', sans-serif",
+  },
+  // Pipeline Tabs
+  pipelineTabs: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0',
+    margin: '24px 32px 0',
+    background: '#ffffff',
+    borderRadius: '12px 12px 0 0',
+    border: '1px solid #e2e8f0',
+    borderBottom: 'none',
+    overflow: 'hidden',
+  },
+  pipelineTab: (isActive) => ({
+    flex: 1,
+    padding: '14px 24px',
+    fontSize: '12px',
+    fontWeight: 700,
+    letterSpacing: '0.8px',
+    textTransform: 'uppercase',
+    color: isActive ? '#f97316' : '#94a3b8',
+    background: isActive ? '#fff' : '#fafbfc',
+    border: 'none',
+    borderBottom: isActive ? '3px solid #f97316' : '3px solid transparent',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    fontFamily: "'Inter', sans-serif",
+    position: 'relative',
+  }),
+  // Table
+  tableContainer: {
+    margin: '0 32px 32px',
+    background: '#ffffff',
+    border: '1px solid #e2e8f0',
+    borderRadius: '0 0 12px 12px',
+    overflow: 'hidden',
+  },
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse',
+  },
+  tableHead: {
+    background: '#f8fafc',
+    borderBottom: '1px solid #e2e8f0',
+  },
+  th: {
+    padding: '14px 20px',
+    fontSize: '10px',
+    fontWeight: 800,
+    letterSpacing: '1.2px',
+    textTransform: 'uppercase',
+    color: '#64748b',
+    textAlign: 'left',
+    whiteSpace: 'nowrap',
+  },
+  tr: (isHovered) => ({
+    borderBottom: '1px solid #f1f5f9',
+    transition: 'background 0.15s ease',
+    background: isHovered ? '#fafbfe' : 'transparent',
+    cursor: 'pointer',
+  }),
+  td: {
+    padding: '16px 20px',
+    verticalAlign: 'middle',
+  },
+  // Farmer Cell
+  farmerCell: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '14px',
+    minWidth: '200px',
+  },
+  avatar: (bgColor) => ({
+    width: '42px',
+    height: '42px',
+    borderRadius: '50%',
+    background: bgColor,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#fff',
+    fontWeight: 700,
+    fontSize: '15px',
+    flexShrink: 0,
+    boxShadow: `0 2px 8px ${bgColor}40`,
+  }),
+  farmerInfo: {},
+  farmerName: {
+    fontSize: '13.5px',
+    fontWeight: 700,
+    color: '#1e40af',
+    lineHeight: 1.3,
+    cursor: 'pointer',
+  },
+  farmerId: {
+    fontSize: '11px',
+    fontWeight: 600,
+    color: '#f97316',
+    marginTop: '1px',
+  },
+  farmerPhone: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    fontSize: '11px',
+    color: '#94a3b8',
+    marginTop: '2px',
+  },
+  // Address Cell
+  addressMain: {
+    fontSize: '13.5px',
+    fontWeight: 600,
+    color: '#1e293b',
+    lineHeight: 1.4,
+  },
+  addressSub: {
+    fontSize: '11.5px',
+    color: '#94a3b8',
+    fontWeight: 500,
+    marginTop: '2px',
+  },
+  // Unit Profile
+  unitProfile: {
+    fontSize: '13px',
+    fontWeight: 700,
+    color: '#334155',
+    whiteSpace: 'nowrap',
+  },
+  // Executive
+  executiveName: {
+    fontSize: '13px',
+    fontWeight: 600,
+    color: '#475569',
+    textTransform: 'uppercase',
+    letterSpacing: '0.3px',
+  },
+  // Start Verify Button
+  verifyBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '9px 20px',
+    background: 'linear-gradient(135deg, #f97316, #ea580c)',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '11px',
+    fontWeight: 800,
+    color: '#fff',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    letterSpacing: '0.8px',
+    textTransform: 'uppercase',
+    boxShadow: '0 2px 8px rgba(249, 115, 22, 0.35)',
+    whiteSpace: 'nowrap',
+    fontFamily: "'Inter', sans-serif",
+  },
+  // Inbound Signal Pill
+  inboundPill: {
+    position: 'fixed',
+    bottom: '24px',
+    right: '24px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '10px 20px',
+    background: 'linear-gradient(135deg, #f97316, #ea580c)',
+    borderRadius: '50px',
+    color: '#fff',
+    fontSize: '12px',
+    fontWeight: 700,
+    letterSpacing: '0.5px',
+    boxShadow: '0 4px 20px rgba(249, 115, 22, 0.4)',
+    cursor: 'pointer',
+    zIndex: 100,
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    textTransform: 'uppercase',
+    fontFamily: "'Inter', sans-serif",
+  },
+  // Loading & Empty
+  loadingContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: '80px 0',
+  },
+  emptyState: {
+    textAlign: 'center',
+    padding: '60px 20px',
+    color: '#94a3b8',
+    fontSize: '14px',
+    fontWeight: 500,
+  },
+  // Pagination
+  pagination: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '16px 20px',
+    borderTop: '1px solid #f1f5f9',
+  },
+  pageBtn: (disabled) => ({
+    padding: '6px',
+    background: 'none',
+    border: '1px solid #e2e8f0',
+    borderRadius: '6px',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.4 : 1,
+    color: '#475569',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.15s',
+  }),
+  pageNum: (isActive) => ({
+    padding: '4px 10px',
+    borderRadius: '6px',
+    fontSize: '13px',
+    fontWeight: isActive ? 700 : 500,
+    color: isActive ? '#fff' : '#475569',
+    background: isActive ? '#f97316' : 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    fontFamily: "'Inter', sans-serif",
+  }),
+};
+
 // Main Component
 const LandPhysicalVerificationDashboard = () => {
   const [lands, setLands] = useState([]);
@@ -113,13 +422,14 @@ const LandPhysicalVerificationDashboard = () => {
   const [selectedMediaCategory, setSelectedMediaCategory] = useState('');
   const [selectedDocType, setSelectedDocType] = useState('');
   const [error, setError] = useState(null);
-
+  const [hoveredRow, setHoveredRow] = useState(null);
+  
   // Fetch lands based on status filter
   const fetchLands = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/land/pending-physical-verification/${statusFilter}`, {
+      const response = await fetch(`${API_BASE_URL}/land/pending-call-verification/${statusFilter}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -264,6 +574,7 @@ const LandPhysicalVerificationDashboard = () => {
       }
       
       setIsEditing(false);
+            setSelectedLand(null);
       alert('Land updated successfully!');
     } catch (error) {
       console.error('Error updating land:', error);
@@ -321,7 +632,13 @@ const LandPhysicalVerificationDashboard = () => {
     setEditFormData(clonedData);
     setIsEditing(true);
     setEditTab('basic');
-  };
+      };
+
+  // Cancel editing and go back to phone verification list
+  const cancelEditing = () => {
+    setIsEditing(false);
+    setSelectedLand(null);
+      };
 
   // Filter lands by search
   const filteredLands = lands.filter(land => 
@@ -388,842 +705,474 @@ const LandPhysicalVerificationDashboard = () => {
     );
   };
 
-  // Render edit form with multiple tabs
-  const renderEditForm = () => {
+  // Render edit form INLINE (not modal)
+  const renderInlineEditForm = () => {
     if (!selectedLand || !isEditing) return null;
 
+    const FormCard = ({ title, icon: Icon, colorTheme, children }) => {
+      const themes = {
+        red: { bg: 'bg-red-50', border: 'border-t-red-500', text: 'text-red-600', iconBg: 'bg-red-500' },
+        green: { bg: 'bg-green-50', border: 'border-t-green-500', text: 'text-green-600', iconBg: 'bg-green-500' },
+        blue: { bg: 'bg-blue-50', border: 'border-t-blue-500', text: 'text-blue-600', iconBg: 'bg-blue-500' },
+        orange: { bg: 'bg-orange-50', border: 'border-t-orange-500', text: 'text-orange-600', iconBg: 'bg-orange-500' },
+        teal: { bg: 'bg-teal-50', border: 'border-t-teal-500', text: 'text-teal-600', iconBg: 'bg-teal-500' },
+      };
+      const theme = themes[colorTheme] || themes.blue;
+
+      return (
+        <div className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden border-t-4 ${theme.border}`}>
+          <div className={`pt-4 pb-3 px-6 flex flex-col items-center justify-center border-b border-gray-100 ${theme.bg}`}>
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white mb-2 shadow-sm ${theme.iconBg}`}>
+              <Icon size={16} />
+            </div>
+            <h3 className={`text-[10px] font-bold uppercase tracking-wider ${theme.text}`}>
+              {title}
+            </h3>
+          </div>
+          <div className="p-5 space-y-4">
+            {children}
+          </div>
+        </div>
+      );
+    };
+
+    const uploadSpecificDocument = async (e, type) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const url = await handleFileUpload(file, 'document');
+      if (url) {
+        const newDoc = { doc_type: type, file_url: url, created_at: new Date().toISOString() };
+        setEditFormData(prev => ({ ...prev, documents: [...(prev.documents || []), newDoc] }));
+      }
+    };
+
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto py-4">
-        <div className="bg-white rounded-lg w-full max-w-5xl max-h-[95vh] overflow-y-auto">
-          {/* Header */}
-          <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center z-10">
-            <h2 className="text-xl font-bold">Edit Land #{selectedLand.id}</h2>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setIsEditing(false)}
-                className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-                disabled={updating}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => updateLand(selectedLand.id, editFormData)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                disabled={updating}
-              >
-                {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                Save Changes
-              </button>
+      <div className="pb-10 bg-[#f8f9fb]">
+        {/* Dark Header */}
+        <div className="bg-[#0B1120] rounded-xl p-4 flex flex-col md:flex-row justify-between items-center mb-6 shadow-lg mx-6 mt-2 gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-gray-600 border-2 border-gray-400 overflow-hidden flex items-center justify-center text-xl font-bold text-white">
+               {selectedLand.farmerDetails?.name?.charAt(0).toUpperCase() || 'U'}
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-0.5 tracking-tight leading-none">L{String(selectedLand.id).padStart(3, '0')}</h2>
+              <div className="text-[9px] font-bold text-orange-500 tracking-widest uppercase mt-1">
+                TECHNICAL VERIFY WORKFLOW • {selectedLand.farmerDetails?.name || 'UNKNOWN'}
+              </div>
             </div>
           </div>
-
-          {/* Tabs */}
-          <div className="border-b px-4 bg-gray-50">
-            <div className="flex gap-4 overflow-x-auto">
-              {['basic', 'farmer', 'land', 'status', 'media', 'documents'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setEditTab(tab)}
-                  className={`px-4 py-3 font-medium capitalize whitespace-nowrap border-b-2 ${
-                    editTab === tab
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-gray-600 hover:text-gray-800'
-                  }`}
-                >
-                  {tab === 'basic' ? 'Basic Info' : 
-                   tab === 'farmer' ? 'Farmer Details' :
-                   tab === 'land' ? 'Land Details' :
-                   tab === 'status' ? 'Status & Options' :
-                   tab === 'media' ? 'Media Gallery' : 'Documents'}
-                </button>
-              ))}
-            </div>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={cancelEditing}
+              className="px-4 py-2 bg-transparent border border-gray-600 text-gray-300 rounded-lg text-xs font-bold tracking-wide hover:bg-gray-800 transition-colors flex items-center gap-2"
+            >
+              <ChevronLeft size={14} /> BACK TO REGISTRY
+            </button>
+            <button 
+              onClick={() => updateLand(selectedLand.id, editFormData)}
+              className="px-5 py-2 bg-[#f97316] text-white rounded-lg text-xs font-bold tracking-wide hover:bg-[#ea580c] transition-colors shadow-lg shadow-orange-500/30 flex items-center gap-2"
+              disabled={updating}
+            >
+              {updating ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+              COMMIT AUDIT
+            </button>
           </div>
+        </div>
 
-          {/* Content */}
-          <div className="p-6 space-y-6">
-            {/* BASIC INFO TAB */}
-            {editTab === 'basic' && (
-              <div className="space-y-6">
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-lg mb-4">Location Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">State</label>
-                      <input
-                        type="text"
-                        value={editFormData.state || ''}
-                        onChange={(e) => handleEditChange('state', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">District</label>
-                      <input
-                        type="text"
-                        value={editFormData.district || ''}
-                        onChange={(e) => handleEditChange('district', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Mandal</label>
-                      <input
-                        type="text"
-                        value={editFormData.mandal || ''}
-                        onChange={(e) => handleEditChange('mandal', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Village</label>
-                      <input
-                        type="text"
-                        value={editFormData.village || ''}
-                        onChange={(e) => handleEditChange('village', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Location Latitude</label>
-                      <input
-                        type="text"
-                        value={editFormData.location_latitude || ''}
-                        onChange={(e) => handleEditChange('location_latitude', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Location Longitude</label>
-                      <input
-                        type="text"
-                        value={editFormData.location_longitude || ''}
-                        onChange={(e) => handleEditChange('location_longitude', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                  </div>
+        {/* 4-Column Masonry Grid */}
+        <div className="px-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
+          
+          {/* COLUMN 1 */}
+          <div className="flex flex-col gap-6">
+            <FormCard title="1. ADDRESS REGISTRY" icon={MapPin} colorTheme="red">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">State</label>
+                  <input type="text" value={editFormData.state || ''} onChange={(e) => handleEditChange('state', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" />
                 </div>
-
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-lg mb-4">Verification Status</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Form Status</label>
-                      <select
-                        value={editFormData.form_status || 'draft'}
-                        onChange={(e) => handleEditChange('form_status', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      >
-                        <option value="draft">Draft</option>
-                        <option value="complete">Complete</option>
-                        <option value="review">Review</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Physical Verification Status</label>
-                      <select
-                        value={editFormData.physcial_verification_status || 'pending'}
-                        onChange={(e) => handleEditChange('physcial_verification_status', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="complete">Complete</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Verification Status</label>
-                      <select
-                        value={editFormData.verification_status || 'pending'}
-                        onChange={(e) => handleEditChange('verification_status', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="complete">Complete</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Availability</label>
-                      <select
-                        value={editFormData.availablity || 'available'}
-                        onChange={(e) => handleEditChange('availablity', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      >
-                        <option value="available">Available</option>
-                        <option value="sold">Sold</option>
-                      </select>
-                    </div>
-                  </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">District</label>
+                  <input type="text" value={editFormData.district || ''} onChange={(e) => handleEditChange('district', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" />
                 </div>
-
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-lg mb-4">GPS Coordinates</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">GPS Latitude</label>
-                      <input
-                        type="text"
-                        value={editFormData.gps?.latitude || ''}
-                        onChange={(e) => handleEditChange('gps.latitude', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">GPS Longitude</label>
-                      <input
-                        type="text"
-                        value={editFormData.gps?.longitude || ''}
-                        onChange={(e) => handleEditChange('gps.longitude', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                  </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Mandal</label>
+                  <input type="text" value={editFormData.mandal || ''} onChange={(e) => handleEditChange('mandal', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Village</label>
+                  <input type="text" value={editFormData.village || ''} onChange={(e) => handleEditChange('village', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" />
                 </div>
               </div>
-            )}
+              
+              <div className="mt-4">
+                <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">GPS COORDINATES</label>
+                <div className="flex items-center bg-[#0B1120] rounded-lg overflow-hidden border border-gray-800">
+                  <input type="text" className="bg-transparent border-none text-white px-3 py-2 text-xs w-full outline-none font-medium" value={`${editFormData.location_latitude || ''}, ${editFormData.location_longitude || ''}`} placeholder="17.4486, 78.1345" readOnly />
+                  <button className="bg-[#1e293b] p-2.5 text-blue-400 hover:text-blue-300 transition-colors">
+                    <MapPin size={14} />
+                  </button>
+                </div>
+                <div className="text-[7px] text-gray-400 mt-1.5 uppercase font-bold tracking-wider">CLICK GPS TO SUGGEST NEAREST VILLAGE</div>
+              </div>
+            </FormCard>
 
-            {/* FARMER DETAILS TAB */}
-            {editTab === 'farmer' && (
-              <div className="border rounded-lg p-4">
-                <h3 className="font-semibold text-lg mb-4">Farmer Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Name</label>
-                    <input
-                      type="text"
-                      value={editFormData.farmerDetails?.name || ''}
-                      onChange={(e) => handleEditChange('farmerDetails.name', e.target.value)}
-                      className="w-full border rounded-lg p-2"
-                    />
+            <FormCard title="2. FARMER DETAILS" icon={User} colorTheme="red">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Name</label>
+                  <input type="text" value={editFormData.farmerDetails?.name || ''} onChange={(e) => handleEditChange('farmerDetails.name', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 text-green-600 font-bold" />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Phone No</label>
+                  <input type="text" value={editFormData.farmerDetails?.phone || ''} onChange={(e) => handleEditChange('farmerDetails.phone', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" />
+                </div>
+                
+                <div className="flex items-center gap-4 border-b border-gray-100 pb-3 mt-2">
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-wider w-1/2">NUMBER HAS WHATSAPP?</label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <div className="relative flex items-center justify-center">
+                        <input type="radio" name="has_whatsapp" checked={editFormData.farmerDetails?.has_whatsapp === 'yes'} onChange={() => handleEditChange('farmerDetails.has_whatsapp', 'yes')} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-full checked:border-orange-500 transition-all cursor-pointer" />
+                        <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+                      </div>
+                      <span className="text-[10px] font-bold text-orange-600">YES</span>
+                    </label>
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <div className="relative flex items-center justify-center">
+                        <input type="radio" name="has_whatsapp" checked={editFormData.farmerDetails?.has_whatsapp === 'no'} onChange={() => handleEditChange('farmerDetails.has_whatsapp', 'no')} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-full checked:border-orange-500 transition-all cursor-pointer" />
+                        <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+                      </div>
+                      <span className="text-[10px] font-bold text-gray-400">NO</span>
+                    </label>
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">WhatsApp No</label>
+                  <input type="text" value={editFormData.farmerDetails?.whatsapp || ''} onChange={(e) => handleEditChange('farmerDetails.whatsapp', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-bold" />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 mt-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Phone</label>
-                    <input
-                      type="text"
-                      value={editFormData.farmerDetails?.phone || ''}
-                      onChange={(e) => handleEditChange('farmerDetails.phone', e.target.value)}
-                      className="w-full border rounded-lg p-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">WhatsApp</label>
-                    <input
-                      type="text"
-                      value={editFormData.farmerDetails?.whatsapp || ''}
-                      onChange={(e) => handleEditChange('farmerDetails.whatsapp', e.target.value)}
-                      className="w-full border rounded-lg p-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Ownership Type</label>
-                    <select
-                      value={editFormData.farmerDetails?.ownership_type || 'Ancestral'}
-                      onChange={(e) => handleEditChange('farmerDetails.ownership_type', e.target.value)}
-                      className="w-full border rounded-lg p-2"
-                    >
+                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Ownership</label>
+                    <select value={editFormData.farmerDetails?.ownership_type || 'Ancestral'} onChange={(e) => handleEditChange('farmerDetails.ownership_type', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[11px] outline-none focus:border-red-400 bg-white font-medium">
                       {OWNERSHIP_TYPE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Locality</label>
-                    <select
-                      value={editFormData.farmerDetails?.locality || 'Local'}
-                      onChange={(e) => handleEditChange('farmerDetails.locality', e.target.value)}
-                      className="w-full border rounded-lg p-2"
-                    >
+                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Locality</label>
+                    <select value={editFormData.farmerDetails?.locality || 'Local'} onChange={(e) => handleEditChange('farmerDetails.locality', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[11px] outline-none focus:border-red-400 bg-white font-medium">
                       {LOCALITY_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Ownership Status</label>
-                    <select
-                      value={editFormData.farmerDetails?.ownership_status || 'Own'}
-                      onChange={(e) => handleEditChange('farmerDetails.ownership_status', e.target.value)}
-                      className="w-full border rounded-lg p-2"
-                    >
+                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Status</label>
+                    <select value={editFormData.farmerDetails?.ownership_status || 'Own'} onChange={(e) => handleEditChange('farmerDetails.ownership_status', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[11px] outline-none focus:border-red-400 bg-white font-medium">
                       {OWNERSHIP_STATUS_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Age</label>
-                    <select
-                      value={editFormData.farmerDetails?.age || 'Upto 30'}
-                      onChange={(e) => handleEditChange('farmerDetails.age', e.target.value)}
-                      className="w-full border rounded-lg p-2"
-                    >
+                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Age</label>
+                    <select value={editFormData.farmerDetails?.age || '30-50'} onChange={(e) => handleEditChange('farmerDetails.age', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[11px] outline-none focus:border-red-400 bg-white font-medium">
+                      <option value="30-50">30-50</option>
                       {AGE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Literacy</label>
-                    <select
-                      value={editFormData.farmerDetails?.literacy || 'Illiterate'}
-                      onChange={(e) => handleEditChange('farmerDetails.literacy', e.target.value)}
-                      className="w-full border rounded-lg p-2"
-                    >
+                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Literacy</label>
+                    <select value={editFormData.farmerDetails?.literacy || 'Literate'} onChange={(e) => handleEditChange('farmerDetails.literacy', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[11px] outline-none focus:border-red-400 bg-white font-medium">
+                      <option value="Literate">Literate</option>
                       {LITERACY_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Nature</label>
-                    <select
-                      value={editFormData.farmerDetails?.nature || 'Calm'}
-                      onChange={(e) => handleEditChange('farmerDetails.nature', e.target.value)}
-                      className="w-full border rounded-lg p-2"
-                    >
+                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Nature</label>
+                    <select value={editFormData.farmerDetails?.nature || 'Calm'} onChange={(e) => handleEditChange('farmerDetails.nature', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[11px] outline-none focus:border-red-400 bg-white font-medium">
                       {NATURE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                     </select>
                   </div>
                 </div>
               </div>
-            )}
+            </FormCard>
+          </div>
 
-            {/* LAND DETAILS TAB */}
-            {editTab === 'land' && (
-              <div className="space-y-6">
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-lg mb-4">Land Area & Value</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Total Acres</label>
-                      <input
-                        type="number"
-                        value={editFormData.landDetails?.total_acres || 0}
-                        onChange={(e) => handleEditChange('landDetails.total_acres', parseFloat(e.target.value))}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Guntas</label>
-                      <input
-                        type="number"
-                        value={editFormData.landDetails?.guntas || 0}
-                        onChange={(e) => handleEditChange('landDetails.guntas', parseFloat(e.target.value))}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Price per Acre (₹)</label>
-                      <input
-                        type="number"
-                        value={editFormData.landDetails?.price_per_acres || 0}
-                        onChange={(e) => handleEditChange('landDetails.price_per_acres', parseFloat(e.target.value))}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Total Value (₹)</label>
-                      <input
-                        type="number"
-                        value={editFormData.landDetails?.total_value || 0}
-                        onChange={(e) => handleEditChange('landDetails.total_value', parseFloat(e.target.value))}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                  </div>
+          {/* COLUMN 2 */}
+          <div className="flex flex-col gap-6">
+            <FormCard title="3. ACRES & PRICE" icon={Building2} colorTheme="green">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Acres</label>
+                  <input type="number" value={editFormData.landDetails?.total_acres || 0} onChange={(e) => handleEditChange('landDetails.total_acres', parseFloat(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-bold" />
                 </div>
-
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-lg mb-4">Land Features</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Nearest Road Type</label>
-                      <input
-                        type="text"
-                        value={editFormData.landDetails?.nearest_road_type || ''}
-                        onChange={(e) => handleEditChange('landDetails.nearest_road_type', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Land Attached to Road</label>
-                      <select
-                        value={editFormData.landDetails?.land_attached_to_road || 'yes'}
-                        onChange={(e) => handleEditChange('landDetails.land_attached_to_road', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      >
-                        <option value="yes">Yes</option>
-                        <option value="no">No</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Path Ownership</label>
-                      <input
-                        type="text"
-                        value={editFormData.landDetails?.path_ownership || ''}
-                        onChange={(e) => handleEditChange('landDetails.path_ownership', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Soil Type</label>
-                      <input
-                        type="text"
-                        value={editFormData.landDetails?.soil_type || ''}
-                        onChange={(e) => handleEditChange('landDetails.soil_type', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Fencing Status</label>
-                      <input
-                        type="text"
-                        value={editFormData.landDetails?.fencing_status || ''}
-                        onChange={(e) => handleEditChange('landDetails.fencing_status', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Number of Bores</label>
-                      <input
-                        type="number"
-                        value={editFormData.landDetails?.number_of_bores || 0}
-                        onChange={(e) => handleEditChange('landDetails.number_of_bores', parseInt(e.target.value))}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Number of Poultry Sheds</label>
-                      <input
-                        type="number"
-                        value={editFormData.landDetails?.poultry_shed_number || 0}
-                        onChange={(e) => handleEditChange('landDetails.poultry_shed_number', parseInt(e.target.value))}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Number of Cow Sheds</label>
-                      <input
-                        type="number"
-                        value={editFormData.landDetails?.cow_shed_number || 0}
-                        onChange={(e) => handleEditChange('landDetails.cow_shed_number', parseInt(e.target.value))}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-lg mb-4">Boundary Coordinates</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Land Entry Latitude</label>
-                      <input
-                        type="text"
-                        value={editFormData.landDetails?.land_entry_latitude || ''}
-                        onChange={(e) => handleEditChange('landDetails.land_entry_latitude', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Land Entry Longitude</label>
-                      <input
-                        type="text"
-                        value={editFormData.landDetails?.land_entry_longitude || ''}
-                        onChange={(e) => handleEditChange('landDetails.land_entry_longitude', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Land Boundary Latitude</label>
-                      <input
-                        type="text"
-                        value={editFormData.landDetails?.land_boundary_latitude || ''}
-                        onChange={(e) => handleEditChange('landDetails.land_boundary_latitude', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Land Boundary Longitude</label>
-                      <input
-                        type="text"
-                        value={editFormData.landDetails?.land_boundary_longitude || ''}
-                        onChange={(e) => handleEditChange('landDetails.land_boundary_longitude', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-lg mb-4">Electricity & Water</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Electricity Available</label>
-                      <div className="flex flex-wrap gap-3">
-                        {ELECTRICITY_OPTIONS.map(opt => (
-                          <label key={opt} className="inline-flex items-center">
-                            <input
-                              type="checkbox"
-                              checked={(editFormData.landDetails?.electricity || []).includes(opt)}
-                              onChange={(e) => handleArrayChange('landDetails.electricity', opt, e.target.checked)}
-                              className="rounded border-gray-300 text-blue-600"
-                            />
-                            <span className="ml-2 text-sm text-gray-700">{opt}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Water Source</label>
-                      <div className="flex flex-wrap gap-3">
-                        {WATER_SOURCE_OPTIONS.map(opt => (
-                          <label key={opt} className="inline-flex items-center">
-                            <input
-                              type="checkbox"
-                              checked={(editFormData.landDetails?.water_source || []).includes(opt)}
-                              onChange={(e) => handleArrayChange('landDetails.water_source', opt, e.target.checked)}
-                              className="rounded border-gray-300 text-blue-600"
-                            />
-                            <span className="ml-2 text-sm text-gray-700">{opt}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Residence Type</label>
-                      <div className="flex flex-wrap gap-3">
-                        {RESIDENCE_OPTIONS.map(opt => (
-                          <label key={opt} className="inline-flex items-center">
-                            <input
-                              type="checkbox"
-                              checked={(editFormData.landDetails?.residence || []).includes(opt)}
-                              onChange={(e) => handleArrayChange('landDetails.residence', opt, e.target.checked)}
-                              className="rounded border-gray-300 text-blue-600"
-                            />
-                            <span className="ml-2 text-sm text-gray-700">{opt}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={editFormData.landDetails?.farm_pond || false}
-                        onChange={(e) => handleEditChange('landDetails.farm_pond', e.target.checked)}
-                        className="rounded border-gray-300 text-blue-600"
-                      />
-                      <label className="ml-2 text-sm text-gray-700">Farm Pond Available</label>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-lg mb-4">Trees Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Mango Trees</label>
-                      <input
-                        type="text"
-                        value={editFormData.landDetails?.mango_trees_number || ''}
-                        onChange={(e) => handleEditChange('landDetails.mango_trees_number', e.target.value)}
-                        placeholder="e.g., mango-10"
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Coconut Trees</label>
-                      <input
-                        type="text"
-                        value={editFormData.landDetails?.coconut_trees_number || ''}
-                        onChange={(e) => handleEditChange('landDetails.coconut_trees_number', e.target.value)}
-                        placeholder="e.g., coconut-10"
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Neem Trees</label>
-                      <input
-                        type="text"
-                        value={editFormData.landDetails?.neem_trees_number || ''}
-                        onChange={(e) => handleEditChange('landDetails.neem_trees_number', e.target.value)}
-                        placeholder="e.g., neem-10"
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Banyan Trees</label>
-                      <input
-                        type="text"
-                        value={editFormData.landDetails?.baniyan_trees_number || ''}
-                        onChange={(e) => handleEditChange('landDetails.baniyan_trees_number', e.target.value)}
-                        placeholder="e.g., baniyan-10"
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Tamarind Trees</label>
-                      <input
-                        type="text"
-                        value={editFormData.landDetails?.tamarind_trees_number || ''}
-                        onChange={(e) => handleEditChange('landDetails.tamarind_trees_number', e.target.value)}
-                        placeholder="e.g., tamarind-10"
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Sapota Trees</label>
-                      <input
-                        type="text"
-                        value={editFormData.landDetails?.sapoto_trees_number || ''}
-                        onChange={(e) => handleEditChange('landDetails.sapoto_trees_number', e.target.value)}
-                        placeholder="e.g., sapoto-10"
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Guava Trees</label>
-                      <input
-                        type="text"
-                        value={editFormData.landDetails?.guava_trees_number || ''}
-                        onChange={(e) => handleEditChange('landDetails.guava_trees_number', e.target.value)}
-                        placeholder="e.g., guava-10"
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Teak Trees</label>
-                      <input
-                        type="text"
-                        value={editFormData.landDetails?.teak_trees_number || ''}
-                        onChange={(e) => handleEditChange('landDetails.teak_trees_number', e.target.value)}
-                        placeholder="e.g., teak-10"
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Other Trees</label>
-                      <input
-                        type="text"
-                        value={editFormData.landDetails?.other_trees_number || ''}
-                        onChange={(e) => handleEditChange('landDetails.other_trees_number', e.target.value)}
-                        placeholder="e.g., banana-10"
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-lg mb-4">Complaints/Issues</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {COMPLAINT_OPTIONS.map(opt => (
-                      <label key={opt} className="inline-flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={(editFormData.landDetails?.complaints || []).includes(opt)}
-                          onChange={(e) => handleArrayChange('landDetails.complaints', opt, e.target.checked)}
-                          className="rounded border-gray-300 text-blue-600"
-                        />
-                        <span className="ml-2 text-sm text-gray-700">{opt}</span>
-                      </label>
-                    ))}
-                  </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Guntas (0-39)</label>
+                  <input type="number" value={editFormData.landDetails?.guntas || 0} onChange={(e) => handleEditChange('landDetails.guntas', parseFloat(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-bold" />
                 </div>
               </div>
-            )}
+              <div className="mt-4">
+                <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Price per Acre (Lakhs)</label>
+                <input type="number" value={editFormData.landDetails?.price_per_acres || 0} onChange={(e) => handleEditChange('landDetails.price_per_acres', parseFloat(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm text-orange-500 font-bold outline-none focus:border-green-400" />
+              </div>
+              
+              <div className="bg-[#0B1120] rounded-xl p-4 mt-5">
+                <div className="text-[8px] font-bold text-orange-500 uppercase tracking-widest mb-1">TOTAL CALCULATED VALUE</div>
+                <div className="text-2xl font-bold text-white mb-1 tracking-tight">₹{editFormData.landDetails?.total_value ? Number(editFormData.landDetails?.total_value).toLocaleString('en-IN') : '0'}</div>
+                <div className="text-[7px] text-gray-400 uppercase tracking-wider font-bold">CALCULATED BASED ON AREA AND PRICE PER ACRE</div>
+              </div>
+            </FormCard>
 
-            {/* STATUS & OPTIONS TAB */}
-            {editTab === 'status' && (
-              <div className="space-y-6">
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-lg mb-4">Land Sale Status</h3>
-                  <div className="flex flex-wrap gap-3">
-                    {LAND_SALE_STATUS_OPTIONS.map(status => (
-                      <label key={status} className="inline-flex items-center">
-                        <input
-                          type="checkbox"
-                          value={status}
-                          checked={(editFormData.land_sale_available_status || []).includes(status)}
-                          onChange={(e) => handleArrayChange('land_sale_available_status', status, e.target.checked)}
-                          className="rounded border-gray-300 text-blue-600"
-                        />
-                        <span className="ml-2 text-sm text-gray-700">{status}</span>
-                      </label>
-                    ))}
-                  </div>
+            <FormCard title="4. PATH DETAILS" icon={MapPin} colorTheme="green">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Road Type</label>
+                  <input type="text" value={editFormData.landDetails?.nearest_road_type || ''} onChange={(e) => handleEditChange('landDetails.nearest_road_type', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium" />
                 </div>
-
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-lg mb-4">Mortgage Availability Status</h3>
-                  <div className="flex flex-wrap gap-3">
-                    {MORTGAGE_STATUS_OPTIONS.map(status => (
-                      <label key={status} className="inline-flex items-center">
-                        <input
-                          type="checkbox"
-                          value={status}
-                          checked={(editFormData.mortage_availability_status || []).includes(status)}
-                          onChange={(e) => handleArrayChange('mortage_availability_status', status, e.target.checked)}
-                          className="rounded border-gray-300 text-blue-600"
-                        />
-                        <span className="ml-2 text-sm text-gray-700">{status}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-lg mb-4">Urgency Listing</h3>
-                  <div className="flex flex-wrap gap-3">
-                    {URGENCY_OPTIONS.map(urgency => (
-                      <label key={urgency} className="inline-flex items-center">
-                        <input
-                          type="checkbox"
-                          value={urgency}
-                          checked={(editFormData.urgency_listing || []).includes(urgency)}
-                          onChange={(e) => handleArrayChange('urgency_listing', urgency, e.target.checked)}
-                          className="rounded border-gray-300 text-blue-600"
-                        />
-                        <span className="ml-2 text-sm text-gray-700">{urgency}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-lg mb-4">Options</h3>
-                  <div className="flex items-center gap-4">
-                    <label className="inline-flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={editFormData.verification_package || false}
-                        onChange={(e) => handleEditChange('verification_package', e.target.checked)}
-                        className="rounded border-gray-300 text-blue-600"
-                      />
-                      <span className="ml-2 text-sm text-gray-700">Verification Package</span>
+                <div className="flex items-center gap-4 border-t border-gray-100 pt-3">
+                  <label className="block text-[9px] font-bold text-green-700 uppercase tracking-wider w-1/2">Land Attached To Road</label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <div className="relative flex items-center justify-center">
+                        <input type="radio" name="land_attached_to_road" checked={editFormData.landDetails?.land_attached_to_road === 'yes'} onChange={() => handleEditChange('landDetails.land_attached_to_road', 'yes')} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-full checked:border-orange-500 transition-all cursor-pointer" />
+                        <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+                      </div>
+                      <span className="text-[10px] font-bold text-orange-600">YES</span>
+                    </label>
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <div className="relative flex items-center justify-center">
+                        <input type="radio" name="land_attached_to_road" checked={editFormData.landDetails?.land_attached_to_road === 'no'} onChange={() => handleEditChange('landDetails.land_attached_to_road', 'no')} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-full checked:border-orange-500 transition-all cursor-pointer" />
+                        <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+                      </div>
+                      <span className="text-[10px] font-bold text-gray-400">NO</span>
                     </label>
                   </div>
                 </div>
               </div>
-            )}
+            </FormCard>
 
-            {/* MEDIA TAB */}
-            {editTab === 'media' && (
-              <div className="space-y-6">
+            <FormCard title="5. LAND DETAILS" icon={TreePine} colorTheme="green">
+              <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Media (Photos & Videos)</h3>
-                  {error && (
-                    <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-                      {error}
-                    </div>
-                  )}
-                  <div className="flex flex-wrap gap-4 mb-4">
-                    <select
-                      value={selectedMediaCategory}
-                      onChange={(e) => setSelectedMediaCategory(e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select Category</option>
-                      {MEDIA_CATEGORIES.map(cat => (
-                        <option key={cat} value={cat}>{cat.replace(/_/g, ' ').toUpperCase()}</option>
-                      ))}
-                    </select>
-                    <input
-                      type="file"
-                      accept="image/*,video/*"
-                      onChange={handleAddMedia}
-                      disabled={uploading || !selectedMediaCategory}
-                      className="px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                    {uploading && <span className="text-sm text-gray-500">Uploading...</span>}
-                  </div>
-
-                  {/* Media List */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                    {(editFormData.media || []).map((item, idx) => (
-                      <div key={idx} className="relative border rounded-lg p-2 bg-gray-50">
-                        {item.type === 'image' ? (
-                          <img 
-                            src={item.url} 
-                            alt={item.category} 
-                            className="w-full h-32 object-cover rounded"
-                            onError={(e) => {
-                              e.target.src = 'https://via.placeholder.com/200x150?text=Image+Not+Found';
-                            }}
-                          />
-                        ) : (
-                          <video src={item.url} className="w-full h-32 object-cover rounded" controls />
-                        )}
-                        <p className="text-xs text-gray-600 mt-1 truncate">{item.category}</p>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveMedia(idx)}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                        >
-                          ×
-                        </button>
+                  <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Soil Type</label>
+                  <select value={editFormData.landDetails?.soil_type || 'Red'} onChange={(e) => handleEditChange('landDetails.soil_type', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white">
+                    <option value="Red">Red</option>
+                    <option value="Black">Black</option>
+                    <option value="Alluvial">Alluvial</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Fencing Status</label>
+                  <select value={editFormData.landDetails?.fencing_status || 'All sides'} onChange={(e) => handleEditChange('landDetails.fencing_status', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white">
+                    <option value="All sides">All sides</option>
+                    <option value="Partial">Partial</option>
+                    <option value="None">None</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-green-700 uppercase mb-2 tracking-wider">Electricity</label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <div className="relative flex items-center justify-center">
+                        <input type="radio" name="electricity_phase" checked={editFormData.landDetails?.electricity_phase === 'SINGLE'} onChange={() => handleEditChange('landDetails.electricity_phase', 'SINGLE')} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-full checked:border-orange-500 transition-all cursor-pointer" />
+                        <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
                       </div>
-                    ))}
+                      <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">SINGLE</span>
+                    </label>
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <div className="relative flex items-center justify-center">
+                        <input type="radio" name="electricity_phase" checked={editFormData.landDetails?.electricity_phase === 'THREE'} onChange={() => handleEditChange('landDetails.electricity_phase', 'THREE')} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-full checked:border-orange-500 transition-all cursor-pointer" />
+                        <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+                      </div>
+                      <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">THREE</span>
+                    </label>
                   </div>
                 </div>
               </div>
-            )}
+            </FormCard>
 
-            {/* DOCUMENTS TAB */}
-            {editTab === 'documents' && (
-              <div className="space-y-6">
+            <FormCard title="6. WATER SOURCE DETAILS" icon={Zap} colorTheme="green">
+              <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Legal Documents</h3>
-                  {error && (
-                    <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-                      {error}
+                  <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Water Source</label>
+                  <select value={editFormData.landDetails?.water_source || 'Borewell'} onChange={(e) => handleEditChange('landDetails.water_source', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white">
+                    <option value="Borewell">Borewell</option>
+                    <option value="Canal">Canal</option>
+                    <option value="River">River</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">No of Bores</label>
+                  <input type="number" value={editFormData.landDetails?.number_of_bores || 2} onChange={(e) => handleEditChange('landDetails.number_of_bores', parseInt(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-bold" />
+                </div>
+                <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+                  <label className="block text-[10px] font-bold text-green-700 uppercase tracking-wider">Farm Pond</label>
+                  <div className="relative flex items-center justify-center">
+                    <input type="checkbox" checked={editFormData.landDetails?.farm_pond || false} onChange={(e) => handleEditChange('landDetails.farm_pond', e.target.checked)} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-sm checked:bg-white checked:border-orange-500 transition-all cursor-pointer" />
+                    <div className="pointer-events-none absolute opacity-0 peer-checked:opacity-100 text-orange-500">
+                      <CheckCircle size={14} className="stroke-[3]" />
                     </div>
-                  )}
-                  <div className="flex flex-wrap gap-4 mb-4">
-                    <select
-                      value={selectedDocType}
-                      onChange={(e) => setSelectedDocType(e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select Document Type</option>
-                      {DOC_TYPES.map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
-                    <input
-                      type="file"
-                      accept="image/*,application/pdf"
-                      onChange={handleAddDocument}
-                      disabled={uploading || !selectedDocType}
-                      className="px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                    {uploading && <span className="text-sm text-gray-500">Uploading...</span>}
-                  </div>
-
-                  {/* Documents List */}
-                  <div className="space-y-2">
-                    {(editFormData.documents || []).map((doc, idx) => (
-                      <div key={idx} className="flex items-center justify-between border rounded-lg p-3 bg-gray-50">
-                        <div className="flex items-center gap-3 flex-1">
-                          <FileText className="w-6 h-6 text-blue-600 flex-shrink-0" />
-                          <div className="flex-1">
-                            <span className="font-medium">{doc.doc_type}</span>
-                            <a 
-                              href={doc.file_url} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              className="ml-4 text-blue-600 hover:underline text-sm"
-                            >
-                              View Document
-                            </a>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveDocument(idx)}
-                          className="bg-red-500 text-white rounded-md px-3 py-1 text-sm hover:bg-red-600 flex-shrink-0"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))}
                   </div>
                 </div>
               </div>
-            )}
+            </FormCard>
+          </div>
+
+          {/* COLUMN 3 */}
+          <div className="flex flex-col gap-6">
+            <FormCard title="7. LAND GPS" icon={MapPin} colorTheme="blue">
+              <div className="space-y-5">
+                <div>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">ENTRY POINT GPS</label>
+                  <div className="flex items-center bg-[#0B1120] rounded-lg overflow-hidden border border-gray-800">
+                    <input type="text" className="bg-transparent border-none text-white px-3 py-2 text-xs font-bold w-full outline-none" value={`${editFormData.landDetails?.land_entry_latitude || ''}, ${editFormData.landDetails?.land_entry_longitude || ''}`} placeholder="Lat, Lng" readOnly />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-wider">BOUNDARY POINTS</label>
+                    <button className="text-orange-500 hover:text-orange-600 border border-orange-200 rounded-full p-0.5"><CheckCircle size={10} /></button>
+                  </div>
+                  <div className="flex items-center bg-[#0B1120] rounded-lg overflow-hidden border border-gray-800">
+                    <input type="text" className="bg-transparent border-none text-gray-400 px-3 py-2 text-xs font-bold w-full outline-none" value={`${editFormData.landDetails?.land_boundary_latitude || ''}, ${editFormData.landDetails?.land_boundary_longitude || ''}`} placeholder="Point 1 GPS" readOnly />
+                    <button className="bg-[#1e293b] p-2 text-blue-400 hover:text-blue-300 transition-colors">
+                      <MapPin size={12} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </FormCard>
+
+            <FormCard title="8. MULTIMEDIA REGISTRY" icon={ImageIcon} colorTheme="blue">
+              <div className="grid grid-cols-3 gap-2">
+                {[1,2,3,4,5,6,7,8,9].map((i) => (
+                  <div key={i} className="aspect-square bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-300 hover:bg-gray-100 cursor-pointer transition-colors relative">
+                    {editFormData.media && editFormData.media[i-1] ? (
+                       <img src={editFormData.media[i-1].url} className="w-full h-full object-cover rounded-lg" alt="" />
+                    ) : (
+                       i === 6 ? <Video size={16} className="text-orange-400" /> : <ImageIcon size={16} />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4">
+                 <select value={selectedMediaCategory} onChange={(e) => setSelectedMediaCategory(e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[9px] outline-none focus:border-blue-400 bg-white mb-2 uppercase font-bold text-gray-600 tracking-wide">
+                    <option value="">SELECT CATEGORY...</option>
+                    {MEDIA_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat.replace('_', ' ')}</option>)}
+                 </select>
+                 <input type="file" accept="image/*,video/*" onChange={handleAddMedia} disabled={uploading || !selectedMediaCategory} className="w-full text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+              </div>
+              <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                  <span className="text-[9px] font-bold text-blue-800 tracking-wider uppercase">Show Photos On Listing</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={editFormData.show_photos_on_listing || false} onChange={(e) => handleEditChange('show_photos_on_listing', e.target.checked)} />
+                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-500"></div>
+                  </label>
+              </div>
+            </FormCard>
+
+            <FormCard title="9. DOCUMENTS" icon={FileText} colorTheme="blue">
+              <div className="space-y-3">
+                {['PASSBOOK', 'AADHAR CARD', 'PREVIOUS TITLE DEEDS'].map((docType) => {
+                  const existingDoc = (editFormData.documents || []).find(d => d.doc_type === docType);
+                  
+                  return (
+                    <div key={docType} className="border border-gray-100 rounded-lg p-3 bg-white shadow-sm flex items-center justify-between relative group overflow-hidden">
+                      <span className="text-[10px] font-bold text-blue-800 tracking-wider uppercase">{docType}</span>
+                      <div className="flex items-center gap-2">
+                        {existingDoc ? (
+                           <a href={existingDoc.file_url} target="_blank" rel="noopener noreferrer" className="text-green-500 hover:text-green-600"><CheckCircle size={16} /></a>
+                        ) : null}
+                        <label className="cursor-pointer text-gray-300 hover:text-blue-500 transition-colors">
+                          <input type="file" className="hidden" accept="image/*,application/pdf" onChange={(e) => uploadSpecificDocument(e, docType)} disabled={uploading} />
+                          <FileText size={16} />
+                        </label>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </FormCard>
+          </div>
+
+          {/* COLUMN 4 */}
+          <div className="flex flex-col gap-6">
+            
+            <FormCard title="10. SALE STATUS" icon={CheckCircle} colorTheme="green">
+              <div className="space-y-4">
+                <div>
+                  <select value={editFormData.land_sale_status || 'Available For Sale'} onChange={(e) => handleEditChange('land_sale_status', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[11px] outline-none focus:border-green-400 font-bold bg-white">
+                    <option value="Available For Sale">Available For Sale</option>
+                    <option value="Token Received">Token Received</option>
+                    <option value="Agreement Made">Agreement Made</option>
+                    <option value="Sold">Sold</option>
+                    <option value="Not Available">Not Available</option>
+                  </select>
+                </div>
+              </div>
+            </FormCard>
+
+            <FormCard title="11. MORTGAGE STATUS" icon={Building2} colorTheme="blue">
+              <div className="space-y-4">
+                <div>
+                  <select value={editFormData.mortgage_status || 'Available For Mortgage'} onChange={(e) => handleEditChange('mortgage_status', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[11px] outline-none focus:border-blue-400 font-bold bg-white">
+                    <option value="Available For Mortgage">Available For Mortgage</option>
+                    <option value="Currently Mortgaged">Currently Mortgaged</option>
+                    <option value="Not Available">Not Available</option>
+                  </select>
+                </div>
+              </div>
+            </FormCard>
+
+            <FormCard title="12. LISTING CONFIG" icon={CheckCircle} colorTheme="blue">
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-bold text-blue-800 tracking-wider uppercase">Urgent Sale</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={(editFormData.urgency_listing || []).includes('Urgent Sale')} onChange={(e) => handleArrayChange('urgency_listing', 'Urgent Sale', e.target.checked)} />
+                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-500"></div>
+                  </label>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-bold text-blue-800 tracking-wider uppercase">Premium Listing</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={editFormData.premium_listing || false} onChange={(e) => handleEditChange('premium_listing', e.target.checked)} />
+                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-500"></div>
+                  </label>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-bold text-blue-800 tracking-wider uppercase">Certification Package</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={editFormData.verification_package || false} onChange={(e) => handleEditChange('verification_package', e.target.checked)} />
+                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-500"></div>
+                  </label>
+                </div>
+              </div>
+            </FormCard>
+            
+            <FormCard title="13. RISK AUDIT" icon={XCircle} colorTheme="red">
+              <div className="space-y-4">
+                {['Siblings Issue', 'Cousins Issue', 'Boundary Dispute', 'Rocks In Land', 'Electric Poles', 'Sealing', 'Path Issue', 'No Path at all', 'Other Discrepancy'].map(status => (
+                  <label key={status} className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative flex items-center justify-center">
+                      <input type="checkbox" value={status} checked={(editFormData.landDetails?.complaints || []).includes(status)} onChange={(e) => handleArrayChange('landDetails.complaints', status, e.target.checked)} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-sm checked:bg-white checked:border-orange-500 transition-all cursor-pointer" />
+                      <div className="pointer-events-none absolute opacity-0 peer-checked:opacity-100 text-orange-500">
+                        <CheckCircle size={14} className="stroke-[3]" />
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-bold text-red-600 tracking-wider uppercase group-hover:text-red-700 transition-colors truncate">{status}</span>
+                  </label>
+                ))}
+                
+                <div className="pt-2 border-t border-red-100 mt-2">
+                  <textarea 
+                    value={editFormData.registry_notes || ''} 
+                    onChange={(e) => handleEditChange('registry_notes', e.target.value)}
+                    placeholder="Registry notes..."
+                    className="w-full border border-gray-200 rounded-lg p-2 text-[10px] font-bold text-gray-700 outline-none focus:border-red-400 min-h-[60px] resize-none"
+                  />
+                </div>
+              </div>
+            </FormCard>
+
           </div>
         </div>
       </div>
@@ -1279,6 +1228,7 @@ const LandPhysicalVerificationDashboard = () => {
                   <div><strong>Mandal:</strong> {selectedLand.mandal || 'N/A'}</div>
                   <div><strong>Village:</strong> {selectedLand.village || 'N/A'}</div>
                   <div><strong>Location:</strong> {selectedLand.location_latitude}, {selectedLand.location_longitude}</div>
+                  <div><strong>Call Status:</strong> <StatusBadge status={selectedLand.call_verification_status} /></div>
                   <div><strong>Form Status:</strong> <StatusBadge status={selectedLand.form_status} /></div>
                   <div><strong>Physical Status:</strong> <StatusBadge status={selectedLand.physcial_verification_status} /></div>
                   <div><strong>Verification Status:</strong> <StatusBadge status={selectedLand.verification_status} /></div>
@@ -1459,187 +1409,212 @@ const LandPhysicalVerificationDashboard = () => {
     );
   };
 
+  // ============================================
+  // NEW UI RENDER
+  // ============================================
+  const pipelineTabs = [
+    { key: 'phone', label: '1. Physical Verification' },
+    { key: 'verify', label: '2. Verify' },
+    { key: 'physical', label: '3. Physical Audit' },
+    { key: 'review', label: '4. Review' },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-gray-800">Land Physical Verification Dashboard</h1>
-          <p className="text-gray-600 text-sm">Manage physical verification for land listings</p>
-        </div>
-      </div>
+    <div style={{ width: '100%' }}>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex flex-col md:flex-row justify-between gap-4">
-            <div className="flex gap-2 flex-wrap">
-              {['pending', 'complete'].map((status) => (
-                <button
-                  key={status}
-                  onClick={() => {
-                    setStatusFilter(status);
-                    setCurrentPage(1);
-                  }}
-                  className={`px-4 py-2 rounded-lg capitalize ${
-                    statusFilter === status
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {status}
-                </button>
-              ))}
-            </div>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search by village, district, farmer name or phone..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="pl-10 pr-4 py-2 border rounded-lg w-full md:w-96 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-        </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <div className="text-sm text-gray-600">Total Lands</div>
-            <div className="text-2xl font-bold">{lands.length}</div>
+      {/* Content */}
+      {isEditing ? renderInlineEditForm() : (
+      /* Table (Physical Verification) */
+      <div style={styles.tableContainer}>
+        {loading ? (
+          <div style={styles.loadingContainer}>
+            <Loader2 size={32} style={{ animation: 'spin 1s linear infinite', color: '#f97316' }} />
+            <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
           </div>
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <div className="text-sm text-gray-600">Filtered Lands</div>
-            <div className="text-2xl font-bold">{filteredLands.length}</div>
+        ) : paginatedLands.length === 0 ? (
+          <div style={styles.emptyState}>
+            <div style={{ fontSize: '48px', marginBottom: '12px', opacity: 0.3 }}>🔍</div>
+            <div>No lands found for status: <strong>{statusFilter}</strong></div>
+            {searchTerm && <div style={{ marginTop: '4px', fontSize: '13px' }}>with search term: "{searchTerm}"</div>}
           </div>
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <div className="text-sm text-gray-600">Current Page</div>
-            <div className="text-2xl font-bold">{currentPage} / {totalPages || 1}</div>
-          </div>
-        </div>
+        ) : (
+          <>
+            <table style={styles.table}>
+              <thead style={styles.tableHead}>
+                <tr>
+                  <th style={styles.th}>Farmer</th>
+                  <th style={styles.th}>Address</th>
+                  <th style={styles.th}>Unit Profile</th>
+                  <th style={styles.th}>Assigned Executive</th>
+                  <th style={{ ...styles.th, textAlign: 'right' }}>Management</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedLands.map((land, index) => {
+                  const farmerName = land.farmerDetails?.name || 'Unknown';
+                  const avatarColor = getAvatarColor(farmerName);
+                  const landId = `L${String(land.id).padStart(3, '0')}`;
+                  const acres = land.landDetails?.total_acres || 0;
+                  const pricePerAcre = land.landDetails?.price_per_acres || 0;
 
-        {/* Land List */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-            </div>
-          ) : paginatedLands.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              No lands found for status: {statusFilter}
-              {searchTerm && ` with search term: "${searchTerm}"`}
-            </div>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Farmer</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Form Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Physical Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {paginatedLands.map((land) => (
-                      <tr key={land.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{land.id}</td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900">{land.village || 'N/A'}</div>
-                          <div className="text-xs text-gray-500">{land.mandal}, {land.district}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {land.farmerDetails?.name || 'N/A'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {land.farmerDetails?.phone || 'N/A'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <StatusBadge status={land.form_status} />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <StatusBadge status={land.physcial_verification_status} />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <button
-                            onClick={() => setSelectedLand(land)}
-                            className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                          >
-                            <Eye className="w-4 h-4" />
-                            View
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  return (
+                    <tr
+                      key={land.id}
+                      style={styles.tr(hoveredRow === land.id)}
+                      onMouseEnter={() => setHoveredRow(land.id)}
+                      onMouseLeave={() => setHoveredRow(null)}
+                    >
+                      {/* Farmer */}
+                      <td style={styles.td}>
+                        <div style={styles.farmerCell}>
+                          <div style={styles.avatar(avatarColor)}>
+                            {farmerName.charAt(0).toUpperCase()}
+                          </div>
+                          <div style={styles.farmerInfo}>
+                            <div
+                              style={styles.farmerName}
+                              onClick={() => setSelectedLand(land)}
+                            >
+                              {farmerName}
+                            </div>
+                            <div style={styles.farmerId}>{landId}</div>
+                            <div style={styles.farmerPhone}>
+                              <Phone size={10} />
+                              {land.farmerDetails?.phone || 'N/A'}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="px-6 py-4 border-t flex justify-between items-center">
-                  <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="p-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <div className="flex gap-2">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNum;
-                      if (totalPages <= 5) {
-                        pageNum = i + 1;
-                      } else if (currentPage <= 3) {
-                        pageNum = i + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNum = totalPages - 4 + i;
-                      } else {
-                        pageNum = currentPage - 2 + i;
-                      }
-                      return (
+                      {/* Address */}
+                      <td style={styles.td}>
+                        <div style={styles.addressMain}>
+                          {land.village || 'N/A'}, Registry Mandal
+                        </div>
+                        <div style={styles.addressSub}>
+                          {land.mandal || 'N/A'}, {land.state || 'N/A'}
+                        </div>
+                      </td>
+
+                      {/* Unit Profile */}
+                      <td style={styles.td}>
+                        <div style={styles.unitProfile}>
+                          {acres} AC • {formatPriceShort(pricePerAcre)}/AC
+                        </div>
+                      </td>
+
+                      {/* Assigned Executive */}
+                      <td style={styles.td}>
+                        <div style={styles.executiveName}>
+                          {land.assigned_executive || land.employeeName || 'UNASSIGNED'}
+                        </div>
+                      </td>
+
+                      {/* Management */}
+                      <td style={{ ...styles.td, textAlign: 'right' }}>
                         <button
-                          key={pageNum}
-                          onClick={() => setCurrentPage(pageNum)}
-                          className={`px-3 py-1 rounded ${
-                            currentPage === pageNum
-                              ? 'bg-blue-600 text-white'
-                              : 'hover:bg-gray-100'
-                          }`}
+                          style={styles.verifyBtn}
+                          onClick={() => {
+                            setSelectedLand(land);
+                            startEditing(land);
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-1px)';
+                            e.currentTarget.style.boxShadow = '0 4px 14px rgba(249, 115, 22, 0.5)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(249, 115, 22, 0.35)';
+                          }}
                         >
-                          {pageNum}
+                          Start Verify <ArrowRight size={13} />
                         </button>
-                      );
-                    })}
-                  </div>
-                  <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="p-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div style={styles.pagination}>
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  style={styles.pageBtn(currentPage === 1)}
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        style={styles.pageNum(currentPage === pageNum)}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  style={styles.pageBtn(currentPage === totalPages)}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            )}
             </>
           )}
         </div>
+      )}
+
+      {/* Inbound Signals Pill */}
+      <div
+        style={styles.inboundPill}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.boxShadow = '0 6px 24px rgba(249, 115, 22, 0.5)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = '0 4px 20px rgba(249, 115, 22, 0.4)';
+        }}
+      >
+        <Bell size={15} />
+        Inbound Signals ({lands.length})
+        <div style={{
+          width: '32px', height: '18px', background: 'rgba(255,255,255,0.25)', borderRadius: '50px',
+          position: 'relative', cursor: 'pointer', marginLeft: '4px'
+        }}>
+          <div style={{
+            width: '14px', height: '14px', background: '#fff', borderRadius: '50%',
+            position: 'absolute', top: '2px', right: '2px', boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+          }} />
+        </div>
       </div>
 
-      {/* Modals */}
+      {/* Detail modal (view only - when clicking farmer name) */}
       {selectedLand && !isEditing && renderDetailModal()}
-      {isEditing && renderEditForm()}
     </div>
   );
 };
 
 export default LandPhysicalVerificationDashboard;
+
+
