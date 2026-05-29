@@ -1064,13 +1064,7 @@ const LandVerificationDashboard = () => {
                  </select>
                  <input type="file" accept="image/*,video/*" onChange={handleAddMedia} disabled={uploading || !selectedMediaCategory} className="w-full text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
               </div>
-              <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-                  <span className="text-[9px] font-bold text-blue-800 tracking-wider uppercase">Show Photos On Listing</span>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" checked={editFormData.show_photos_on_listing || false} onChange={(e) => handleEditChange('show_photos_on_listing', e.target.checked)} />
-                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-500"></div>
-                  </label>
-              </div>
+
             </FormCard>
 
             <FormCard title="9. DOCUMENTS" icon={FileText} colorTheme="blue">
