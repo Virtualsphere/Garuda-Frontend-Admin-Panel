@@ -15,6 +15,10 @@ export default defineConfig({
         target: 'http://72.61.169.226:5000',
         changeOrigin: true,
       },
+      '/public': {
+        target: 'http://72.61.169.226:5000',
+        changeOrigin: true,
+      },
     },
   },
 })

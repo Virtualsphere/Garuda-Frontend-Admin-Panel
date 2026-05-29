@@ -27,7 +27,7 @@ import {
   Bell
 } from 'lucide-react';
 import { BASE_URL } from '../../url/BaseUrl';
-import { fixUrl } from "../../utils/fixUrl";
+import { fixUrl, IMAGE_NOT_FOUND_PLACEHOLDER } from "../../utils/fixUrl";
 
 const API_BASE_URL = `${BASE_URL}/api`;
 
@@ -684,7 +684,7 @@ const LandPhysicalVerificationDashboard = () => {
                       alt={category} 
                       className="w-full h-40 object-cover"
                       onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/400x300?text=Image+Not+Found';
+                        e.target.src = IMAGE_NOT_FOUND_PLACEHOLDER;
                       }}
                     />
                   ) : item.type === 'video' ? (
