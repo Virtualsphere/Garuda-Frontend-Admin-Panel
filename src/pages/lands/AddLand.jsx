@@ -120,6 +120,39 @@ const MEDIA_LABELS = {
 
 const API_BASE_URL = `${BASE_URL}/api`;
 
+const getTotalLandValue = (landDetails) =>
+  (Number(landDetails?.total_acres) || 0) * (Number(landDetails?.price_per_acres) || 0);
+
+const createEmptyFormData = () => ({
+  ...INITIAL_FORM_DATA,
+  farmerDetails: { ...INITIAL_FARMER_DETAILS },
+  landDetails: { ...INITIAL_LAND_DETAILS },
+  gps: { latitude: '', longitude: '' },
+  media: [],
+  documents: [],
+});
+
+// Must be defined outside AddLand — defining components inside causes remount on every keystroke.
+const CardWrapper = ({ color, icon, title, watermark, children }) => (
+  <div className={`land-card land-card--${color}`}>
+    <div className={`land-card__header land-card__header--${color}`}>
+      <div className="land-card__watermark">{watermark}</div>
+      <div className={`land-card__badge land-card__badge--${color}`}>{icon}</div>
+      <div className={`land-card__title land-card__title--${color}`}>{title}</div>
+    </div>
+    <div className="land-card__body">
+      {children}
+    </div>
+  </div>
+);
+
+const ToggleSwitch = ({ checked, onChange }) => (
+  <label className="toggle-switch">
+    <input type="checkbox" checked={checked} onChange={onChange} />
+    <span className="toggle-slider"></span>
+  </label>
+);
+
 const AddLand = () => {
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
   const [loading, setLoading] = useState(false);
@@ -356,18 +389,6 @@ const AddLand = () => {
     }));
   };
 
-  // Calculate total value when acres or price changes
-  useEffect(() => {
-    const acres = formData.landDetails.total_acres;
-    const price = formData.landDetails.price_per_acres;
-    if (acres && price) {
-      setFormData(prev => ({
-        ...prev,
-        landDetails: { ...prev.landDetails, total_value: acres * price }
-      }));
-    }
-  }, [formData.landDetails.total_acres, formData.landDetails.price_per_acres]);
-
   // Submit form
   const handleSubmit = async (e, status) => {
     e.preventDefault();
@@ -375,7 +396,14 @@ const AddLand = () => {
     setError(null);
     setSuccess(null);
 
-    const submitData = { ...formData, form_status: status };
+    const submitData = {
+      ...formData,
+      form_status: status,
+      landDetails: {
+        ...formData.landDetails,
+        total_value: getTotalLandValue(formData.landDetails),
+      },
+    };
 
     // Get token from localStorage (assuming JWT is stored here)
     const token = localStorage.getItem('token');
@@ -391,7 +419,7 @@ const AddLand = () => {
       if (response.status === 201) {
         setSuccess(`Land ${status === 'draft' ? 'saved as draft' : 'submitted successfully'}!`);
         if (status !== 'draft') {
-          setFormData(INITIAL_FORM_DATA);
+          setFormData(createEmptyFormData());
         }
       }
     } catch (err) {
@@ -404,7 +432,7 @@ const AddLand = () => {
 
   // Reset form
   const handleReset = () => {
-    setFormData(INITIAL_FORM_DATA);
+    setFormData(createEmptyFormData());
     setDistricts([]);
     setMandals([]);
     setVillages([]);
@@ -429,30 +457,6 @@ const AddLand = () => {
   const addBoundaryPoint = () => {
     setBoundaryPoints(prev => [...prev, { lat: '', lng: '' }]);
   };
-
-  // ========================
-  // CARD COMPONENTS
-  // ========================
-
-  const CardWrapper = ({ color, icon, title, watermark, children }) => (
-    <div className={`land-card land-card--${color}`}>
-      <div className={`land-card__header land-card__header--${color}`}>
-        <div className="land-card__watermark">{watermark}</div>
-        <div className={`land-card__badge land-card__badge--${color}`}>{icon}</div>
-        <div className={`land-card__title land-card__title--${color}`}>{title}</div>
-      </div>
-      <div className="land-card__body">
-        {children}
-      </div>
-    </div>
-  );
-
-  const ToggleSwitch = ({ checked, onChange, label }) => (
-    <label className="toggle-switch">
-      <input type="checkbox" checked={checked} onChange={onChange} />
-      <span className="toggle-slider"></span>
-    </label>
-  );
 
   // ========================
   // RENDER SECTIONS
@@ -608,7 +612,7 @@ const AddLand = () => {
       <div className="field-group">
         <div className="total-value-pill">
           <span className="total-value-pill__label">TOTAL VALUE (₹)</span>
-          <span>₹{formData.landDetails.total_value || 0}</span>
+          <span>₹{getTotalLandValue(formData.landDetails)}</span>
         </div>
       </div>
     </CardWrapper>
