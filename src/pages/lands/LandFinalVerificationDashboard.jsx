@@ -25,6 +25,7 @@ import {
   Zap
 } from 'lucide-react';
 import { BASE_URL } from '../../url/BaseUrl';
+import { fixUrl } from '../../utils/fixUrl';
 
 const API_BASE_URL = `${BASE_URL}/api`;
 
@@ -113,6 +114,7 @@ const LandFinalVerificationDashboard = () => {
   const [selectedMediaCategory, setSelectedMediaCategory] = useState('');
   const [selectedDocType, setSelectedDocType] = useState('');
   const [error, setError] = useState(null);
+  const [previewMedia, setPreviewMedia] = useState(null);
 
   // Fetch lands based on status filter
   const fetchLands = async () => {
@@ -362,15 +364,17 @@ const LandFinalVerificationDashboard = () => {
                 <div key={i} className="border rounded-lg overflow-hidden">
                   {item.type === 'image' ? (
                     <img 
-                      src={item.url} 
+                      src={fixUrl(item.url)} 
                       alt={category} 
-                      className="w-full h-40 object-cover"
+                      className="w-full h-40 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => setPreviewMedia(item)}
                       onError={(e) => {
+                        e.target.onerror = null;
                         e.target.src = 'https://via.placeholder.com/400x300?text=Image+Not+Found';
                       }}
                     />
                   ) : item.type === 'video' ? (
-                    <video src={item.url} className="w-full h-40 object-cover" controls />
+                    <video src={fixUrl(item.url)} className="w-full h-40 object-cover" controls />
                   ) : (
                     <div className="w-full h-40 bg-gray-100 flex items-center justify-center">
                       <FileText className="w-12 h-12 text-gray-400" />
@@ -1137,15 +1141,17 @@ const LandFinalVerificationDashboard = () => {
                       <div key={idx} className="relative border rounded-lg p-2 bg-gray-50">
                         {item.type === 'image' ? (
                           <img 
-                            src={item.url} 
+                            src={fixUrl(item.url)} 
                             alt={item.category} 
-                            className="w-full h-32 object-cover rounded"
+                            className="w-full h-32 object-cover rounded cursor-pointer hover:opacity-90 transition-opacity"
+                            onClick={() => setPreviewMedia(item)}
                             onError={(e) => {
+                              e.target.onerror = null;
                               e.target.src = 'https://via.placeholder.com/200x150?text=Image+Not+Found';
                             }}
                           />
                         ) : (
-                          <video src={item.url} className="w-full h-32 object-cover rounded" controls />
+                          <video src={fixUrl(item.url)} className="w-full h-32 object-cover rounded" controls />
                         )}
                         <p className="text-xs text-gray-600 mt-1 truncate">{item.category}</p>
                         <button
@@ -1202,7 +1208,7 @@ const LandFinalVerificationDashboard = () => {
                           <div className="flex-1">
                             <span className="font-medium">{doc.doc_type}</span>
                             <a 
-                              href={doc.file_url} 
+                              href={fixUrl(doc.file_url)} 
                               target="_blank" 
                               rel="noopener noreferrer" 
                               className="ml-4 text-blue-600 hover:underline text-sm"
@@ -1425,7 +1431,7 @@ const LandFinalVerificationDashboard = () => {
                     {selectedLand.documents.map((doc, i) => (
                       <a
                         key={i}
-                        href={doc.file_url}
+                        href={fixUrl(doc.file_url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition"
