@@ -595,7 +595,7 @@ const LandPhysicalVerificationDashboard = () => {
       ...data,
       call_verification_status: 'complete',
       physcial_verification_status: 'complete',
-      verification_status: 'complete',
+      verification_status: 'pending', // Set to pending so it goes to final verification
     };
     try {
       const token = localStorage.getItem('token');
