@@ -160,6 +160,7 @@ const AddLand = () => {
   const [success, setSuccess] = useState(null);
 
   const [activeNavItem, setActiveNavItem] = useState('Add land');
+  const [whatsappSame, setWhatsappSame] = useState(true);
 
   // Location states
   const [states, setStates] = useState([]);
@@ -257,7 +258,11 @@ const AddLand = () => {
       if (parent === 'farmerDetails') {
         setFormData(prev => ({
           ...prev,
-          farmerDetails: { ...prev.farmerDetails, [child]: value }
+          farmerDetails: { 
+            ...prev.farmerDetails, 
+            [child]: value,
+            ...(child === 'phone' && whatsappSame ? { whatsapp: value } : {})
+          }
         }));
       } else if (parent === 'landDetails') {
         setFormData(prev => ({
@@ -399,10 +404,6 @@ const AddLand = () => {
     const submitData = {
       ...formData,
       form_status: status,
-      landDetails: {
-        ...formData.landDetails,
-        total_value: getTotalLandValue(formData.landDetails),
-      },
     };
 
     // Get token from localStorage (assuming JWT is stored here)
@@ -572,6 +573,17 @@ const AddLand = () => {
           </button>
         </div>
       </div>
+      <div className="field-group" style={{ marginTop: '12px' }}>
+        <label className="land-label">Address / Landmark</label>
+        <input
+          type="text"
+          name="address"
+          value={formData.address || ''}
+          onChange={handleInputChange}
+          className="land-input"
+          placeholder="Enter address or nearby landmark"
+        />
+      </div>
     </CardWrapper>
   );
 
@@ -610,52 +622,89 @@ const AddLand = () => {
         />
       </div>
       <div className="field-group">
-        <div className="total-value-pill">
-          <span className="total-value-pill__label">TOTAL VALUE (₹)</span>
-          <span>₹{getTotalLandValue(formData.landDetails)}</span>
-        </div>
+        <label className="land-label">Total Value (₹)</label>
+        <input
+          type="number"
+          name="landDetails.total_value"
+          value={formData.landDetails.total_value}
+          onChange={handleInputChange}
+          className="land-input"
+          placeholder="Enter Total Value"
+        />
       </div>
     </CardWrapper>
   );
 
   const renderResidencesShedsCard = () => (
     <CardWrapper color="green" icon="🏠" title="RESIDENCES & SHEDS" watermark="🏘️">
-      <div>
-        <label className="land-label">Residence</label>
-        <select
-          value={formData.landDetails.residence[0] || ''}
-          onChange={(e) => {
-            setFormData(prev => ({
-              ...prev,
-              landDetails: { ...prev.landDetails, residence: e.target.value ? [e.target.value] : [] }
-            }));
-          }}
-          className="land-select"
-        >
-          <option value="">Select</option>
-          {RESIDENCE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-        </select>
-      </div>
-      <div className="field-row">
-        <div className="toggle-row" style={{ flex: 1 }}>
-          <span className="toggle-row__label">Poultry Shed</span>
-          <ToggleSwitch
-            checked={formData.landDetails.poultry_shed_number > 0}
-            onChange={(e) => setFormData(prev => ({
-              ...prev,
-              landDetails: { ...prev.landDetails, poultry_shed_number: e.target.checked ? 1 : 0 }
-            }))}
-          />
+      <div className="field-group mb-4">
+        <label className="land-label" style={{ marginBottom: '8px', display: 'block' }}>Residence</label>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', padding: '4px 0' }}>
+          {RESIDENCE_OPTIONS.map(opt => (
+            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <input 
+                type="checkbox" 
+                checked={(formData.landDetails.residence || []).includes(opt)}
+                onChange={(e) => handleNestedArrayChange('residence', opt, e.target.checked)}
+                style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#22c55e' }}
+              />
+              <span style={{ fontSize: '12px', fontWeight: '500', color: '#475569', textTransform: 'capitalize' }}>{opt}</span>
+            </label>
+          ))}
         </div>
-        <div className="toggle-row" style={{ flex: 1 }}>
-          <span className="toggle-row__label">Cow Shed</span>
-          <ToggleSwitch
-            checked={formData.landDetails.cow_shed_number > 0}
-            onChange={(e) => setFormData(prev => ({
-              ...prev,
-              landDetails: { ...prev.landDetails, cow_shed_number: e.target.checked ? 1 : 0 }
-            }))}
-          />
+      </div>
+      <div className="field-row" style={{ marginTop: '16px' }}>
+        <div style={{ flex: 1 }}>
+          <div className="toggle-row" style={{ marginBottom: formData.landDetails.poultry_shed_number > 0 ? '8px' : '0' }}>
+            <span className="toggle-row__label">Poultry Shed</span>
+            <ToggleSwitch
+              checked={formData.landDetails.poultry_shed_number > 0}
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                landDetails: { ...prev.landDetails, poultry_shed_number: e.target.checked ? 1 : 0 }
+              }))}
+            />
+          </div>
+          {formData.landDetails.poultry_shed_number > 0 && (
+            <input 
+              type="number" 
+              min="1"
+              value={formData.landDetails.poultry_shed_number}
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                landDetails: { ...prev.landDetails, poultry_shed_number: parseInt(e.target.value) || 0 }
+              }))}
+              className="land-input"
+              placeholder="Number of sheds"
+              style={{ padding: '8px 12px', fontSize: '12px' }}
+            />
+          )}
+        </div>
+        <div style={{ flex: 1 }}>
+          <div className="toggle-row" style={{ marginBottom: formData.landDetails.cow_shed_number > 0 ? '8px' : '0' }}>
+            <span className="toggle-row__label">Cow Shed</span>
+            <ToggleSwitch
+              checked={formData.landDetails.cow_shed_number > 0}
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                landDetails: { ...prev.landDetails, cow_shed_number: e.target.checked ? 1 : 0 }
+              }))}
+            />
+          </div>
+          {formData.landDetails.cow_shed_number > 0 && (
+            <input 
+              type="number" 
+              min="1"
+              value={formData.landDetails.cow_shed_number}
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                landDetails: { ...prev.landDetails, cow_shed_number: parseInt(e.target.value) || 0 }
+              }))}
+              className="land-input"
+              placeholder="Number of sheds"
+              style={{ padding: '8px 12px', fontSize: '12px' }}
+            />
+          )}
         </div>
       </div>
     </CardWrapper>
@@ -720,10 +769,28 @@ const AddLand = () => {
       </div>
       <div className="field-group" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
         <label className="land-radio">
-          <input type="radio" name="whatsapp_same" value="yes" defaultChecked /> YES
+          <input 
+            type="radio" 
+            name="whatsapp_same" 
+            value="yes" 
+            checked={whatsappSame}
+            onChange={() => {
+              setWhatsappSame(true);
+              setFormData(prev => ({
+                ...prev,
+                farmerDetails: { ...prev.farmerDetails, whatsapp: prev.farmerDetails.phone }
+              }));
+            }} 
+          /> YES
         </label>
         <label className="land-radio">
-          <input type="radio" name="whatsapp_same" value="no" /> NO
+          <input 
+            type="radio" 
+            name="whatsapp_same" 
+            value="no" 
+            checked={!whatsappSame}
+            onChange={() => setWhatsappSame(false)}
+          /> NO
         </label>
       </div>
       <div className="field-group">
@@ -735,6 +802,8 @@ const AddLand = () => {
           onChange={handleInputChange}
           className="land-input"
           placeholder="98XXXXXXXX"
+          readOnly={whatsappSame}
+          style={whatsappSame ? { backgroundColor: '#f1f5f9', cursor: 'not-allowed' } : {}}
         />
       </div>
       <div className="field-row">
@@ -810,33 +879,44 @@ const AddLand = () => {
 
   const renderWaterSourceCard = () => (
     <CardWrapper color="green" icon="💧" title="WATER SOURCE DETAILS" watermark="🌊">
-      <div>
-        <label className="land-label">Water Source</label>
-        <select
-          value={formData.landDetails.water_source[0] || ''}
-          onChange={(e) => {
-            setFormData(prev => ({
-              ...prev,
-              landDetails: { ...prev.landDetails, water_source: e.target.value ? [e.target.value] : [] }
-            }));
-          }}
-          className="land-select"
-        >
-          <option value="">Select</option>
-          {WATER_SOURCE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-        </select>
+      <div className="field-group mb-4">
+        <label className="land-label" style={{ marginBottom: '8px', display: 'block' }}>Water Source</label>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', padding: '4px 0' }}>
+          {WATER_SOURCE_OPTIONS.map(opt => (
+            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <input 
+                type="checkbox" 
+                checked={(formData.landDetails.water_source || []).includes(opt)}
+                onChange={(e) => handleNestedArrayChange('water_source', opt, e.target.checked)}
+                style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#22c55e' }}
+              />
+              <span style={{ fontSize: '12px', fontWeight: '500', color: '#475569', textTransform: 'capitalize' }}>{opt}</span>
+            </label>
+          ))}
+        </div>
       </div>
-      <div className="field-group">
-        <label className="land-label">No of Bores</label>
-        <input
-          type="number"
-          name="landDetails.number_of_bores"
-          value={formData.landDetails.number_of_bores}
-          onChange={handleInputChange}
-          className="land-input"
-        />
+      
+      <div className="field-row mt-4" style={{ marginTop: '16px', display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+        {(formData.landDetails.water_source || []).filter(opt => opt !== 'not available').map(opt => {
+          const fieldName = opt === 'borewell' ? 'number_of_bores' : `number_of_${opt.replace(/\s+/g, '_')}`;
+          return (
+            <div key={opt} style={{ flex: '1 1 45%' }}>
+              <label className="land-label">No of {opt.charAt(0).toUpperCase() + opt.slice(1)}</label>
+              <input
+                type="number"
+                name={`landDetails.${fieldName}`}
+                value={formData.landDetails[fieldName] || ''}
+                onChange={handleInputChange}
+                className="land-input"
+                placeholder={`Number of ${opt}`}
+                style={{ padding: '8px 12px', fontSize: '12px' }}
+              />
+            </div>
+          );
+        })}
       </div>
-      <div className="toggle-row field-group">
+
+      <div className="toggle-row field-group" style={{ marginTop: '16px' }}>
         <span className="toggle-row__label">Farm Pond</span>
         <ToggleSwitch
           checked={formData.landDetails.farm_pond}
@@ -853,14 +933,17 @@ const AddLand = () => {
     <CardWrapper color="green" icon="🛤️" title="PATH DETAILS" watermark="🚧">
       <div>
         <label className="land-label">Nearest Road Type</label>
-        <input
-          type="text"
+        <select
           name="landDetails.nearest_road_type"
           value={formData.landDetails.nearest_road_type}
           onChange={handleInputChange}
-          className="land-input"
-          placeholder="e.g., National Highway"
-        />
+          className="land-select"
+        >
+          <option value="">Select</option>
+          {['HIGHWAY', 'DOUBLE ROAD', 'SINGLE ROAD', 'GRAVEL ROAD', 'CAR ROAD', 'TRACTOR ROAD', 'BIKE ROAD', 'FOOT PATH'].map(opt => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </select>
       </div>
       <div className="field-group">
         <label className="land-label">Land Attached to Road</label>
@@ -889,13 +972,14 @@ const AddLand = () => {
 
   const renderLandDetailsCard = () => (
     <CardWrapper color="green" icon="✅" title="LAND DETAILS" watermark="🌿">
-      <div>
+      <div className="field-group">
         <label className="land-label">Soil Type</label>
         <select
           name="landDetails.soil_type"
           value={formData.landDetails.soil_type}
           onChange={handleInputChange}
           className="land-select"
+          style={{ marginBottom: '8px' }}
         >
           <option value="">Select</option>
           <option value="Red Soil">Red Soil</option>
@@ -904,6 +988,14 @@ const AddLand = () => {
           <option value="Clay Soil">Clay Soil</option>
           <option value="Loamy Soil">Loamy Soil</option>
         </select>
+        <input
+          type="text"
+          name="landDetails.soil_type_details"
+          value={formData.landDetails.soil_type_details || ''}
+          onChange={handleInputChange}
+          className="land-input"
+          placeholder="Additional Soil Details (Optional)"
+        />
       </div>
       <div className="field-group">
         <label className="land-label">Fencing Status</label>
@@ -996,109 +1088,6 @@ const AddLand = () => {
             />
             {status}
           </label>
-        ))}
-      </div>
-    </CardWrapper>
-  );
-
-  const renderLandGPSCard = () => (
-    <CardWrapper color="green" icon="✅" title="LAND GPS" watermark="📡">
-      <div>
-        <label className="land-label">Land Entry Point</label>
-        <div className="gps-input-group">
-          <input
-            type="text"
-            value={formData.landDetails.land_entry_latitude && formData.landDetails.land_entry_longitude
-              ? `${formData.landDetails.land_entry_latitude}, ${formData.landDetails.land_entry_longitude}` : ''}
-            onChange={(e) => {
-              const parts = e.target.value.split(',').map(s => s.trim());
-              setFormData(prev => ({
-                ...prev,
-                landDetails: {
-                  ...prev.landDetails,
-                  land_entry_latitude: parts[0] || '',
-                  land_entry_longitude: parts[1] || ''
-                }
-              }));
-            }}
-            placeholder="GPS Entry Point"
-          />
-          <button type="button" onClick={() => {
-            if (navigator.geolocation) {
-              navigator.geolocation.getCurrentPosition((position) => {
-                setFormData(prev => ({
-                  ...prev,
-                  landDetails: {
-                    ...prev.landDetails,
-                    land_entry_latitude: position.coords.latitude.toString(),
-                    land_entry_longitude: position.coords.longitude.toString()
-                  }
-                }));
-              });
-            }
-          }}>📍</button>
-        </div>
-      </div>
-      <div className="field-group">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-          <label className="land-label" style={{ margin: 0 }}>Land Boundary Points</label>
-          <button type="button" className="add-point-btn" onClick={addBoundaryPoint}>+ ADD POINT</button>
-        </div>
-        {boundaryPoints.map((point, idx) => (
-          <div key={idx} className="gps-input-group" style={{ marginBottom: '8px' }}>
-            <input
-              type="text"
-              value={idx === 0
-                ? (formData.landDetails.land_boundary_latitude && formData.landDetails.land_boundary_longitude
-                  ? `${formData.landDetails.land_boundary_latitude}, ${formData.landDetails.land_boundary_longitude}` : '')
-                : `${point.lat}${point.lat && point.lng ? ', ' : ''}${point.lng}`}
-              onChange={(e) => {
-                const parts = e.target.value.split(',').map(s => s.trim());
-                if (idx === 0) {
-                  setFormData(prev => ({
-                    ...prev,
-                    landDetails: {
-                      ...prev.landDetails,
-                      land_boundary_latitude: parts[0] || '',
-                      land_boundary_longitude: parts[1] || ''
-                    }
-                  }));
-                } else {
-                  setBoundaryPoints(prev => {
-                    const newPoints = [...prev];
-                    newPoints[idx] = { lat: parts[0] || '', lng: parts[1] || '' };
-                    return newPoints;
-                  });
-                }
-              }}
-              placeholder={`Point ${idx + 1} GPS`}
-            />
-            <button type="button" onClick={() => {
-              if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((position) => {
-                  if (idx === 0) {
-                    setFormData(prev => ({
-                      ...prev,
-                      landDetails: {
-                        ...prev.landDetails,
-                        land_boundary_latitude: position.coords.latitude.toString(),
-                        land_boundary_longitude: position.coords.longitude.toString()
-                      }
-                    }));
-                  } else {
-                    setBoundaryPoints(prev => {
-                      const newPoints = [...prev];
-                      newPoints[idx] = {
-                        lat: position.coords.latitude.toString(),
-                        lng: position.coords.longitude.toString()
-                      };
-                      return newPoints;
-                    });
-                  }
-                });
-              }
-            }}>📍</button>
-          </div>
         ))}
       </div>
     </CardWrapper>
@@ -1383,7 +1372,7 @@ const AddLand = () => {
               {renderPathDetailsCard()}
               {renderLandDetailsCard()}
               {renderTreesCard()}
-              {renderLandGPSCard()}
+
               {renderComplaintsCard()}
             </div>
 
