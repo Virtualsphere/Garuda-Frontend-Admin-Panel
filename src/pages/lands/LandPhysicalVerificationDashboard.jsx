@@ -452,12 +452,12 @@ const LandPhysicalVerificationDashboard = () => {
   const [error, setError] = useState(null);
   const [hoveredRow, setHoveredRow] = useState(null);
   
-  // Fetch lands based on status filter
+  // Fetch lands for physical audit (phone complete; physical pending or complete)
   const fetchLands = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/land/pending-call-verification/${statusFilter}`, {
+      const response = await fetch(`${API_BASE_URL}/land/pending-call-verification/complete`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -468,6 +468,14 @@ const LandPhysicalVerificationDashboard = () => {
       
       let landsData = result.data || result;
       if (!Array.isArray(landsData)) landsData = [landsData];
+
+      landsData = landsData.filter((land) => {
+        const phoneComplete = land.call_verification_status === 'complete';
+        if (statusFilter === 'pending') {
+          return phoneComplete && land.physcial_verification_status === 'pending';
+        }
+        return phoneComplete && land.physcial_verification_status === 'complete';
+      });
       
       setLands(landsData);
     } catch (error) {
@@ -580,9 +588,15 @@ const LandPhysicalVerificationDashboard = () => {
     }));
   };
 
-  // Update land data
+  // Update land data (physical audit commit → physical & overall verification complete)
   const updateLand = async (id, data) => {
     setUpdating(true);
+    const payload = {
+      ...data,
+      call_verification_status: 'complete',
+      physcial_verification_status: 'complete',
+      verification_status: 'complete',
+    };
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/land/${id}`, {
@@ -591,7 +605,7 @@ const LandPhysicalVerificationDashboard = () => {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(payload)
       });
       if (!response.ok) throw new Error('Failed to update land');
       const result = await response.json();

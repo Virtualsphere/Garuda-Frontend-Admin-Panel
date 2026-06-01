@@ -664,9 +664,15 @@ const LandVerificationDashboard = () => {
     }));
   };
 
-  // Update land data
+  // Update land data (phone verification commit → call complete, physical still pending)
   const updateLand = async (id, data) => {
     setUpdating(true);
+    const payload = {
+      ...data,
+      call_verification_status: 'complete',
+      physcial_verification_status: 'pending',
+      verification_status: 'pending',
+    };
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/land/call/verify/${id}`, {
@@ -675,7 +681,7 @@ const LandVerificationDashboard = () => {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(payload)
       });
       if (!response.ok) throw new Error('Failed to update land');
       const result = await response.json();
