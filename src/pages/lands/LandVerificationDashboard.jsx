@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { 
   Search, 
   Filter, 
@@ -405,6 +406,33 @@ const styles = {
   }),
 };
 
+const FormCard = ({ title, icon: Icon, colorTheme, children }) => {
+  const themes = {
+    red: { bg: 'bg-red-50', border: 'border-t-red-500', text: 'text-red-600', iconBg: 'bg-red-500' },
+    green: { bg: 'bg-green-50', border: 'border-t-green-500', text: 'text-green-600', iconBg: 'bg-green-500' },
+    blue: { bg: 'bg-blue-50', border: 'border-t-blue-500', text: 'text-blue-600', iconBg: 'bg-blue-500' },
+    orange: { bg: 'bg-orange-50', border: 'border-t-orange-500', text: 'text-orange-600', iconBg: 'bg-orange-500' },
+    teal: { bg: 'bg-teal-50', border: 'border-t-teal-500', text: 'text-teal-600', iconBg: 'bg-teal-500' },
+  };
+  const theme = themes[colorTheme] || themes.blue;
+
+  return (
+    <div className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden border-t-4 ${theme.border}`}>
+      <div className={`pt-4 pb-3 px-6 flex flex-col items-center justify-center border-b border-gray-100 ${theme.bg}`}>
+        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white mb-2 shadow-sm ${theme.iconBg}`}>
+          <Icon size={16} />
+        </div>
+        <h3 className={`text-[10px] font-bold uppercase tracking-wider ${theme.text}`}>
+          {title}
+        </h3>
+      </div>
+      <div className="p-5 space-y-4">
+        {children}
+      </div>
+    </div>
+  );
+};
+
 // Main Component
 const LandVerificationDashboard = () => {
   const [lands, setLands] = useState([]);
@@ -412,7 +440,7 @@ const LandVerificationDashboard = () => {
   const [selectedLand, setSelectedLand] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editFormData, setEditFormData] = useState({});
-  const [updating, setUpdating] = useState(false);
+  const [updatingAction, setUpdatingAction] = useState(null);
   const [statusFilter, setStatusFilter] = useState('pending');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -425,6 +453,12 @@ const LandVerificationDashboard = () => {
   const [error, setError] = useState(null);
   const [hoveredRow, setHoveredRow] = useState(null);
   const [activePipelineTab, setActivePipelineTab] = useState('phone');
+
+  // Location dropdown states
+  const [locationStates, setLocationStates] = useState([]);
+  const [locationDistricts, setLocationDistricts] = useState([]);
+  const [locationMandals, setLocationMandals] = useState([]);
+  const [locationVillages, setLocationVillages] = useState([]);
 
   // Fetch lands based on status filter
   const fetchLands = async () => {
@@ -456,6 +490,82 @@ const LandVerificationDashboard = () => {
   useEffect(() => {
     fetchLands();
   }, [statusFilter]);
+
+  // Fetch all location states on mount
+  useEffect(() => {
+    const fetchLocationStates = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/location`);
+        if (response.data.success) {
+          setLocationStates(response.data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching location states:', err);
+      }
+    };
+    fetchLocationStates();
+  }, []);
+
+  // Location cascading handlers
+  const handleLocationStateChange = async (stateName) => {
+    handleEditChange('state', stateName);
+    handleEditChange('district', '');
+    handleEditChange('mandal', '');
+    handleEditChange('village', '');
+    setLocationDistricts([]);
+    setLocationMandals([]);
+    setLocationVillages([]);
+
+    const selectedState = locationStates.find(s => s.name === stateName);
+    if (selectedState?.id) {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/location/districts/${selectedState.id}`);
+        if (response.data.success) {
+          setLocationDistricts(response.data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching districts:', err);
+      }
+    }
+  };
+
+  const handleLocationDistrictChange = async (districtName) => {
+    handleEditChange('district', districtName);
+    handleEditChange('mandal', '');
+    handleEditChange('village', '');
+    setLocationMandals([]);
+    setLocationVillages([]);
+
+    const selectedDistrict = locationDistricts.find(d => d.name === districtName);
+    if (selectedDistrict?.id) {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/location/mandals/${selectedDistrict.id}`);
+        if (response.data.success) {
+          setLocationMandals(response.data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching mandals:', err);
+      }
+    }
+  };
+
+  const handleLocationMandalChange = async (mandalName) => {
+    handleEditChange('mandal', mandalName);
+    handleEditChange('village', '');
+    setLocationVillages([]);
+
+    const selectedMandal = locationMandals.find(m => m.name === mandalName);
+    if (selectedMandal?.id) {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/location/villages/${selectedMandal.id}`);
+        if (response.data.success) {
+          setLocationVillages(response.data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching villages:', err);
+      }
+    }
+  };
 
   // File upload handler
   const handleFileUpload = async (file, type) => {
@@ -554,9 +664,15 @@ const LandVerificationDashboard = () => {
     }));
   };
 
-  // Update land data
-  const updateLand = async (id, data) => {
-    setUpdating(true);
+  // Update land data (Verify)
+  const verifyLand = async (id, data) => {
+    setUpdatingAction('verify');
+    const payload = {
+      ...data,
+      call_verification_status: 'complete',
+      physcial_verification_status: 'complete',
+      verification_status: 'complete',
+    };
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/land/call/verify/${id}`, {
@@ -565,9 +681,9 @@ const LandVerificationDashboard = () => {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(payload)
       });
-      if (!response.ok) throw new Error('Failed to update land');
+      if (!response.ok) throw new Error('Failed to verify land');
       const result = await response.json();
       
       await fetchLands();
@@ -580,12 +696,53 @@ const LandVerificationDashboard = () => {
       setIsEditing(false);
       setActivePipelineTab('phone');
       setSelectedLand(null);
-      alert('Land updated successfully!');
+      alert('Land verified successfully!');
     } catch (error) {
-      console.error('Error updating land:', error);
-      alert('Failed to update land');
+      console.error('Error verifying land:', error);
+      alert('Failed to verify land');
     } finally {
-      setUpdating(false);
+      setUpdatingAction(null);
+    }
+  };
+
+  // Update land data (Physical Verify)
+  const physicalVerifyLand = async (id, data) => {
+    setUpdatingAction('physical');
+    const payload = {
+      ...data,
+      call_verification_status: 'complete',
+      physcial_verification_status: 'complete',
+      verification_status: 'complete',
+    };
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/land/verify/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error('Failed to physically verify land');
+      const result = await response.json();
+      
+      await fetchLands();
+      
+      if (selectedLand?.id === id) {
+        const updatedLand = lands.find(l => l.id === id);
+        if (updatedLand) setSelectedLand(updatedLand);
+      }
+      
+      setIsEditing(false);
+      setActivePipelineTab('phone');
+      setSelectedLand(null);
+      alert('Land physically verified successfully!');
+    } catch (error) {
+      console.error('Error physically verifying land:', error);
+      alert('Failed to physically verify land');
+    } finally {
+      setUpdatingAction(null);
     }
   };
 
@@ -609,12 +766,12 @@ const LandVerificationDashboard = () => {
   // Handle array field changes (for checkboxes)
   const handleArrayChange = (path, value, checked) => {
     setEditFormData(prev => {
-      const newData = { ...prev };
+      const newData = JSON.parse(JSON.stringify(prev));
       const keys = path.split('.');
       let current = newData;
       
       for (let i = 0; i < keys.length - 1; i++) {
-        if (!current[keys[i]]) current[keys[i]] = [];
+        if (!current[keys[i]]) current[keys[i]] = {};
         current = current[keys[i]];
       }
       
@@ -622,7 +779,7 @@ const LandVerificationDashboard = () => {
       const currentArray = current[lastKey] || [];
       
       if (checked) {
-        current[lastKey] = [...currentArray, value];
+        current[lastKey] = Array.from(new Set([...currentArray, value]));
       } else {
         current[lastKey] = currentArray.filter(item => item !== value);
       }
@@ -632,12 +789,46 @@ const LandVerificationDashboard = () => {
   };
 
   // Initialize edit form when editing starts
-  const startEditing = (land) => {
+  const startEditing = async (land) => {
     const clonedData = JSON.parse(JSON.stringify(land));
     setEditFormData(clonedData);
     setIsEditing(true);
     setEditTab('basic');
     setActivePipelineTab('verify');
+    fetchLocationData();
+
+    // Pre-populate cascading location dropdowns based on existing land data
+    try {
+      if (land.state) {
+        const stateObj = locationStates.find(s => s.name === land.state);
+        if (stateObj?.id) {
+          const distRes = await axios.get(`${API_BASE_URL}/location/districts/${stateObj.id}`);
+          if (distRes.data.success) {
+            setLocationDistricts(distRes.data.data);
+            if (land.district) {
+              const distObj = distRes.data.data.find(d => d.name === land.district);
+              if (distObj?.id) {
+                const mandalRes = await axios.get(`${API_BASE_URL}/location/mandals/${distObj.id}`);
+                if (mandalRes.data.success) {
+                  setLocationMandals(mandalRes.data.data);
+                  if (land.mandal) {
+                    const mandalObj = mandalRes.data.data.find(m => m.name === land.mandal);
+                    if (mandalObj?.id) {
+                      const villageRes = await axios.get(`${API_BASE_URL}/location/villages/${mandalObj.id}`);
+                      if (villageRes.data.success) {
+                        setLocationVillages(villageRes.data.data);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error pre-populating location dropdowns:', err);
+    }
   };
 
   // Cancel editing and go back to phone verification list
@@ -717,33 +908,6 @@ const LandVerificationDashboard = () => {
   const renderInlineEditForm = () => {
     if (!selectedLand || !isEditing) return null;
 
-    const FormCard = ({ title, icon: Icon, colorTheme, children }) => {
-      const themes = {
-        red: { bg: 'bg-red-50', border: 'border-t-red-500', text: 'text-red-600', iconBg: 'bg-red-500' },
-        green: { bg: 'bg-green-50', border: 'border-t-green-500', text: 'text-green-600', iconBg: 'bg-green-500' },
-        blue: { bg: 'bg-blue-50', border: 'border-t-blue-500', text: 'text-blue-600', iconBg: 'bg-blue-500' },
-        orange: { bg: 'bg-orange-50', border: 'border-t-orange-500', text: 'text-orange-600', iconBg: 'bg-orange-500' },
-        teal: { bg: 'bg-teal-50', border: 'border-t-teal-500', text: 'text-teal-600', iconBg: 'bg-teal-500' },
-      };
-      const theme = themes[colorTheme] || themes.blue;
-
-      return (
-        <div className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden border-t-4 ${theme.border}`}>
-          <div className={`pt-4 pb-3 px-6 flex flex-col items-center justify-center border-b border-gray-100 ${theme.bg}`}>
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white mb-2 shadow-sm ${theme.iconBg}`}>
-              <Icon size={16} />
-            </div>
-            <h3 className={`text-[10px] font-bold uppercase tracking-wider ${theme.text}`}>
-              {title}
-            </h3>
-          </div>
-          <div className="p-5 space-y-4">
-            {children}
-          </div>
-        </div>
-      );
-    };
-
     const uploadSpecificDocument = async (e, type) => {
       const file = e.target.files?.[0];
       if (!file) return;
@@ -777,12 +941,20 @@ const LandVerificationDashboard = () => {
               <ChevronLeft size={14} /> BACK TO REGISTRY
             </button>
             <button 
-              onClick={() => updateLand(selectedLand.id, editFormData)}
-              className="px-5 py-2 bg-[#f97316] text-white rounded-lg text-xs font-bold tracking-wide hover:bg-[#ea580c] transition-colors shadow-lg shadow-orange-500/30 flex items-center gap-2"
-              disabled={updating}
+              onClick={() => verifyLand(selectedLand.id, editFormData)}
+              className="px-5 py-2 bg-[#3b82f6] text-white rounded-lg text-xs font-bold tracking-wide hover:bg-[#2563eb] transition-colors shadow-lg shadow-blue-500/30 flex items-center gap-2"
+              disabled={updatingAction !== null}
             >
-              {updating ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
-              COMMIT AUDIT
+              {updatingAction === 'verify' ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+              VERIFY
+            </button>
+            <button 
+              onClick={() => physicalVerifyLand(selectedLand.id, editFormData)}
+              className="px-5 py-2 bg-[#f97316] text-white rounded-lg text-xs font-bold tracking-wide hover:bg-[#ea580c] transition-colors shadow-lg shadow-orange-500/30 flex items-center gap-2"
+              disabled={updatingAction !== null}
+            >
+              {updatingAction === 'physical' ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+              PHYSICAL VERIFY
             </button>
           </div>
         </div>
@@ -796,19 +968,58 @@ const LandVerificationDashboard = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">State</label>
-                  <input type="text" value={editFormData.state || ''} onChange={(e) => handleEditChange('state', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" />
+                  <select 
+                    value={editFormData.state || ''} 
+                    onChange={(e) => handleLocationStateChange(e.target.value)} 
+                    className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium bg-white"
+                  >
+                    <option value="">Select State</option>
+                    {locationStates.map(s => (
+                      <option key={s.id} value={s.name}>{s.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">District</label>
-                  <input type="text" value={editFormData.district || ''} onChange={(e) => handleEditChange('district', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" />
+                  <select 
+                    value={editFormData.district || ''} 
+                    onChange={(e) => handleLocationDistrictChange(e.target.value)} 
+                    className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium bg-white"
+                    disabled={!editFormData.state}
+                  >
+                    <option value="">Select District</option>
+                    {locationDistricts.map(d => (
+                      <option key={d.id} value={d.name}>{d.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Mandal</label>
-                  <input type="text" value={editFormData.mandal || ''} onChange={(e) => handleEditChange('mandal', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" />
+                  <select 
+                    value={editFormData.mandal || ''} 
+                    onChange={(e) => handleLocationMandalChange(e.target.value)} 
+                    className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium bg-white"
+                    disabled={!editFormData.district}
+                  >
+                    <option value="">Select Mandal</option>
+                    {locationMandals.map(m => (
+                      <option key={m.id} value={m.name}>{m.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Village</label>
-                  <input type="text" value={editFormData.village || ''} onChange={(e) => handleEditChange('village', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" />
+                  <select 
+                    value={editFormData.village || ''} 
+                    onChange={(e) => handleEditChange('village', e.target.value)} 
+                    className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium bg-white"
+                    disabled={!editFormData.mandal}
+                  >
+                    <option value="">Select Village</option>
+                    {locationVillages.map(v => (
+                      <option key={v.id} value={v.name}>{v.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
               
@@ -822,6 +1033,10 @@ const LandVerificationDashboard = () => {
                 </div>
                 <div className="text-[7px] text-gray-400 mt-1.5 uppercase font-bold tracking-wider">CLICK GPS TO SUGGEST NEAREST VILLAGE</div>
               </div>
+              <div className="mt-4">
+                <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Address / Landmark</label>
+                <input type="text" value={editFormData.address || ''} onChange={(e) => handleEditChange('address', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" placeholder="Enter address or nearby landmark" />
+              </div>
             </FormCard>
 
             <FormCard title="2. FARMER DETAILS" icon={User} colorTheme="red">
@@ -832,7 +1047,12 @@ const LandVerificationDashboard = () => {
                 </div>
                 <div>
                   <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Phone No</label>
-                  <input type="text" value={editFormData.farmerDetails?.phone || ''} onChange={(e) => handleEditChange('farmerDetails.phone', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" />
+                  <input type="text" value={editFormData.farmerDetails?.phone || ''} onChange={(e) => {
+                    handleEditChange('farmerDetails.phone', e.target.value);
+                    if (editFormData.farmerDetails?.has_whatsapp === 'yes') {
+                      handleEditChange('farmerDetails.whatsapp', e.target.value);
+                    }
+                  }} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" />
                 </div>
                 
                 <div className="flex items-center gap-4 border-b border-gray-100 pb-3 mt-2">
@@ -840,14 +1060,17 @@ const LandVerificationDashboard = () => {
                   <div className="flex gap-4">
                     <label className="flex items-center gap-1.5 cursor-pointer">
                       <div className="relative flex items-center justify-center">
-                        <input type="radio" name="has_whatsapp" checked={editFormData.farmerDetails?.has_whatsapp === 'yes'} onChange={() => handleEditChange('farmerDetails.has_whatsapp', 'yes')} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-full checked:border-orange-500 transition-all cursor-pointer" />
+                        <input type="radio" name="has_whatsapp" checked={editFormData.farmerDetails?.has_whatsapp === 'yes'} onChange={() => {
+                          handleEditChange('farmerDetails.has_whatsapp', 'yes');
+                          handleEditChange('farmerDetails.whatsapp', editFormData.farmerDetails?.phone || '');
+                        }} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-full checked:border-orange-500 transition-all cursor-pointer" />
                         <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
                       </div>
                       <span className="text-[10px] font-bold text-orange-600">YES</span>
                     </label>
                     <label className="flex items-center gap-1.5 cursor-pointer">
                       <div className="relative flex items-center justify-center">
-                        <input type="radio" name="has_whatsapp" checked={editFormData.farmerDetails?.has_whatsapp === 'no'} onChange={() => handleEditChange('farmerDetails.has_whatsapp', 'no')} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-full checked:border-orange-500 transition-all cursor-pointer" />
+                        <input type="radio" name="has_whatsapp" checked={editFormData.farmerDetails?.has_whatsapp !== 'yes'} onChange={() => handleEditChange('farmerDetails.has_whatsapp', 'no')} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-full checked:border-orange-500 transition-all cursor-pointer" />
                         <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
                       </div>
                       <span className="text-[10px] font-bold text-gray-400">NO</span>
@@ -857,7 +1080,7 @@ const LandVerificationDashboard = () => {
 
                 <div>
                   <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">WhatsApp No</label>
-                  <input type="text" value={editFormData.farmerDetails?.whatsapp || ''} onChange={(e) => handleEditChange('farmerDetails.whatsapp', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-bold" />
+                  <input type="text" value={editFormData.farmerDetails?.whatsapp || ''} onChange={(e) => handleEditChange('farmerDetails.whatsapp', e.target.value)} readOnly={editFormData.farmerDetails?.has_whatsapp === 'yes'} style={editFormData.farmerDetails?.has_whatsapp === 'yes' ? { backgroundColor: '#f1f5f9', cursor: 'not-allowed' } : {}} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-bold" />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3 mt-4">
@@ -922,18 +1145,69 @@ const LandVerificationDashboard = () => {
                 <input type="number" value={editFormData.landDetails?.price_per_acres || 0} onChange={(e) => handleEditChange('landDetails.price_per_acres', parseFloat(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm text-orange-500 font-bold outline-none focus:border-green-400" />
               </div>
               
-              <div className="bg-[#0B1120] rounded-xl p-4 mt-5">
-                <div className="text-[8px] font-bold text-orange-500 uppercase tracking-widest mb-1">TOTAL CALCULATED VALUE</div>
-                <div className="text-2xl font-bold text-white mb-1 tracking-tight">₹{editFormData.landDetails?.total_value ? Number(editFormData.landDetails?.total_value).toLocaleString('en-IN') : '0'}</div>
-                <div className="text-[7px] text-gray-400 uppercase tracking-wider font-bold">CALCULATED BASED ON AREA AND PRICE PER ACRE</div>
+              <div className="mt-4">
+                <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Total Value (₹)</label>
+                <input type="number" value={editFormData.landDetails?.total_value || ''} onChange={(e) => handleEditChange('landDetails.total_value', parseFloat(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm text-orange-500 font-bold outline-none focus:border-green-400" placeholder="Enter Total Value" />
               </div>
             </FormCard>
 
+            <FormCard title="3A. RESIDENCES & SHEDS" icon={Building2} colorTheme="green">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[9px] font-bold text-green-700 uppercase mb-2 tracking-wider">Type of Residence</label>
+                  <div className="flex flex-wrap gap-4">
+                    {['developed farm', 'rcc house', 'asbestos shelter', 'hut'].map(opt => (
+                      <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
+                        <div className="relative flex items-center justify-center">
+                          <input type="checkbox" checked={(editFormData.landDetails?.residence || []).includes(opt)} onChange={(e) => handleArrayChange('landDetails.residence', opt, e.target.checked)} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-sm checked:bg-white checked:border-orange-500 transition-all cursor-pointer" />
+                          <div className="pointer-events-none absolute opacity-0 peer-checked:opacity-100 text-orange-500">
+                            <CheckCircle size={14} className="stroke-[3]" />
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">{opt}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 mt-2 pt-2 border-t border-gray-100">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[9px] font-bold text-green-700 uppercase tracking-wider">Poultry Shed</span>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" className="sr-only peer" checked={(editFormData.landDetails?.poultry_shed_number || 0) > 0} onChange={(e) => handleEditChange('landDetails.poultry_shed_number', e.target.checked ? 1 : 0)} />
+                        <div className="w-7 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-orange-500"></div>
+                      </label>
+                    </div>
+                    {(editFormData.landDetails?.poultry_shed_number || 0) > 0 && (
+                      <input type="number" min="1" value={editFormData.landDetails?.poultry_shed_number || ''} onChange={(e) => handleEditChange('landDetails.poultry_shed_number', parseInt(e.target.value) || 0)} className="w-full border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-green-400 font-bold" placeholder="No. of sheds" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[9px] font-bold text-green-700 uppercase tracking-wider">Cow Shed</span>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" className="sr-only peer" checked={(editFormData.landDetails?.cow_shed_number || 0) > 0} onChange={(e) => handleEditChange('landDetails.cow_shed_number', e.target.checked ? 1 : 0)} />
+                        <div className="w-7 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-orange-500"></div>
+                      </label>
+                    </div>
+                    {(editFormData.landDetails?.cow_shed_number || 0) > 0 && (
+                      <input type="number" min="1" value={editFormData.landDetails?.cow_shed_number || ''} onChange={(e) => handleEditChange('landDetails.cow_shed_number', parseInt(e.target.value) || 0)} className="w-full border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-green-400 font-bold" placeholder="No. of sheds" />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </FormCard>
             <FormCard title="4. PATH DETAILS" icon={MapPin} colorTheme="green">
               <div className="space-y-4">
                 <div>
                   <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Road Type</label>
-                  <input type="text" value={editFormData.landDetails?.nearest_road_type || ''} onChange={(e) => handleEditChange('landDetails.nearest_road_type', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium" />
+                  <select value={editFormData.landDetails?.nearest_road_type || ''} onChange={(e) => handleEditChange('landDetails.nearest_road_type', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white">
+                    <option value="">Select</option>
+                    {['HIGHWAY', 'DOUBLE ROAD', 'SINGLE ROAD', 'GRAVEL ROAD', 'CAR ROAD', 'TRACTOR ROAD', 'BIKE ROAD', 'FOOT PATH'].map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="flex items-center gap-4 border-t border-gray-100 pt-3">
                   <label className="block text-[9px] font-bold text-green-700 uppercase tracking-wider w-1/2">Land Attached To Road</label>
@@ -956,16 +1230,16 @@ const LandVerificationDashboard = () => {
                 </div>
               </div>
             </FormCard>
-
             <FormCard title="5. LAND DETAILS" icon={TreePine} colorTheme="green">
               <div className="space-y-4">
                 <div>
                   <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Soil Type</label>
-                  <select value={editFormData.landDetails?.soil_type || 'Red'} onChange={(e) => handleEditChange('landDetails.soil_type', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white">
+                  <select value={editFormData.landDetails?.soil_type || 'Red'} onChange={(e) => handleEditChange('landDetails.soil_type', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white mb-2">
                     <option value="Red">Red</option>
                     <option value="Black">Black</option>
                     <option value="Alluvial">Alluvial</option>
                   </select>
+                  <input type="text" value={editFormData.landDetails?.soil_type_details || ''} onChange={(e) => handleEditChange('landDetails.soil_type_details', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium" placeholder="Additional details..." />
                 </div>
                 <div>
                   <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Fencing Status</label>
@@ -996,20 +1270,39 @@ const LandVerificationDashboard = () => {
                 </div>
               </div>
             </FormCard>
-
             <FormCard title="6. WATER SOURCE DETAILS" icon={Zap} colorTheme="green">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Water Source</label>
-                  <select value={editFormData.landDetails?.water_source || 'Borewell'} onChange={(e) => handleEditChange('landDetails.water_source', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white">
-                    <option value="Borewell">Borewell</option>
-                    <option value="Canal">Canal</option>
-                    <option value="River">River</option>
-                  </select>
+                  <label className="block text-[9px] font-bold text-green-700 uppercase mb-2 tracking-wider">Water Source</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {WATER_SOURCE_OPTIONS.map(opt => (
+                      <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
+                        <div className="relative flex items-center justify-center">
+                          <input 
+                            type="checkbox" 
+                            checked={(editFormData.landDetails?.water_source || []).includes(opt)} 
+                            onChange={(e) => handleArrayChange('landDetails.water_source', opt, e.target.checked)} 
+                            className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-sm checked:bg-white checked:border-orange-500 transition-all cursor-pointer" 
+                          />
+                          <div className="pointer-events-none absolute opacity-0 peer-checked:opacity-100 text-orange-500">
+                            <CheckCircle size={14} className="stroke-[3]" />
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">{opt}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">No of Bores</label>
-                  <input type="number" value={editFormData.landDetails?.number_of_bores || 2} onChange={(e) => handleEditChange('landDetails.number_of_bores', parseInt(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-bold" />
+                <div className="mt-4 flex flex-wrap gap-3">
+                  {[...new Set(editFormData.landDetails?.water_source || [])].filter(opt => opt !== 'not available').map(opt => {
+                    const fieldName = opt === 'borewell' ? 'number_of_bores' : `number_of_${opt.replace(/\s+/g, '_')}`;
+                    return (
+                      <div key={opt} className="flex-1 min-w-[45%]">
+                        <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">No of {opt}</label>
+                        <input type="number" value={editFormData.landDetails?.[fieldName] || ''} onChange={(e) => handleEditChange(`landDetails.${fieldName}`, parseInt(e.target.value) || 0)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-bold" />
+                      </div>
+                    );
+                  })}
                 </div>
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
                   <label className="block text-[10px] font-bold text-green-700 uppercase tracking-wider">Farm Pond</label>
@@ -1026,40 +1319,50 @@ const LandVerificationDashboard = () => {
 
           {/* COLUMN 3 */}
           <div className="flex flex-col gap-6">
-            <FormCard title="7. LAND GPS" icon={MapPin} colorTheme="blue">
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">ENTRY POINT GPS</label>
-                  <div className="flex items-center bg-[#0B1120] rounded-lg overflow-hidden border border-gray-800">
-                    <input type="text" className="bg-transparent border-none text-white px-3 py-2 text-xs font-bold w-full outline-none" value={`${editFormData.landDetails?.land_entry_latitude || ''}, ${editFormData.landDetails?.land_entry_longitude || ''}`} placeholder="Lat, Lng" readOnly />
+
+            <FormCard title="7. TREES" icon={TreePine} colorTheme="orange">
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { label: 'Mango', field: 'mango_trees_number' },
+                  { label: 'Coconut', field: 'coconut_trees_number' },
+                  { label: 'Neem', field: 'neem_trees_number' },
+                  { label: 'Banyan', field: 'baniyan_trees_number' },
+                  { label: 'Tamarind', field: 'tamarind_trees_number' },
+                  { label: 'Sapota', field: 'sapoto_trees_number' },
+                  { label: 'Guava', field: 'guava_trees_number' },
+                  { label: 'Teak', field: 'teak_trees_number' },
+                  { label: 'Other', field: 'other_trees_number' }
+                ].map(tree => (
+                  <div key={tree.field} className="flex flex-col">
+                    <span className="text-[9px] font-bold text-orange-800 tracking-wider uppercase mb-1">{tree.label}</span>
+                    <input type="number" min="0" value={editFormData.landDetails?.[tree.field] || ''} onChange={(e) => handleEditChange(`landDetails.${tree.field}`, parseInt(e.target.value) || 0)} className="w-full border border-gray-200 rounded-lg p-2 text-xs outline-none focus:border-orange-400 font-bold" placeholder="0" />
                   </div>
-                </div>
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-wider">BOUNDARY POINTS</label>
-                    <button className="text-orange-500 hover:text-orange-600 border border-orange-200 rounded-full p-0.5"><CheckCircle size={10} /></button>
-                  </div>
-                  <div className="flex items-center bg-[#0B1120] rounded-lg overflow-hidden border border-gray-800">
-                    <input type="text" className="bg-transparent border-none text-gray-400 px-3 py-2 text-xs font-bold w-full outline-none" value={`${editFormData.landDetails?.land_boundary_latitude || ''}, ${editFormData.landDetails?.land_boundary_longitude || ''}`} placeholder="Point 1 GPS" readOnly />
-                    <button className="bg-[#1e293b] p-2 text-blue-400 hover:text-blue-300 transition-colors">
-                      <MapPin size={12} />
-                    </button>
-                  </div>
-                </div>
+                ))}
               </div>
             </FormCard>
 
             <FormCard title="8. MULTIMEDIA REGISTRY" icon={ImageIcon} colorTheme="blue">
               <div className="grid grid-cols-3 gap-2">
-                {[1,2,3,4,5,6,7,8,9].map((i) => (
-                  <div key={i} className="aspect-square bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-300 hover:bg-gray-100 cursor-pointer transition-colors relative">
-                    {editFormData.media && editFormData.media[i-1] ? (
-                       <img src={fixUrl(editFormData.media[i-1].url)} className="w-full h-full object-cover rounded-lg" alt="" />
-                    ) : (
-                       i === 6 ? <Video size={16} className="text-orange-400" /> : <ImageIcon size={16} />
-                    )}
-                  </div>
-                ))}
+                {[1,2,3,4,5,6,7,8,9].map((i) => {
+                  const validMedia = (editFormData.media || []).filter(m => m.category && m.category.toLowerCase() !== 'default');
+                  const mediaItem = validMedia[i-1];
+                  return (
+                    <div key={i} className="aspect-square bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-300 hover:bg-gray-100 transition-colors relative">
+                      {mediaItem ? (
+                         <a href={fixUrl(mediaItem.url)} target="_blank" rel="noopener noreferrer" className="w-full h-full block relative cursor-pointer group">
+                           <img src={fixUrl(mediaItem.url)} className="w-full h-full object-cover rounded-lg" alt="" />
+                           <div className="absolute bottom-0 left-0 right-0 bg-black/60 rounded-b-lg px-1 py-0.5">
+                              <span className="text-white text-[7px] font-bold uppercase truncate block text-center">
+                                 {mediaItem.category?.replace('_', ' ')}
+                              </span>
+                           </div>
+                         </a>
+                      ) : (
+                         i === 6 ? <Video size={16} className="text-orange-400" /> : <ImageIcon size={16} />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
               <div className="mt-4">
                  <select value={selectedMediaCategory} onChange={(e) => setSelectedMediaCategory(e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[9px] outline-none focus:border-blue-400 bg-white mb-2 uppercase font-bold text-gray-600 tracking-wide">
@@ -1068,7 +1371,6 @@ const LandVerificationDashboard = () => {
                  </select>
                  <input type="file" accept="image/*,video/*" onChange={handleAddMedia} disabled={uploading || !selectedMediaCategory} className="w-full text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
               </div>
-
             </FormCard>
 
             <FormCard title="9. DOCUMENTS" icon={FileText} colorTheme="blue">
@@ -1078,10 +1380,14 @@ const LandVerificationDashboard = () => {
                   
                   return (
                     <div key={docType} className="border border-gray-100 rounded-lg p-3 bg-white shadow-sm flex items-center justify-between relative group overflow-hidden">
-                      <span className="text-[10px] font-bold text-blue-800 tracking-wider uppercase">{docType}</span>
+                      {existingDoc ? (
+                         <a href={fixUrl(existingDoc.file_url)} target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-blue-600 hover:text-blue-800 underline tracking-wider uppercase cursor-pointer">{docType}</a>
+                      ) : (
+                         <span className="text-[10px] font-bold text-blue-800 tracking-wider uppercase">{docType}</span>
+                      )}
                       <div className="flex items-center gap-2">
                         {existingDoc ? (
-                           <a href={fixUrl(existingDoc.file_url)} target="_blank" rel="noopener noreferrer" className="text-green-500 hover:text-green-600"><CheckCircle size={16} /></a>
+                           <a href={fixUrl(existingDoc.file_url)} target="_blank" rel="noopener noreferrer" className="text-green-500 hover:text-green-600 cursor-pointer"><CheckCircle size={16} /></a>
                         ) : null}
                         <label className="cursor-pointer text-gray-300 hover:text-blue-500 transition-colors">
                           <input type="file" className="hidden" accept="image/*,application/pdf" onChange={(e) => uploadSpecificDocument(e, docType)} disabled={uploading} />
@@ -1101,13 +1407,24 @@ const LandVerificationDashboard = () => {
             <FormCard title="10. SALE STATUS" icon={CheckCircle} colorTheme="green">
               <div className="space-y-4">
                 <div>
-                  <select value={editFormData.land_sale_status || 'Available For Sale'} onChange={(e) => handleEditChange('land_sale_status', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[11px] outline-none focus:border-green-400 font-bold bg-white">
-                    <option value="Available For Sale">Available For Sale</option>
-                    <option value="Token Received">Token Received</option>
-                    <option value="Agreement Made">Agreement Made</option>
-                    <option value="Sold">Sold</option>
-                    <option value="Not Available">Not Available</option>
-                  </select>
+                  <div className="grid grid-cols-1 gap-2">
+                    {['TOKEN RECEIVED', 'MORTGAGED', 'AVAILABLE FOR SALE', 'AGREEMENT Made', 'NOT AVAILABLE', 'SOLD'].map(opt => (
+                      <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
+                        <div className="relative flex items-center justify-center">
+                          <input 
+                            type="checkbox" 
+                            checked={(editFormData.land_sale_available_status || []).includes(opt)} 
+                            onChange={(e) => handleArrayChange('land_sale_available_status', opt, e.target.checked)} 
+                            className="peer appearance-none w-4 h-4 border-2 border-green-400 rounded-sm checked:bg-white checked:border-green-500 transition-all cursor-pointer" 
+                          />
+                          <div className="pointer-events-none absolute opacity-0 peer-checked:opacity-100 text-green-500">
+                            <CheckCircle size={14} className="stroke-[3]" />
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">{opt}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
             </FormCard>
@@ -1115,10 +1432,10 @@ const LandVerificationDashboard = () => {
             <FormCard title="11. MORTGAGE STATUS" icon={Building2} colorTheme="blue">
               <div className="space-y-4">
                 <div>
-                  <select value={editFormData.mortgage_status || 'Available For Mortgage'} onChange={(e) => handleEditChange('mortgage_status', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[11px] outline-none focus:border-blue-400 font-bold bg-white">
-                    <option value="Available For Mortgage">Available For Mortgage</option>
-                    <option value="Currently Mortgaged">Currently Mortgaged</option>
-                    <option value="Not Available">Not Available</option>
+                  <select value={editFormData.mortage_availability_status || 'AVAILABLE FOR MORTGAGE'} onChange={(e) => handleEditChange('mortage_availability_status', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[11px] outline-none focus:border-blue-400 font-bold bg-white">
+                    <option value="AVAILABLE FOR MORTGAGE">AVAILABLE FOR MORTGAGE</option>
+                    <option value="CURRENTLY MORTGAGED">CURRENTLY MORTGAGED</option>
+                    <option value="NOT AVAILABLE">NOT AVAILABLE</option>
                   </select>
                 </div>
               </div>
@@ -1129,14 +1446,14 @@ const LandVerificationDashboard = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-[9px] font-bold text-blue-800 tracking-wider uppercase">Urgent Sale</span>
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" checked={(editFormData.urgency_listing || []).includes('Urgent Sale')} onChange={(e) => handleArrayChange('urgency_listing', 'Urgent Sale', e.target.checked)} />
+                    <input type="checkbox" className="sr-only peer" checked={(editFormData.urgency_listing || []).includes('urgent sale')} onChange={(e) => handleArrayChange('urgency_listing', 'urgent sale', e.target.checked)} />
                     <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-500"></div>
                   </label>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[9px] font-bold text-blue-800 tracking-wider uppercase">Premium Listing</span>
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" checked={editFormData.premium_listing || false} onChange={(e) => handleEditChange('premium_listing', e.target.checked)} />
+                    <input type="checkbox" className="sr-only peer" checked={(editFormData.urgency_listing || []).includes('premium listing')} onChange={(e) => handleArrayChange('urgency_listing', 'premium listing', e.target.checked)} />
                     <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-500"></div>
                   </label>
                 </div>
@@ -1152,7 +1469,7 @@ const LandVerificationDashboard = () => {
             
             <FormCard title="13. RISK AUDIT" icon={XCircle} colorTheme="red">
               <div className="space-y-4">
-                {['Siblings Issue', 'Cousins Issue', 'Boundary Dispute', 'Rocks In Land', 'Electric Poles', 'Sealing', 'Path Issue', 'No Path at all', 'Other Discrepancy'].map(status => (
+                {['Siblings Issue (own Brother or Sister)', 'Cousins Issue (of uncles family)', 'Boundary', 'Rocks In Land', 'Electric Poles', 'Sealing', 'path issue', 'No Path at all'].map(status => (
                   <label key={status} className="flex items-center gap-3 cursor-pointer group">
                     <div className="relative flex items-center justify-center">
                       <input type="checkbox" value={status} checked={(editFormData.landDetails?.complaints || []).includes(status)} onChange={(e) => handleArrayChange('landDetails.complaints', status, e.target.checked)} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-sm checked:bg-white checked:border-orange-500 transition-all cursor-pointer" />
@@ -1299,7 +1616,7 @@ const LandVerificationDashboard = () => {
                   <div><strong>Nearest Road:</strong> {selectedLand.landDetails.nearest_road_type || 'N/A'}</div>
                   <div><strong>Attached to Road:</strong> {selectedLand.landDetails.land_attached_to_road || 'N/A'}</div>
                   <div><strong>Path Ownership:</strong> {selectedLand.landDetails.path_ownership || 'N/A'}</div>
-                  <div><strong>Soil Type:</strong> {selectedLand.landDetails.soil_type || 'N/A'}</div>
+                  <div><strong>Soil Type:</strong> {selectedLand.landDetails.soil_type || 'N/A'} {selectedLand.landDetails.soil_type_details ? `(${selectedLand.landDetails.soil_type_details})` : ''}</div>
                   <div><strong>Fencing Status:</strong> {selectedLand.landDetails.fencing_status || 'N/A'}</div>
                   <div><strong>Farm Pond:</strong> {selectedLand.landDetails.farm_pond ? 'Yes' : 'No'}</div>
                   <div><strong>Number of Bores:</strong> {selectedLand.landDetails.number_of_bores || 0}</div>
