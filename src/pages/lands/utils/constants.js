@@ -23,7 +23,7 @@ export const COMPLAINT_OPTIONS = [
 ];
 export const MEDIA_CATEGORIES = ['farmer_photo', 'land_soil', 'fencing', 'farm_pond', 'residence', 'shed', 'water_source', 'trees', 'rocks', 'electric_poles', 'others', 'video', 'farmer_agreement'];
 export const DOC_TYPES = ['PASSBOOK', 'AADHAR', 'TITLE_DEED'];
-export const SOIL_TYPES = ['Red', 'Black', 'Alluvial'];
+export const SOIL_TYPES = ['Red Soil', 'Black Soil', 'Sandy Soil', 'Clay Soil', 'Loamy Soil'];
 export const WATER_SOURCE_TYPES = WATER_SOURCE_OPTIONS;
 export const ELECTRICITY_PHASES = ELECTRICITY_OPTIONS;
 export const COMPLAINTS_TYPES = COMPLAINT_OPTIONS;

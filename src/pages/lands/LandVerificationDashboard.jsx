@@ -1359,10 +1359,13 @@ const LandVerificationDashboard = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Soil Type</label>
-                  <select value={editFormData.landDetails?.soil_type || 'Red'} onChange={(e) => handleEditChange('landDetails.soil_type', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white mb-2">
-                    <option value="Red">Red</option>
-                    <option value="Black">Black</option>
-                    <option value="Alluvial">Alluvial</option>
+                  <select value={editFormData.landDetails?.soil_type || ''} onChange={(e) => handleEditChange('landDetails.soil_type', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white mb-2">
+                    <option value="">Select</option>
+                    <option value="Red Soil">Red Soil</option>
+                    <option value="Black Soil">Black Soil</option>
+                    <option value="Sandy Soil">Sandy Soil</option>
+                    <option value="Clay Soil">Clay Soil</option>
+                    <option value="Loamy Soil">Loamy Soil</option>
                   </select>
                   <input type="text" value={editFormData.landDetails?.soil_type_details || ''} onChange={(e) => handleEditChange('landDetails.soil_type_details', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium" placeholder="Additional details..." />
                 </div>
