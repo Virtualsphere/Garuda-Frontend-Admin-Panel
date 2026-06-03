@@ -1011,6 +1011,7 @@ const AddLand = () => {
           <option value="Fully Fenced">Fully Fenced</option>
           <option value="Partially Fenced">Partially Fenced</option>
           <option value="Not Fenced">Not Fenced</option>
+          <option value="All side with gates">All side with gates</option>
         </select>
       </div>
       <div className="field-group">
