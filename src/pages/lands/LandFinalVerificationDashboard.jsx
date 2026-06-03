@@ -322,6 +322,15 @@ const LandFinalVerificationDashboard = () => {
   // Initialize edit form when editing starts
   const startEditing = (land) => {
     const clonedData = JSON.parse(JSON.stringify(land));
+    
+    // Normalize has_whatsapp based on whatsapp number and phone
+    if (clonedData.farmerDetails) {
+      if (clonedData.farmerDetails.whatsapp && clonedData.farmerDetails.phone && String(clonedData.farmerDetails.whatsapp).trim() === String(clonedData.farmerDetails.phone).trim()) {
+        clonedData.farmerDetails.has_whatsapp = 'yes';
+      } else {
+        clonedData.farmerDetails.has_whatsapp = 'no';
+      }
+    }
     setEditFormData(clonedData);
     setIsEditing(true);
     setEditTab('basic');
