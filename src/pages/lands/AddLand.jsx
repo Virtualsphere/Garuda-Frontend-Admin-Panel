@@ -9,9 +9,10 @@ import {
   LayoutGrid, UserCheck, CalendarCheck,
   UploadCloud, MapPin, CheckCircle, Save, 
   IndianRupee, Layers, Image as ImageIcon, 
-  Video, Trash2, Camera, Compass
+  Video, Trash2, Camera, Compass, ShieldCheck
 } from 'lucide-react';
 import LandVerificationDashboard from './LandVerificationDashboard';
+import VerifiedLandsDashboard from './VerifiedLandsDashboard';
 
 const INITIAL_FARMER_DETAILS = {
   name: '',
@@ -78,7 +79,7 @@ const INITIAL_FORM_DATA = {
 };
 
 // Options for select fields
-const LAND_SALE_STATUS_OPTIONS = ['TOKEN RECEIVED', 'MORTGAGED', 'AVAILABLE FOR SALE', 'AGREEMENT Made', 'NOT AVAILABLE', 'SOLD'];
+const LAND_SALE_STATUS_OPTIONS = ['TOKEN RECEIVED', 'AVAILABLE FOR SALE', 'AGREEMENT Made', 'NOT AVAILABLE', 'SOLD'];
 const MORTGAGE_STATUS_OPTIONS = ['AVAILABLE FOR MORTGAGE', 'CURRENTLY MORTGAGED', 'NOT AVAILABLE'];
 const URGENCY_OPTIONS = ['urgent sale', 'premium listing'];
 const OWNERSHIP_TYPE_OPTIONS = ['Ancestral', 'Purchased'];
@@ -941,7 +942,7 @@ const AddLand = () => {
           className="land-select"
         >
           <option value="">Select</option>
-          {['HIGHWAY', 'DOUBLE ROAD', 'SINGLE ROAD', 'GRAVEL ROAD', 'CAR ROAD', 'TRACTOR ROAD', 'BIKE ROAD', 'FOOT PATH'].map(opt => (
+          {['HIGHWAY', 'DOUBLE ROAD', 'SINGLE ROAD', 'GRAVEL ROAD'].map(opt => (
             <option key={opt} value={opt}>{opt}</option>
           ))}
         </select>
@@ -1363,6 +1364,7 @@ const AddLand = () => {
           { label: 'Crew', icon: <Users size={13} /> },
           { label: 'Work allotment', icon: <CheckSquare size={13} /> },
           { label: 'Verification', icon: <Search size={13} /> },
+          { label: 'Verified Lands', icon: <ShieldCheck size={13} /> },
           { label: 'Edit data', icon: <PenLine size={13} /> },
           { label: 'Publish', icon: <CircleDot size={13} /> },
           { label: 'Trainee observation', icon: <Eye size={13} /> },
@@ -1384,6 +1386,8 @@ const AddLand = () => {
       {/* Conditionally render based on active nav item */}
       {activeNavItem === 'Verification' ? (
         <LandVerificationDashboard />
+      ) : activeNavItem === 'Verified Lands' ? (
+        <VerifiedLandsDashboard />
       ) : (
         <>
           {/* Page Header */}

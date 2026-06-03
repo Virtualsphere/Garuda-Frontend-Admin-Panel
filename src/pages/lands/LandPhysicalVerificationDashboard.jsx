@@ -32,7 +32,7 @@ import { fixUrl, IMAGE_NOT_FOUND_PLACEHOLDER } from "../../utils/fixUrl";
 const API_BASE_URL = `${BASE_URL}/api`;
 
 // Option constants - match Add Land form
-const LAND_SALE_STATUS_OPTIONS = ['TOKEN RECEIVED', 'MORTGAGED', 'AVAILABLE FOR SALE', 'AGREEMENT Made', 'NOT AVAILABLE', 'SOLD'];
+const LAND_SALE_STATUS_OPTIONS = ['TOKEN RECEIVED', 'AVAILABLE FOR SALE', 'AGREEMENT Made', 'NOT AVAILABLE', 'SOLD'];
 const MORTGAGE_STATUS_OPTIONS = ['AVAILABLE FOR MORTGAGE', 'CURRENTLY MORTGAGED', 'NOT AVAILABLE'];
 const URGENCY_OPTIONS = ['urgent sale', 'premium listing'];
 const OWNERSHIP_TYPE_OPTIONS = ['Ancestral', 'Purchased'];
@@ -1090,7 +1090,7 @@ const LandPhysicalVerificationDashboard = () => {
                   <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Road Type</label>
                   <select value={editFormData.landDetails?.nearest_road_type || ''} onChange={(e) => handleEditChange('landDetails.nearest_road_type', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white">
                     <option value="">Select</option>
-                    {['HIGHWAY', 'DOUBLE ROAD', 'SINGLE ROAD', 'GRAVEL ROAD', 'CAR ROAD', 'TRACTOR ROAD', 'BIKE ROAD', 'FOOT PATH'].map(opt => (
+                    {['HIGHWAY', 'DOUBLE ROAD', 'SINGLE ROAD', 'GRAVEL ROAD'].map(opt => (
                       <option key={opt} value={opt}>{opt}</option>
                     ))}
                   </select>
@@ -1130,10 +1130,10 @@ const LandPhysicalVerificationDashboard = () => {
                 </div>
                 <div>
                   <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Fencing Status</label>
-                  <select value={editFormData.landDetails?.fencing_status || 'All sides'} onChange={(e) => handleEditChange('landDetails.fencing_status', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white">
-                    <option value="All sides">All sides</option>
-                    <option value="Partial">Partial</option>
-                    <option value="None">None</option>
+                  <select value={editFormData.landDetails?.fencing_status || 'Fully Fenced'} onChange={(e) => handleEditChange('landDetails.fencing_status', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white">
+                    <option value="Fully Fenced">Fully Fenced</option>
+                    <option value="Partially Fenced">Partially Fenced</option>
+                    <option value="Not Fenced">Not Fenced</option>
                   </select>
                 </div>
                 <div>
@@ -1300,8 +1300,9 @@ const LandPhysicalVerificationDashboard = () => {
             <FormCard title="10. SALE STATUS" icon={CheckCircle} colorTheme="green">
               <div className="space-y-4">
                 <div>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase mb-2 tracking-wider">Status</label>
                   <div className="grid grid-cols-1 gap-2">
-                    {['TOKEN RECEIVED', 'MORTGAGED', 'AVAILABLE FOR SALE', 'AGREEMENT Made', 'NOT AVAILABLE', 'SOLD'].map(opt => (
+                    {['TOKEN RECEIVED', 'AVAILABLE FOR SALE', 'AGREEMENT Made', 'NOT AVAILABLE', 'SOLD'].map(opt => (
                       <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
                         <div className="relative flex items-center justify-center">
                           <input

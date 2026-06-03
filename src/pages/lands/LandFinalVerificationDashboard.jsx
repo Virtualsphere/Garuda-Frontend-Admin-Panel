@@ -30,7 +30,7 @@ import { fixUrl, IMAGE_NOT_FOUND_PLACEHOLDER } from '../../utils/fixUrl';
 const API_BASE_URL = `${BASE_URL}/api`;
 
 // Option constants - match Add Land form
-const LAND_SALE_STATUS_OPTIONS = ['TOKEN RECEIVED', 'MORTGAGED', 'AVAILABLE FOR SALE', 'AGREEMENT Made', 'NOT AVAILABLE', 'SOLD'];
+const LAND_SALE_STATUS_OPTIONS = ['TOKEN RECEIVED', 'AVAILABLE FOR SALE', 'AGREEMENT Made', 'NOT AVAILABLE', 'SOLD'];
 const MORTGAGE_STATUS_OPTIONS = ['AVAILABLE FOR MORTGAGE', 'CURRENTLY MORTGAGED', 'NOT AVAILABLE'];
 const URGENCY_OPTIONS = ['urgent sale', 'premium listing'];
 const OWNERSHIP_TYPE_OPTIONS = ['Ancestral', 'Purchased'];
@@ -734,12 +734,16 @@ const LandFinalVerificationDashboard = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-1">Nearest Road Type</label>
-                      <input
-                        type="text"
+                      <select
                         value={editFormData.landDetails?.nearest_road_type || ''}
                         onChange={(e) => handleEditChange('landDetails.nearest_road_type', e.target.value)}
                         className="w-full border rounded-lg p-2"
-                      />
+                      >
+                        <option value="">Select</option>
+                        {['HIGHWAY', 'DOUBLE ROAD', 'SINGLE ROAD', 'GRAVEL ROAD'].map(opt => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Land Attached to Road</label>
@@ -772,12 +776,15 @@ const LandFinalVerificationDashboard = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Fencing Status</label>
-                      <input
-                        type="text"
-                        value={editFormData.landDetails?.fencing_status || ''}
+                      <select
+                        value={editFormData.landDetails?.fencing_status || 'Fully Fenced'}
                         onChange={(e) => handleEditChange('landDetails.fencing_status', e.target.value)}
                         className="w-full border rounded-lg p-2"
-                      />
+                      >
+                        <option value="Fully Fenced">Fully Fenced</option>
+                        <option value="Partially Fenced">Partially Fenced</option>
+                        <option value="Not Fenced">Not Fenced</option>
+                      </select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Number of Bores</label>
