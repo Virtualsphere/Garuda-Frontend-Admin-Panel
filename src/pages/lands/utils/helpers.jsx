@@ -18,7 +18,7 @@ export const getAvatarColor = (name) => {
 };
 
 // Format price in lakhs
-export export const formatPriceShort = (price) => {
+export const formatPriceShort = (price) => {
   if (!price) return '₹0';
   if (price >= 10000000) return `₹${(price / 10000000).toFixed(1)}Cr`;
   if (price >= 100000) return `₹${(price / 100000).toFixed(0)}L`;
@@ -26,8 +26,18 @@ export export const formatPriceShort = (price) => {
   return `₹${price}`;
 };
 
-// Status badge component (kept for modals)
-export const StatusBadge = ({ status, type }) => {
+// Format price full
+export const formatPrice = (price) => {
+  if (!price) return '0';
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0
+  }).format(price);
+};
+
+// Status badge component
+export const StatusBadge = ({ status }) => {
   const getStyles = () => {
     switch (status?.toLowerCase()) {
       case 'complete':
@@ -42,3 +52,17 @@ export const StatusBadge = ({ status, type }) => {
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  const getIcon = () => {
+    if (status === 'complete') return <CheckCircle className="w-3 h-3 mr-1" />;
+    if (status === 'rejected') return <XCircle className="w-3 h-3 mr-1" />;
+    return <Clock className="w-3 h-3 mr-1" />;
+  };
+
+  return (
+    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStyles()}`}>
+      {getIcon()}
+      {status || 'pending'}
+    </span>
+  );
+};

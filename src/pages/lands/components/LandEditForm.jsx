@@ -10,7 +10,10 @@ import { FormCard } from './FormCard';
 import { styles } from '../utils/styles';
 import { 
   DOC_TYPES, WATER_SOURCE_TYPES, ELECTRICITY_PHASES, SOIL_TYPES, 
-  COMPLAINTS_TYPES, LAND_SALE_STATUS, URGENCY_LISTING 
+  COMPLAINTS_TYPES, LAND_SALE_STATUS, URGENCY_LISTING,
+  OWNERSHIP_TYPE_OPTIONS, LOCALITY_OPTIONS, OWNERSHIP_STATUS_OPTIONS,
+  AGE_OPTIONS, LITERACY_OPTIONS, NATURE_OPTIONS, MEDIA_CATEGORIES,
+  MORTGAGE_STATUS_OPTIONS, WATER_SOURCE_OPTIONS
 } from '../utils/constants';
 import { getAvatarColor, formatPriceShort, formatPrice, StatusBadge } from '../utils/helpers';
 
@@ -98,7 +101,7 @@ export const LandEditForm = ({
               disabled={updatingAction !== null}
             >
               {updatingAction === 'physical' ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
-              PHYSICAL VERIFY
+              SUGGEST PHYSICAL VERIFICATION
             </button>
           </div>
         </div>
@@ -361,7 +364,7 @@ export const LandEditForm = ({
                   <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Road Type</label>
                   <select value={editFormData.landDetails?.nearest_road_type || ''} onChange={(e) => handleEditChange('landDetails.nearest_road_type', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white">
                     <option value="">Select</option>
-                    {['HIGHWAY', 'DOUBLE ROAD', 'SINGLE ROAD', 'GRAVEL ROAD', 'CAR ROAD', 'TRACTOR ROAD', 'BIKE ROAD', 'FOOT PATH'].map(opt => (
+                    {['HIGHWAY', 'DOUBLE ROAD', 'SINGLE ROAD', 'GRAVEL ROAD'].map(opt => (
                       <option key={opt} value={opt}>{opt}</option>
                     ))}
                   </select>
@@ -400,10 +403,11 @@ export const LandEditForm = ({
                 </div>
                 <div>
                   <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Fencing Status</label>
-                  <select value={editFormData.landDetails?.fencing_status || 'All sides'} onChange={(e) => handleEditChange('landDetails.fencing_status', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white">
-                    <option value="All sides">All sides</option>
-                    <option value="Partial">Partial</option>
-                    <option value="None">None</option>
+                  <select value={editFormData.landDetails?.fencing_status || ''} onChange={(e) => handleEditChange('landDetails.fencing_status', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white">
+                    <option value="">Select</option>
+                    <option value="Fully Fenced">Fully Fenced</option>
+                    <option value="Partially Fenced">Partially Fenced</option>
+                    <option value="Not Fenced">Not Fenced</option>
                   </select>
                 </div>
                 <div>
@@ -569,7 +573,7 @@ export const LandEditForm = ({
               <div className="space-y-4">
                 <div>
                   <div className="grid grid-cols-1 gap-2">
-                    {['TOKEN RECEIVED', 'MORTGAGED', 'AVAILABLE FOR SALE', 'AGREEMENT Made', 'NOT AVAILABLE', 'SOLD'].map(opt => (
+                    {LAND_SALE_STATUS.map(opt => (
                       <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
                         <div className="relative flex items-center justify-center">
                           <input 
