@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Search, 
-  Filter, 
-  ChevronLeft, 
-  ChevronRight, 
-  Eye, 
-  Edit, 
-  Save, 
-  X, 
-  CheckCircle, 
-  XCircle, 
+import {
+  Search,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Edit,
+  Save,
+  X,
+  CheckCircle,
+  XCircle,
   Clock,
   MapPin,
   User,
@@ -451,7 +451,7 @@ const LandPhysicalVerificationDashboard = () => {
   const [selectedDocType, setSelectedDocType] = useState('');
   const [error, setError] = useState(null);
   const [hoveredRow, setHoveredRow] = useState(null);
-  
+
   // Fetch lands for physical audit (phone complete; physical pending or complete)
   const fetchLands = async () => {
     setLoading(true);
@@ -465,7 +465,7 @@ const LandPhysicalVerificationDashboard = () => {
       });
       if (!response.ok) throw new Error('Failed to fetch lands');
       const result = await response.json();
-      
+
       let landsData = result.data || result;
       if (!Array.isArray(landsData)) landsData = [landsData];
 
@@ -476,7 +476,7 @@ const LandPhysicalVerificationDashboard = () => {
         }
         return phoneComplete && land.physcial_verification_status === 'complete';
       });
-      
+
       setLands(landsData);
     } catch (error) {
       console.error('Error fetching lands:', error);
@@ -609,16 +609,16 @@ const LandPhysicalVerificationDashboard = () => {
       });
       if (!response.ok) throw new Error('Failed to update land');
       const result = await response.json();
-      
+
       await fetchLands();
-      
+
       if (selectedLand?.id === id) {
         const updatedLand = lands.find(l => l.id === id);
         if (updatedLand) setSelectedLand(updatedLand);
       }
-      
+
       setIsEditing(false);
-            setSelectedLand(null);
+      setSelectedLand(null);
       alert('Land updated successfully!');
     } catch (error) {
       console.error('Error updating land:', error);
@@ -631,16 +631,16 @@ const LandPhysicalVerificationDashboard = () => {
   // Handle edit form changes for nested objects
   const handleEditChange = (path, value) => {
     setEditFormData(prev => {
-      const newData = { ...prev };
+      const newData = JSON.parse(JSON.stringify(prev));
       const keys = path.split('.');
       let current = newData;
-      
+
       for (let i = 0; i < keys.length - 1; i++) {
         if (!current[keys[i]]) current[keys[i]] = {};
         current = current[keys[i]];
       }
       current[keys[keys.length - 1]] = value;
-      
+
       return newData;
     });
   };
@@ -651,21 +651,21 @@ const LandPhysicalVerificationDashboard = () => {
       const newData = JSON.parse(JSON.stringify(prev));
       const keys = path.split('.');
       let current = newData;
-      
+
       for (let i = 0; i < keys.length - 1; i++) {
         if (!current[keys[i]]) current[keys[i]] = {};
         current = current[keys[i]];
       }
-      
+
       const lastKey = keys[keys.length - 1];
       const currentArray = current[lastKey] || [];
-      
+
       if (checked) {
         current[lastKey] = Array.from(new Set([...currentArray, value]));
       } else {
         current[lastKey] = currentArray.filter(item => item !== value);
       }
-      
+
       return newData;
     });
   };
@@ -673,19 +673,108 @@ const LandPhysicalVerificationDashboard = () => {
   // Initialize edit form when editing starts
   const startEditing = (land) => {
     const clonedData = JSON.parse(JSON.stringify(land));
+
+    // Normalize landDetails - ensure it exists
+    if (!clonedData.landDetails) {
+      clonedData.landDetails = {};
+    }
+
+    // Normalize electricity: backend stores as array ['single phase'] or ['three phase']
+    // Convert to electricity_phase for the radio buttons
+    const electricityArr = clonedData.landDetails.electricity || [];
+    if (electricityArr.length > 0) {
+      const val = electricityArr[0]?.toLowerCase?.() || '';
+      if (val.includes('single')) {
+        clonedData.landDetails.electricity_phase = 'SINGLE';
+      } else if (val.includes('three')) {
+        clonedData.landDetails.electricity_phase = 'THREE';
+      }
+    }
+
+    // Normalize tree fields - ensure they are numbers, extract from strings like "mango-12"
+    const treeFields = [
+      'mango_trees_number', 'coconut_trees_number', 'neem_trees_number',
+      'baniyan_trees_number', 'tamarind_trees_number', 'sapoto_trees_number',
+      'guava_trees_number', 'teak_trees_number', 'other_trees_number'
+    ];
+    treeFields.forEach(field => {
+      let val = clonedData.landDetails[field];
+      if (typeof val === 'string') {
+        const match = val.match(/\d+/);
+        val = match ? parseInt(match[0], 10) : 0;
+      }
+      // Keep 0 as 0, otherwise default to 0
+      clonedData.landDetails[field] = (val !== undefined && val !== null && val !== '') ? Number(val) : 0;
+    });
+
+    // Parse GPS if they are comma-separated strings (backend might return combined strings)
+    const parseGPS = (val) => {
+      if (typeof val === 'string' && val.includes(',')) {
+        return val.split(',').map(s => s.trim());
+      }
+      return null;
+    };
+
+    if (clonedData.landDetails) {
+      const entryCoords = parseGPS(clonedData.landDetails.land_entry_latitude);
+      if (entryCoords && entryCoords.length >= 2) {
+        clonedData.landDetails.land_entry_latitude = entryCoords[0];
+        clonedData.landDetails.land_entry_longitude = entryCoords[1];
+      }
+
+      const boundaryCoords = parseGPS(clonedData.landDetails.land_boundary_latitude);
+      if (boundaryCoords && boundaryCoords.length >= 2) {
+        clonedData.landDetails.land_boundary_latitude = boundaryCoords[0];
+        clonedData.landDetails.land_boundary_longitude = boundaryCoords[1];
+      }
+    }
+
+    // Backend sends mixed case like "Highway", "Double Road" but options are "HIGHWAY", "DOUBLE ROAD"
+    if (clonedData.landDetails.nearest_road_type) {
+      clonedData.landDetails.nearest_road_type = clonedData.landDetails.nearest_road_type.toUpperCase();
+    }
+
+    // Normalize village - trim whitespace/tab characters
+    if (clonedData.village) {
+      clonedData.village = clonedData.village.trim();
+    }
+
+    // Normalize arrays that might come as null from backend
+    if (!Array.isArray(clonedData.landDetails.residence)) {
+      clonedData.landDetails.residence = [];
+    }
+    if (!Array.isArray(clonedData.landDetails.water_source)) {
+      clonedData.landDetails.water_source = [];
+    }
+    if (typeof clonedData.landDetails.complaints === 'string') {
+      try { clonedData.landDetails.complaints = JSON.parse(clonedData.landDetails.complaints); } catch (e) { clonedData.landDetails.complaints = []; }
+    }
+    if (!Array.isArray(clonedData.landDetails.complaints)) {
+      clonedData.landDetails.complaints = [];
+    }
+    if (!Array.isArray(clonedData.landDetails.electricity)) {
+      clonedData.landDetails.electricity = [];
+    }
+    if (!Array.isArray(clonedData.land_sale_available_status)) {
+      clonedData.land_sale_available_status = [];
+    }
+    if (!Array.isArray(clonedData.urgency_listing)) {
+      clonedData.urgency_listing = [];
+    }
+
     setEditFormData(clonedData);
     setIsEditing(true);
     setEditTab('basic');
-      };
+  };
 
   // Cancel editing and go back to phone verification list
   const cancelEditing = () => {
     setIsEditing(false);
     setSelectedLand(null);
-      };
+  };
 
   // Filter lands by search
-  const filteredLands = lands.filter(land => 
+  const filteredLands = lands.filter(land =>
     land.village?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     land.district?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     land.mandal?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -722,9 +811,9 @@ const LandPhysicalVerificationDashboard = () => {
               {items.map((item, i) => (
                 <div key={i} className="border rounded-lg overflow-hidden">
                   {item.type === 'image' ? (
-                    <img 
-                      src={fixUrl(item.url)} 
-                      alt={category} 
+                    <img
+                      src={fixUrl(item.url)}
+                      alt={category}
                       className="w-full h-40 object-cover"
                       onError={(e) => {
                         e.target.src = IMAGE_NOT_FOUND_PLACEHOLDER;
@@ -769,7 +858,7 @@ const LandPhysicalVerificationDashboard = () => {
         <div className="bg-[#0B1120] rounded-xl p-4 flex flex-col md:flex-row justify-between items-center mb-6 shadow-lg mx-6 mt-2 gap-4">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-gray-600 border-2 border-gray-400 overflow-hidden flex items-center justify-center text-xl font-bold text-white">
-               {selectedLand.farmerDetails?.name?.charAt(0).toUpperCase() || 'U'}
+              {selectedLand.farmerDetails?.name?.charAt(0).toUpperCase() || 'U'}
             </div>
             <div>
               <h2 className="text-2xl font-bold text-white mb-0.5 tracking-tight leading-none">L{String(selectedLand.id).padStart(3, '0')}</h2>
@@ -779,13 +868,13 @@ const LandPhysicalVerificationDashboard = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={cancelEditing}
               className="px-4 py-2 bg-transparent border border-gray-600 text-gray-300 rounded-lg text-xs font-bold tracking-wide hover:bg-gray-800 transition-colors flex items-center gap-2"
             >
               <ChevronLeft size={14} /> BACK TO REGISTRY
             </button>
-            <button 
+            <button
               onClick={() => updateLand(selectedLand.id, editFormData)}
               className="px-5 py-2 bg-[#f97316] text-white rounded-lg text-xs font-bold tracking-wide hover:bg-[#ea580c] transition-colors shadow-lg shadow-orange-500/30 flex items-center gap-2"
               disabled={updating}
@@ -798,7 +887,7 @@ const LandPhysicalVerificationDashboard = () => {
 
         {/* 4-Column Masonry Grid */}
         <div className="px-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
-          
+
           {/* COLUMN 1 */}
           <div className="flex flex-col gap-6">
             <FormCard title="1. ADDRESS REGISTRY" icon={MapPin} colorTheme="red">
@@ -820,7 +909,7 @@ const LandPhysicalVerificationDashboard = () => {
                   <input type="text" value={editFormData.village || ''} onChange={(e) => handleEditChange('village', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" />
                 </div>
               </div>
-              
+
               <div className="mt-4">
                 <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">GPS COORDINATES</label>
                 <div className="flex items-center bg-[#0B1120] rounded-lg overflow-hidden border border-gray-800">
@@ -852,7 +941,7 @@ const LandPhysicalVerificationDashboard = () => {
                     }
                   }} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" />
                 </div>
-                
+
                 <div className="flex items-center gap-4 border-b border-gray-100 pb-3 mt-2">
                   <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-wider w-1/2">NUMBER HAS WHATSAPP?</label>
                   <div className="flex gap-4">
@@ -880,7 +969,7 @@ const LandPhysicalVerificationDashboard = () => {
                   <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">WhatsApp No</label>
                   <input type="text" value={editFormData.farmerDetails?.whatsapp || ''} onChange={(e) => handleEditChange('farmerDetails.whatsapp', e.target.value)} readOnly={editFormData.farmerDetails?.has_whatsapp === 'yes'} style={editFormData.farmerDetails?.has_whatsapp === 'yes' ? { backgroundColor: '#f1f5f9', cursor: 'not-allowed' } : {}} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-bold" />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-3 mt-4">
                   <div>
                     <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Ownership</label>
@@ -942,7 +1031,7 @@ const LandPhysicalVerificationDashboard = () => {
                 <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Price per Acre (Lakhs)</label>
                 <input type="number" value={editFormData.landDetails?.price_per_acres || 0} onChange={(e) => handleEditChange('landDetails.price_per_acres', parseFloat(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm text-orange-500 font-bold outline-none focus:border-green-400" />
               </div>
-              
+
               <div className="mt-4">
                 <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Total Value (₹)</label>
                 <input type="number" value={editFormData.landDetails?.total_value || ''} onChange={(e) => handleEditChange('landDetails.total_value', parseFloat(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm text-orange-500 font-bold outline-none focus:border-green-400" placeholder="Enter Total Value" />
@@ -952,20 +1041,20 @@ const LandPhysicalVerificationDashboard = () => {
             <FormCard title="3A. RESIDENCES & SHEDS" icon={Building2} colorTheme="green">
               <div className="space-y-4">
                 <label className="block text-[9px] font-bold text-green-700 uppercase mb-2 tracking-wider">Type of Residence</label>
-                  <div className="flex flex-wrap gap-4">
-                    {['developed farm', 'rcc house', 'asbestos shelter', 'hut'].map(opt => (
-                      <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
-                        <div className="relative flex items-center justify-center">
-                          <input type="checkbox" checked={(editFormData.landDetails?.residence || []).includes(opt)} onChange={(e) => handleArrayChange('landDetails.residence', opt, e.target.checked)} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-sm checked:bg-white checked:border-orange-500 transition-all cursor-pointer" />
-                          <div className="pointer-events-none absolute opacity-0 peer-checked:opacity-100 text-orange-500">
-                            <CheckCircle size={14} className="stroke-[3]" />
-                          </div>
+                <div className="flex flex-wrap gap-4">
+                  {['developed farm', 'rcc house', 'asbestos shelter', 'hut'].map(opt => (
+                    <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
+                      <div className="relative flex items-center justify-center">
+                        <input type="checkbox" checked={(editFormData.landDetails?.residence || []).includes(opt)} onChange={(e) => handleArrayChange('landDetails.residence', opt, e.target.checked)} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-sm checked:bg-white checked:border-orange-500 transition-all cursor-pointer" />
+                        <div className="pointer-events-none absolute opacity-0 peer-checked:opacity-100 text-orange-500">
+                          <CheckCircle size={14} className="stroke-[3]" />
                         </div>
-                        <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">{opt}</span>
-                      </label>
-                    ))}
-                  </div>
-                
+                      </div>
+                      <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">{opt}</span>
+                    </label>
+                  ))}
+                </div>
+
                 <div className="grid grid-cols-2 gap-4 mt-2 pt-2 border-t border-gray-100">
                   <div>
                     <div className="flex items-center justify-between mb-2">
@@ -1052,14 +1141,14 @@ const LandPhysicalVerificationDashboard = () => {
                   <div className="flex gap-4">
                     <label className="flex items-center gap-1.5 cursor-pointer">
                       <div className="relative flex items-center justify-center">
-                        <input type="radio" name="electricity_phase" checked={editFormData.landDetails?.electricity_phase === 'SINGLE'} onChange={() => handleEditChange('landDetails.electricity_phase', 'SINGLE')} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-full checked:border-orange-500 transition-all cursor-pointer" />
+                        <input type="radio" name="electricity_phase" checked={editFormData.landDetails?.electricity_phase === 'SINGLE' || (editFormData.landDetails?.electricity || []).some(e => e?.toLowerCase?.().includes('single'))} onChange={() => { handleEditChange('landDetails.electricity_phase', 'SINGLE'); handleEditChange('landDetails.electricity', ['single phase']); }} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-full checked:border-orange-500 transition-all cursor-pointer" />
                         <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
                       </div>
                       <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">SINGLE</span>
                     </label>
                     <label className="flex items-center gap-1.5 cursor-pointer">
                       <div className="relative flex items-center justify-center">
-                        <input type="radio" name="electricity_phase" checked={editFormData.landDetails?.electricity_phase === 'THREE'} onChange={() => handleEditChange('landDetails.electricity_phase', 'THREE')} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-full checked:border-orange-500 transition-all cursor-pointer" />
+                        <input type="radio" name="electricity_phase" checked={editFormData.landDetails?.electricity_phase === 'THREE' || (editFormData.landDetails?.electricity || []).some(e => e?.toLowerCase?.().includes('three'))} onChange={() => { handleEditChange('landDetails.electricity_phase', 'THREE'); handleEditChange('landDetails.electricity', ['three phase']); }} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-full checked:border-orange-500 transition-all cursor-pointer" />
                         <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
                       </div>
                       <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">THREE</span>
@@ -1077,11 +1166,11 @@ const LandPhysicalVerificationDashboard = () => {
                     {WATER_SOURCE_OPTIONS.map(opt => (
                       <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
                         <div className="relative flex items-center justify-center">
-                          <input 
-                            type="checkbox" 
-                            checked={(editFormData.landDetails?.water_source || []).includes(opt)} 
-                            onChange={(e) => handleArrayChange('landDetails.water_source', opt, e.target.checked)} 
-                            className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-sm checked:bg-white checked:border-orange-500 transition-all cursor-pointer" 
+                          <input
+                            type="checkbox"
+                            checked={(editFormData.landDetails?.water_source || []).includes(opt)}
+                            onChange={(e) => handleArrayChange('landDetails.water_source', opt, e.target.checked)}
+                            className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-sm checked:bg-white checked:border-orange-500 transition-all cursor-pointer"
                           />
                           <div className="pointer-events-none absolute opacity-0 peer-checked:opacity-100 text-orange-500">
                             <CheckCircle size={14} className="stroke-[3]" />
@@ -1131,44 +1220,48 @@ const LandPhysicalVerificationDashboard = () => {
                   { label: 'Guava', field: 'guava_trees_number' },
                   { label: 'Teak', field: 'teak_trees_number' },
                   { label: 'Other', field: 'other_trees_number' }
-                ].map(tree => (
-                  <div key={tree.field} className="flex flex-col">
-                    <span className="text-[9px] font-bold text-orange-800 tracking-wider uppercase mb-1">{tree.label}</span>
-                    <input type="number" min="0" value={editFormData.landDetails?.[tree.field] || ''} onChange={(e) => handleEditChange(`landDetails.${tree.field}`, parseInt(e.target.value) || 0)} className="w-full border border-gray-200 rounded-lg p-2 text-xs outline-none focus:border-orange-400 font-bold" placeholder="0" />
-                  </div>
-                ))}
+                ].map(tree => {
+                  const val = editFormData.landDetails?.[tree.field];
+                  const displayValue = (val !== undefined && val !== null && val !== '') ? val : '';
+                  return (
+                    <div key={tree.field} className="flex flex-col">
+                      <span className="text-[9px] font-bold text-orange-800 tracking-wider uppercase mb-1">{tree.label}</span>
+                      <input type="number" min="0" value={displayValue} onChange={(e) => handleEditChange(`landDetails.${tree.field}`, e.target.value === '' ? '' : parseInt(e.target.value) || 0)} className="w-full border border-gray-200 rounded-lg p-2 text-xs outline-none focus:border-orange-400 font-bold" placeholder="0" />
+                    </div>
+                  );
+                })}
               </div>
             </FormCard>
 
             <FormCard title="8. MULTIMEDIA REGISTRY" icon={ImageIcon} colorTheme="blue">
               <div className="grid grid-cols-3 gap-2">
-                {[1,2,3,4,5,6,7,8,9].map((i) => {
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => {
                   const validMedia = (editFormData.media || []).filter(m => m.category && m.category.toLowerCase() !== 'default');
-                  const mediaItem = validMedia[i-1];
+                  const mediaItem = validMedia[i - 1];
                   return (
                     <div key={i} className="aspect-square bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-300 hover:bg-gray-100 transition-colors relative">
                       {mediaItem ? (
-                         <a href={fixUrl(mediaItem.url)} target="_blank" rel="noopener noreferrer" className="w-full h-full block relative cursor-pointer group">
-                           <img src={fixUrl(mediaItem.url)} className="w-full h-full object-cover rounded-lg" alt="" />
-                           <div className="absolute bottom-0 left-0 right-0 bg-black/60 rounded-b-lg px-1 py-0.5">
-                              <span className="text-white text-[7px] font-bold uppercase truncate block text-center">
-                                 {mediaItem.category?.replace('_', ' ')}
-                              </span>
-                           </div>
-                         </a>
+                        <a href={fixUrl(mediaItem.url)} target="_blank" rel="noopener noreferrer" className="w-full h-full block relative cursor-pointer group">
+                          <img src={fixUrl(mediaItem.url)} className="w-full h-full object-cover rounded-lg" alt="" />
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/60 rounded-b-lg px-1 py-0.5">
+                            <span className="text-white text-[7px] font-bold uppercase truncate block text-center">
+                              {mediaItem.category?.replace('_', ' ')}
+                            </span>
+                          </div>
+                        </a>
                       ) : (
-                         i === 6 ? <Video size={16} className="text-orange-400" /> : <ImageIcon size={16} />
+                        i === 6 ? <Video size={16} className="text-orange-400" /> : <ImageIcon size={16} />
                       )}
                     </div>
                   );
                 })}
               </div>
               <div className="mt-4">
-                 <select value={selectedMediaCategory} onChange={(e) => setSelectedMediaCategory(e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[9px] outline-none focus:border-blue-400 bg-white mb-2 uppercase font-bold text-gray-600 tracking-wide">
-                    <option value="">SELECT CATEGORY...</option>
-                    {MEDIA_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat.replace('_', ' ')}</option>)}
-                 </select>
-                 <input type="file" accept="image/*,video/*" onChange={handleAddMedia} disabled={uploading || !selectedMediaCategory} className="w-full text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                <select value={selectedMediaCategory} onChange={(e) => setSelectedMediaCategory(e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[9px] outline-none focus:border-blue-400 bg-white mb-2 uppercase font-bold text-gray-600 tracking-wide">
+                  <option value="">SELECT CATEGORY...</option>
+                  {MEDIA_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat.replace('_', ' ')}</option>)}
+                </select>
+                <input type="file" accept="image/*,video/*" onChange={handleAddMedia} disabled={uploading || !selectedMediaCategory} className="w-full text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
               </div>
 
             </FormCard>
@@ -1177,17 +1270,17 @@ const LandPhysicalVerificationDashboard = () => {
               <div className="space-y-3">
                 {['PASSBOOK', 'AADHAR CARD', 'PREVIOUS TITLE DEEDS'].map((docType) => {
                   const existingDoc = (editFormData.documents || []).find(d => d.doc_type === docType);
-                  
+
                   return (
                     <div key={docType} className="border border-gray-100 rounded-lg p-3 bg-white shadow-sm flex items-center justify-between relative group overflow-hidden">
                       {existingDoc ? (
-                         <a href={fixUrl(existingDoc.file_url)} target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-blue-600 hover:text-blue-800 underline tracking-wider uppercase cursor-pointer">{docType}</a>
+                        <a href={fixUrl(existingDoc.file_url)} target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-blue-600 hover:text-blue-800 underline tracking-wider uppercase cursor-pointer">{docType}</a>
                       ) : (
-                         <span className="text-[10px] font-bold text-blue-800 tracking-wider uppercase">{docType}</span>
+                        <span className="text-[10px] font-bold text-blue-800 tracking-wider uppercase">{docType}</span>
                       )}
                       <div className="flex items-center gap-2">
                         {existingDoc ? (
-                           <a href={fixUrl(existingDoc.file_url)} target="_blank" rel="noopener noreferrer" className="text-green-500 hover:text-green-600 cursor-pointer"><CheckCircle size={16} /></a>
+                          <a href={fixUrl(existingDoc.file_url)} target="_blank" rel="noopener noreferrer" className="text-green-500 hover:text-green-600 cursor-pointer"><CheckCircle size={16} /></a>
                         ) : null}
                         <label className="cursor-pointer text-gray-300 hover:text-blue-500 transition-colors">
                           <input type="file" className="hidden" accept="image/*,application/pdf" onChange={(e) => uploadSpecificDocument(e, docType)} disabled={uploading} />
@@ -1203,7 +1296,7 @@ const LandPhysicalVerificationDashboard = () => {
 
           {/* COLUMN 4 */}
           <div className="flex flex-col gap-6">
-            
+
             <FormCard title="10. SALE STATUS" icon={CheckCircle} colorTheme="green">
               <div className="space-y-4">
                 <div>
@@ -1211,11 +1304,11 @@ const LandPhysicalVerificationDashboard = () => {
                     {['TOKEN RECEIVED', 'MORTGAGED', 'AVAILABLE FOR SALE', 'AGREEMENT Made', 'NOT AVAILABLE', 'SOLD'].map(opt => (
                       <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
                         <div className="relative flex items-center justify-center">
-                          <input 
-                            type="checkbox" 
-                            checked={(editFormData.land_sale_available_status || []).includes(opt)} 
-                            onChange={(e) => handleArrayChange('land_sale_available_status', opt, e.target.checked)} 
-                            className="peer appearance-none w-4 h-4 border-2 border-green-400 rounded-sm checked:bg-white checked:border-green-500 transition-all cursor-pointer" 
+                          <input
+                            type="checkbox"
+                            checked={(editFormData.land_sale_available_status || []).includes(opt)}
+                            onChange={(e) => handleArrayChange('land_sale_available_status', opt, e.target.checked)}
+                            className="peer appearance-none w-4 h-4 border-2 border-green-400 rounded-sm checked:bg-white checked:border-green-500 transition-all cursor-pointer"
                           />
                           <div className="pointer-events-none absolute opacity-0 peer-checked:opacity-100 text-green-500">
                             <CheckCircle size={14} className="stroke-[3]" />
@@ -1266,13 +1359,13 @@ const LandPhysicalVerificationDashboard = () => {
                 </div>
               </div>
             </FormCard>
-            
+
             <FormCard title="13. RISK AUDIT" icon={XCircle} colorTheme="red">
               <div className="space-y-4">
                 {['Siblings Issue (own Brother or Sister)', 'Cousins Issue (of uncles family)', 'Boundary', 'Rocks In Land', 'Electric Poles', 'Sealing', 'path issue', 'No Path at all'].map(status => (
                   <label key={status} className="flex items-center gap-3 cursor-pointer group">
                     <div className="relative flex items-center justify-center">
-                      <input type="checkbox" value={status} checked={(editFormData.landDetails?.complaints || []).includes(status)} onChange={(e) => handleArrayChange('landDetails.complaints', status, e.target.checked)} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-sm checked:bg-white checked:border-orange-500 transition-all cursor-pointer" />
+                      <input type="checkbox" value={status} checked={(editFormData.landDetails?.complaints || []).some(c => c?.toLowerCase?.() === status.toLowerCase())} onChange={(e) => handleArrayChange('landDetails.complaints', status, e.target.checked)} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-sm checked:bg-white checked:border-orange-500 transition-all cursor-pointer" />
                       <div className="pointer-events-none absolute opacity-0 peer-checked:opacity-100 text-orange-500">
                         <CheckCircle size={14} className="stroke-[3]" />
                       </div>
@@ -1280,10 +1373,10 @@ const LandPhysicalVerificationDashboard = () => {
                     <span className="text-[9px] font-bold text-red-600 tracking-wider uppercase group-hover:text-red-700 transition-colors truncate">{status}</span>
                   </label>
                 ))}
-                
+
                 <div className="pt-2 border-t border-red-100 mt-2">
-                  <textarea 
-                    value={editFormData.registry_notes || ''} 
+                  <textarea
+                    value={editFormData.registry_notes || ''}
                     onChange={(e) => handleEditChange('registry_notes', e.target.value)}
                     placeholder="Registry notes..."
                     className="w-full border border-gray-200 rounded-lg p-2 text-[10px] font-bold text-gray-700 outline-none focus:border-red-400 min-h-[60px] resize-none"
@@ -1322,16 +1415,15 @@ const LandPhysicalVerificationDashboard = () => {
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2 font-medium capitalize whitespace-nowrap ${
-                    activeTab === tab
-                      ? 'border-b-2 border-blue-600 text-blue-600'
-                      : 'text-gray-600 hover:text-gray-800'
-                  }`}
+                  className={`px-4 py-2 font-medium capitalize whitespace-nowrap ${activeTab === tab
+                    ? 'border-b-2 border-blue-600 text-blue-600'
+                    : 'text-gray-600 hover:text-gray-800'
+                    }`}
                 >
-                  {tab === 'basic' ? 'Basic Info' : 
-                   tab === 'farmer' ? 'Farmer Details' :
-                   tab === 'land' ? 'Land Details' :
-                   tab === 'media' ? 'Media Gallery' : 'Documents'}
+                  {tab === 'basic' ? 'Basic Info' :
+                    tab === 'farmer' ? 'Farmer Details' :
+                      tab === 'land' ? 'Land Details' :
+                        tab === 'media' ? 'Media Gallery' : 'Documents'}
                 </button>
               ))}
             </div>
@@ -1355,7 +1447,7 @@ const LandPhysicalVerificationDashboard = () => {
                   <div><strong>Availability:</strong> {selectedLand.availablity || 'N/A'}</div>
                   <div><strong>Created At:</strong> {new Date(selectedLand.created_at).toLocaleString()}</div>
                 </div>
-                
+
                 {selectedLand.land_sale_available_status && selectedLand.land_sale_available_status.length > 0 && (
                   <div>
                     <strong>Land Sale Status:</strong>
@@ -1366,7 +1458,7 @@ const LandPhysicalVerificationDashboard = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {selectedLand.mortage_availability_status && selectedLand.mortage_availability_status.length > 0 && (
                   <div>
                     <strong>Mortgage Status:</strong>
@@ -1377,7 +1469,7 @@ const LandPhysicalVerificationDashboard = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {selectedLand.urgency_listing && selectedLand.urgency_listing.length > 0 && (
                   <div>
                     <strong>Urgency Listing:</strong>
@@ -1423,7 +1515,7 @@ const LandPhysicalVerificationDashboard = () => {
                   <div><strong>Poultry Sheds:</strong> {selectedLand.landDetails.poultry_shed_number || 0}</div>
                   <div><strong>Cow Sheds:</strong> {selectedLand.landDetails.cow_shed_number || 0}</div>
                 </div>
-                
+
                 {selectedLand.landDetails.electricity && selectedLand.landDetails.electricity.length > 0 && (
                   <div>
                     <strong>Electricity:</strong>
@@ -1436,7 +1528,7 @@ const LandPhysicalVerificationDashboard = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {selectedLand.landDetails.residence && selectedLand.landDetails.residence.length > 0 && (
                   <div>
                     <strong>Residence:</strong>
@@ -1447,7 +1539,7 @@ const LandPhysicalVerificationDashboard = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {selectedLand.landDetails.water_source && selectedLand.landDetails.water_source.length > 0 && (
                   <div>
                     <strong>Water Source:</strong>
@@ -1460,7 +1552,7 @@ const LandPhysicalVerificationDashboard = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {selectedLand.landDetails.complaints && selectedLand.landDetails.complaints.length > 0 && (
                   <div>
                     <strong>Complaints/Issues:</strong>
@@ -1471,7 +1563,7 @@ const LandPhysicalVerificationDashboard = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {selectedLand.gps && (
                   <div className="mt-4 p-3 bg-gray-50 rounded">
                     <strong>GPS Location:</strong>
@@ -1544,160 +1636,160 @@ const LandPhysicalVerificationDashboard = () => {
 
       {/* Content */}
       {isEditing ? renderInlineEditForm() : (
-      /* Table (Physical Verification) */
-      <div style={styles.tableContainer}>
-        {loading ? (
-          <div style={styles.loadingContainer}>
-            <Loader2 size={32} style={{ animation: 'spin 1s linear infinite', color: '#f97316' }} />
-            <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-          </div>
-        ) : paginatedLands.length === 0 ? (
-          <div style={styles.emptyState}>
-            <div style={{ fontSize: '48px', marginBottom: '12px', opacity: 0.3 }}>🔍</div>
-            <div>No lands found for status: <strong>{statusFilter}</strong></div>
-            {searchTerm && <div style={{ marginTop: '4px', fontSize: '13px' }}>with search term: "{searchTerm}"</div>}
-          </div>
-        ) : (
-          <>
-            <table style={styles.table}>
-              <thead style={styles.tableHead}>
-                <tr>
-                  <th style={styles.th}>Farmer</th>
-                  <th style={styles.th}>Address</th>
-                  <th style={styles.th}>Unit Profile</th>
-                  <th style={styles.th}>Assigned Executive</th>
-                  <th style={{ ...styles.th, textAlign: 'right' }}>Management</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedLands.map((land, index) => {
-                  const farmerName = land.farmerDetails?.name || 'Unknown';
-                  const avatarColor = getAvatarColor(farmerName);
-                  const landId = `L${String(land.id).padStart(3, '0')}`;
-                  const acres = land.landDetails?.total_acres || 0;
-                  const pricePerAcre = land.landDetails?.price_per_acres || 0;
+        /* Table (Physical Verification) */
+        <div style={styles.tableContainer}>
+          {loading ? (
+            <div style={styles.loadingContainer}>
+              <Loader2 size={32} style={{ animation: 'spin 1s linear infinite', color: '#f97316' }} />
+              <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+            </div>
+          ) : paginatedLands.length === 0 ? (
+            <div style={styles.emptyState}>
+              <div style={{ fontSize: '48px', marginBottom: '12px', opacity: 0.3 }}>🔍</div>
+              <div>No lands found for status: <strong>{statusFilter}</strong></div>
+              {searchTerm && <div style={{ marginTop: '4px', fontSize: '13px' }}>with search term: "{searchTerm}"</div>}
+            </div>
+          ) : (
+            <>
+              <table style={styles.table}>
+                <thead style={styles.tableHead}>
+                  <tr>
+                    <th style={styles.th}>Farmer</th>
+                    <th style={styles.th}>Address</th>
+                    <th style={styles.th}>Unit Profile</th>
+                    <th style={styles.th}>Assigned Executive</th>
+                    <th style={{ ...styles.th, textAlign: 'right' }}>Management</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedLands.map((land, index) => {
+                    const farmerName = land.farmerDetails?.name || 'Unknown';
+                    const avatarColor = getAvatarColor(farmerName);
+                    const landId = `L${String(land.id).padStart(3, '0')}`;
+                    const acres = land.landDetails?.total_acres || 0;
+                    const pricePerAcre = land.landDetails?.price_per_acres || 0;
 
-                  return (
-                    <tr
-                      key={land.id}
-                      style={styles.tr(hoveredRow === land.id)}
-                      onMouseEnter={() => setHoveredRow(land.id)}
-                      onMouseLeave={() => setHoveredRow(null)}
-                    >
-                      {/* Farmer */}
-                      <td style={styles.td}>
-                        <div style={styles.farmerCell}>
-                          <div style={styles.avatar(avatarColor)}>
-                            {farmerName.charAt(0).toUpperCase()}
-                          </div>
-                          <div style={styles.farmerInfo}>
-                            <div
-                              style={styles.farmerName}
-                              onClick={() => setSelectedLand(land)}
-                            >
-                              {farmerName}
-                            </div>
-                            <div style={styles.farmerId}>{landId}</div>
-                            <div style={styles.farmerPhone}>
-                              <Phone size={10} />
-                              {land.farmerDetails?.phone || 'N/A'}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Address */}
-                      <td style={styles.td}>
-                        <div style={styles.addressMain}>
-                          {land.village || 'N/A'}, Registry Mandal
-                        </div>
-                        <div style={styles.addressSub}>
-                          {land.mandal || 'N/A'}, {land.state || 'N/A'}
-                        </div>
-                      </td>
-
-                      {/* Unit Profile */}
-                      <td style={styles.td}>
-                        <div style={styles.unitProfile}>
-                          {acres} AC • {formatPriceShort(pricePerAcre)}/AC
-                        </div>
-                      </td>
-
-                      {/* Assigned Executive */}
-                      <td style={styles.td}>
-                        <div style={styles.executiveName}>
-                          {land.assigned_executive || land.employeeName || 'UNASSIGNED'}
-                        </div>
-                      </td>
-
-                      {/* Management */}
-                      <td style={{ ...styles.td, textAlign: 'right' }}>
-                        <button
-                          style={styles.verifyBtn}
-                          onClick={() => {
-                            setSelectedLand(land);
-                            startEditing(land);
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'translateY(-1px)';
-                            e.currentTarget.style.boxShadow = '0 4px 14px rgba(249, 115, 22, 0.5)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'translateY(0)';
-                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(249, 115, 22, 0.35)';
-                          }}
-                        >
-                          Start Verify <ArrowRight size={13} />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div style={styles.pagination}>
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  style={styles.pageBtn(currentPage === 1)}
-                >
-                  <ChevronLeft size={18} />
-                </button>
-                <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
                     return (
-                      <button
-                        key={pageNum}
-                        onClick={() => setCurrentPage(pageNum)}
-                        style={styles.pageNum(currentPage === pageNum)}
+                      <tr
+                        key={land.id}
+                        style={styles.tr(hoveredRow === land.id)}
+                        onMouseEnter={() => setHoveredRow(land.id)}
+                        onMouseLeave={() => setHoveredRow(null)}
                       >
-                        {pageNum}
-                      </button>
+                        {/* Farmer */}
+                        <td style={styles.td}>
+                          <div style={styles.farmerCell}>
+                            <div style={styles.avatar(avatarColor)}>
+                              {farmerName.charAt(0).toUpperCase()}
+                            </div>
+                            <div style={styles.farmerInfo}>
+                              <div
+                                style={styles.farmerName}
+                                onClick={() => setSelectedLand(land)}
+                              >
+                                {farmerName}
+                              </div>
+                              <div style={styles.farmerId}>{landId}</div>
+                              <div style={styles.farmerPhone}>
+                                <Phone size={10} />
+                                {land.farmerDetails?.phone || 'N/A'}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Address */}
+                        <td style={styles.td}>
+                          <div style={styles.addressMain}>
+                            {land.village || 'N/A'}, Registry Mandal
+                          </div>
+                          <div style={styles.addressSub}>
+                            {land.mandal || 'N/A'}, {land.state || 'N/A'}
+                          </div>
+                        </td>
+
+                        {/* Unit Profile */}
+                        <td style={styles.td}>
+                          <div style={styles.unitProfile}>
+                            {acres} AC • {formatPriceShort(pricePerAcre)}/AC
+                          </div>
+                        </td>
+
+                        {/* Assigned Executive */}
+                        <td style={styles.td}>
+                          <div style={styles.executiveName}>
+                            {land.assigned_executive || land.employeeName || 'UNASSIGNED'}
+                          </div>
+                        </td>
+
+                        {/* Management */}
+                        <td style={{ ...styles.td, textAlign: 'right' }}>
+                          <button
+                            style={styles.verifyBtn}
+                            onClick={() => {
+                              setSelectedLand(land);
+                              startEditing(land);
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'translateY(-1px)';
+                              e.currentTarget.style.boxShadow = '0 4px 14px rgba(249, 115, 22, 0.5)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'translateY(0)';
+                              e.currentTarget.style.boxShadow = '0 2px 8px rgba(249, 115, 22, 0.35)';
+                            }}
+                          >
+                            Start Verify <ArrowRight size={13} />
+                          </button>
+                        </td>
+                      </tr>
                     );
                   })}
+                </tbody>
+              </table>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div style={styles.pagination}>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    style={styles.pageBtn(currentPage === 1)}
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          style={styles.pageNum(currentPage === pageNum)}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    style={styles.pageBtn(currentPage === totalPages)}
+                  >
+                    <ChevronRight size={18} />
+                  </button>
                 </div>
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  style={styles.pageBtn(currentPage === totalPages)}
-                >
-                  <ChevronRight size={18} />
-                </button>
-              </div>
-            )}
+              )}
             </>
           )}
         </div>

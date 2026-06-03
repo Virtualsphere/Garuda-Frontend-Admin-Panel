@@ -100,7 +100,7 @@ const COMPLAINT_OPTIONS = [
   'path issue',
   'No Path at all'
 ];
-const MEDIA_CATEGORIES = ['farmer_photo', 'land_soil', 'fencing', 'farm_pond', 'residence', 'shed', 'water_source', 'trees', 'rocks', 'electric_poles', 'others', 'video'];
+const MEDIA_CATEGORIES = ['farmer_photo', 'land_soil', 'fencing', 'farm_pond', 'residence', 'shed', 'water_source', 'trees', 'rocks', 'electric_poles', 'others', 'video', 'farmer_agreement'];
 const DOC_TYPES = ['PASSBOOK', 'AADHAR', 'TITLE_DEED'];
 
 const MEDIA_LABELS = {
@@ -116,6 +116,7 @@ const MEDIA_LABELS = {
   electric_poles: 'Electric Poles',
   others: 'Others',
   video: 'Full Site Video',
+  farmer_agreement: 'Farmer Agreement',
 };
 
 const API_BASE_URL = `${BASE_URL}/api`;
@@ -1076,6 +1077,62 @@ const AddLand = () => {
     </CardWrapper>
   );
 
+  const handleGetLocation = (type) => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setFormData(prev => ({
+            ...prev,
+            landDetails: {
+              ...prev.landDetails,
+              [`land_${type}_latitude`]: position.coords.latitude.toString(),
+              [`land_${type}_longitude`]: position.coords.longitude.toString()
+            }
+          }));
+        },
+        (error) => {
+          alert("Error fetching location: " + error.message);
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by this browser.");
+    }
+  };
+
+  const renderGPSCard = () => (
+    <CardWrapper color="blue" icon="📍" title="GPS COORDINATES" watermark="🧭">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <h4 style={{ margin: 0, fontSize: '10px', fontWeight: 'bold', color: '#1e3a8a', textTransform: 'uppercase' }}>Entry Coordinates</h4>
+        <button type="button" onClick={() => handleGetLocation('entry')} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: '4px', padding: '4px 8px', fontSize: '9px', fontWeight: 'bold', cursor: 'pointer' }}>
+          <MapPin size={10} /> FETCH LOCATION
+        </button>
+      </div>
+      <div className="field-group">
+        <label className="land-label">Entry Latitude</label>
+        <input type="text" name="landDetails.land_entry_latitude" value={formData.landDetails.land_entry_latitude} onChange={handleInputChange} className="land-input" placeholder="e.g. 17.123456" />
+      </div>
+      <div className="field-group">
+        <label className="land-label">Entry Longitude</label>
+        <input type="text" name="landDetails.land_entry_longitude" value={formData.landDetails.land_entry_longitude} onChange={handleInputChange} className="land-input" placeholder="e.g. 78.123456" />
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', marginTop: '16px' }}>
+        <h4 style={{ margin: 0, fontSize: '10px', fontWeight: 'bold', color: '#1e3a8a', textTransform: 'uppercase' }}>Boundary Coordinates</h4>
+        <button type="button" onClick={() => handleGetLocation('boundary')} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: '4px', padding: '4px 8px', fontSize: '9px', fontWeight: 'bold', cursor: 'pointer' }}>
+          <MapPin size={10} /> FETCH LOCATION
+        </button>
+      </div>
+      <div className="field-group">
+        <label className="land-label">Boundary Latitude</label>
+        <input type="text" name="landDetails.land_boundary_latitude" value={formData.landDetails.land_boundary_latitude} onChange={handleInputChange} className="land-input" placeholder="e.g. 17.123456" />
+      </div>
+      <div className="field-group">
+        <label className="land-label">Boundary Longitude</label>
+        <input type="text" name="landDetails.land_boundary_longitude" value={formData.landDetails.land_boundary_longitude} onChange={handleInputChange} className="land-input" placeholder="e.g. 78.123456" />
+      </div>
+    </CardWrapper>
+  );
+
   const renderMortgageCard = () => (
     <CardWrapper color="teal" icon="🏦" title="MORTGAGE AVAILABILITY STATUS" watermark="💳">
       <div>
@@ -1371,6 +1428,7 @@ const AddLand = () => {
               {renderWaterSourceCard()}
               {renderPathDetailsCard()}
               {renderLandDetailsCard()}
+              {renderGPSCard()}
               {renderTreesCard()}
 
               {renderComplaintsCard()}

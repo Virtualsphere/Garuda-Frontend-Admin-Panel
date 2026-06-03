@@ -56,7 +56,7 @@ const COMPLAINT_OPTIONS = [
   'path issue',
   'No Path at all'
 ];
-const MEDIA_CATEGORIES = ['farmer_photo', 'land_soil', 'fencing', 'farm_pond', 'residence', 'shed', 'water_source', 'trees', 'rocks', 'electric_poles', 'others', 'video'];
+const MEDIA_CATEGORIES = ['farmer_photo', 'land_soil', 'fencing', 'farm_pond', 'residence', 'shed', 'water_source', 'trees', 'rocks', 'electric_poles', 'others', 'video', 'farmer_agreement'];
 const DOC_TYPES = ['PASSBOOK', 'AADHAR', 'TITLE_DEED'];
 
 // Avatar colors for farmer initials
@@ -749,7 +749,7 @@ const LandVerificationDashboard = () => {
   // Handle edit form changes for nested objects
   const handleEditChange = (path, value) => {
     setEditFormData(prev => {
-      const newData = { ...prev };
+      const newData = JSON.parse(JSON.stringify(prev));
       const keys = path.split('.');
       let current = newData;
       
@@ -791,6 +791,118 @@ const LandVerificationDashboard = () => {
   // Initialize edit form when editing starts
   const startEditing = async (land) => {
     const clonedData = JSON.parse(JSON.stringify(land));
+    
+    // Normalize landDetails - ensure it exists
+    if (!clonedData.landDetails) {
+      clonedData.landDetails = {};
+    }
+    
+    // Normalize electricity: backend stores as array ['single phase'] or ['three phase']
+    // Convert to electricity_phase for the radio buttons
+    const electricityArr = clonedData.landDetails.electricity || [];
+    if (electricityArr.length > 0) {
+      const val = electricityArr[0]?.toLowerCase?.() || '';
+      if (val.includes('single')) {
+        clonedData.landDetails.electricity_phase = 'SINGLE';
+      } else if (val.includes('three')) {
+        clonedData.landDetails.electricity_phase = 'THREE';
+      }
+    }
+    
+    // Normalize tree fields - ensure they are numbers, extract from strings like "mango-12"
+    const treeFields = [
+      'mango_trees_number', 'coconut_trees_number', 'neem_trees_number',
+      'baniyan_trees_number', 'tamarind_trees_number', 'sapoto_trees_number',
+      'guava_trees_number', 'teak_trees_number', 'other_trees_number'
+    ];
+    treeFields.forEach(field => {
+      let val = clonedData.landDetails[field];
+      if (typeof val === 'string') {
+        const match = val.match(/\d+/);
+        val = match ? parseInt(match[0], 10) : 0;
+      }
+      // Keep 0 as 0, otherwise default to 0
+      clonedData.landDetails[field] = (val !== undefined && val !== null && val !== '') ? Number(val) : 0;
+    });
+
+    // Parse GPS if they are comma-separated strings (backend might return combined strings)
+    const parseGPS = (val) => {
+      if (typeof val === 'string' && val.includes(',')) {
+        return val.split(',').map(s => s.trim());
+      }
+      return null;
+    };
+
+    if (clonedData.landDetails) {
+      const entryCoords = parseGPS(clonedData.landDetails.land_entry_latitude);
+      if (entryCoords && entryCoords.length >= 2) {
+        clonedData.landDetails.land_entry_latitude = entryCoords[0];
+        clonedData.landDetails.land_entry_longitude = entryCoords[1];
+      }
+
+      const boundaryCoords = parseGPS(clonedData.landDetails.land_boundary_latitude);
+      if (boundaryCoords && boundaryCoords.length >= 2) {
+        clonedData.landDetails.land_boundary_latitude = boundaryCoords[0];
+        clonedData.landDetails.land_boundary_longitude = boundaryCoords[1];
+      }
+    }
+    
+    // Normalize road type to uppercase to match dropdown options
+    // Backend sends mixed case like "Highway", "Double Road" but options are "HIGHWAY", "DOUBLE ROAD"
+    if (clonedData.landDetails.nearest_road_type) {
+      clonedData.landDetails.nearest_road_type = clonedData.landDetails.nearest_road_type.toUpperCase();
+    }
+    
+    // Normalize village - trim whitespace/tab characters
+    if (clonedData.village) {
+      clonedData.village = clonedData.village.trim();
+    }
+    
+    // Normalize arrays that might come as null from backend
+    if (!Array.isArray(clonedData.landDetails.residence)) {
+      clonedData.landDetails.residence = [];
+    }
+    if (typeof clonedData.landDetails.water_source === 'string') {
+      try { clonedData.landDetails.water_source = JSON.parse(clonedData.landDetails.water_source); } catch(e) { clonedData.landDetails.water_source = []; }
+    }
+    if (!Array.isArray(clonedData.landDetails.water_source)) {
+      clonedData.landDetails.water_source = [];
+    } else {
+      // Parse strings like "cheruvu -0", "canal-2" into water_source array and number_of_X fields
+      const newWaterSource = [];
+      clonedData.landDetails.water_source.forEach(item => {
+        if (typeof item === 'string') {
+          const parts = item.split('-');
+          if (parts.length > 1) {
+            const type = parts[0].trim().toLowerCase();
+            const count = parseInt(parts[1], 10) || 0;
+            newWaterSource.push(type);
+            const fieldName = type === 'borewell' ? 'number_of_bores' : `number_of_${type.replace(/\s+/g, '_')}`;
+            clonedData.landDetails[fieldName] = count;
+          } else {
+            newWaterSource.push(item.trim().toLowerCase());
+          }
+        }
+      });
+      clonedData.landDetails.water_source = newWaterSource;
+    }
+    
+    if (typeof clonedData.landDetails.complaints === 'string') {
+      try { clonedData.landDetails.complaints = JSON.parse(clonedData.landDetails.complaints); } catch(e) { clonedData.landDetails.complaints = []; }
+    }
+    if (!Array.isArray(clonedData.landDetails.complaints)) {
+      clonedData.landDetails.complaints = [];
+    }
+    if (!Array.isArray(clonedData.landDetails.electricity)) {
+      clonedData.landDetails.electricity = [];
+    }
+    if (!Array.isArray(clonedData.land_sale_available_status)) {
+      clonedData.land_sale_available_status = [];
+    }
+    if (!Array.isArray(clonedData.urgency_listing)) {
+      clonedData.urgency_listing = [];
+    }
+    
     setEditFormData(clonedData);
     setIsEditing(true);
     setEditTab('basic');
@@ -974,6 +1086,9 @@ const LandVerificationDashboard = () => {
                     className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium bg-white"
                   >
                     <option value="">Select State</option>
+                    {editFormData.state && !locationStates.some(s => s.name === editFormData.state) && (
+                      <option value={editFormData.state}>{editFormData.state}</option>
+                    )}
                     {locationStates.map(s => (
                       <option key={s.id} value={s.name}>{s.name}</option>
                     ))}
@@ -988,6 +1103,9 @@ const LandVerificationDashboard = () => {
                     disabled={!editFormData.state}
                   >
                     <option value="">Select District</option>
+                    {editFormData.district && !locationDistricts.some(d => d.name === editFormData.district) && (
+                      <option value={editFormData.district}>{editFormData.district}</option>
+                    )}
                     {locationDistricts.map(d => (
                       <option key={d.id} value={d.name}>{d.name}</option>
                     ))}
@@ -1002,6 +1120,9 @@ const LandVerificationDashboard = () => {
                     disabled={!editFormData.district}
                   >
                     <option value="">Select Mandal</option>
+                    {editFormData.mandal && !locationMandals.some(m => m.name === editFormData.mandal) && (
+                      <option value={editFormData.mandal}>{editFormData.mandal}</option>
+                    )}
                     {locationMandals.map(m => (
                       <option key={m.id} value={m.name}>{m.name}</option>
                     ))}
@@ -1016,6 +1137,10 @@ const LandVerificationDashboard = () => {
                     disabled={!editFormData.mandal}
                   >
                     <option value="">Select Village</option>
+                    {/* Show current village value even if not in the loaded list */}
+                    {editFormData.village && !locationVillages.some(v => v.name === editFormData.village) && (
+                      <option value={editFormData.village}>{editFormData.village}</option>
+                    )}
                     {locationVillages.map(v => (
                       <option key={v.id} value={v.name}>{v.name}</option>
                     ))}
@@ -1254,14 +1379,14 @@ const LandVerificationDashboard = () => {
                   <div className="flex gap-4">
                     <label className="flex items-center gap-1.5 cursor-pointer">
                       <div className="relative flex items-center justify-center">
-                        <input type="radio" name="electricity_phase" checked={editFormData.landDetails?.electricity_phase === 'SINGLE'} onChange={() => handleEditChange('landDetails.electricity_phase', 'SINGLE')} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-full checked:border-orange-500 transition-all cursor-pointer" />
+                        <input type="radio" name="electricity_phase" checked={editFormData.landDetails?.electricity_phase === 'SINGLE' || (editFormData.landDetails?.electricity || []).some(e => e?.toLowerCase?.().includes('single'))} onChange={() => { handleEditChange('landDetails.electricity_phase', 'SINGLE'); handleEditChange('landDetails.electricity', ['single phase']); }} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-full checked:border-orange-500 transition-all cursor-pointer" />
                         <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
                       </div>
                       <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">SINGLE</span>
                     </label>
                     <label className="flex items-center gap-1.5 cursor-pointer">
                       <div className="relative flex items-center justify-center">
-                        <input type="radio" name="electricity_phase" checked={editFormData.landDetails?.electricity_phase === 'THREE'} onChange={() => handleEditChange('landDetails.electricity_phase', 'THREE')} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-full checked:border-orange-500 transition-all cursor-pointer" />
+                        <input type="radio" name="electricity_phase" checked={editFormData.landDetails?.electricity_phase === 'THREE' || (editFormData.landDetails?.electricity || []).some(e => e?.toLowerCase?.().includes('three'))} onChange={() => { handleEditChange('landDetails.electricity_phase', 'THREE'); handleEditChange('landDetails.electricity', ['three phase']); }} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-full checked:border-orange-500 transition-all cursor-pointer" />
                         <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
                       </div>
                       <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">THREE</span>
@@ -1332,12 +1457,16 @@ const LandVerificationDashboard = () => {
                   { label: 'Guava', field: 'guava_trees_number' },
                   { label: 'Teak', field: 'teak_trees_number' },
                   { label: 'Other', field: 'other_trees_number' }
-                ].map(tree => (
-                  <div key={tree.field} className="flex flex-col">
-                    <span className="text-[9px] font-bold text-orange-800 tracking-wider uppercase mb-1">{tree.label}</span>
-                    <input type="number" min="0" value={editFormData.landDetails?.[tree.field] || ''} onChange={(e) => handleEditChange(`landDetails.${tree.field}`, parseInt(e.target.value) || 0)} className="w-full border border-gray-200 rounded-lg p-2 text-xs outline-none focus:border-orange-400 font-bold" placeholder="0" />
-                  </div>
-                ))}
+                ].map(tree => {
+                  const val = editFormData.landDetails?.[tree.field];
+                  const displayValue = (val !== undefined && val !== null && val !== '') ? val : '';
+                  return (
+                    <div key={tree.field} className="flex flex-col">
+                      <span className="text-[9px] font-bold text-orange-800 tracking-wider uppercase mb-1">{tree.label}</span>
+                      <input type="number" min="0" value={displayValue} onChange={(e) => handleEditChange(`landDetails.${tree.field}`, e.target.value === '' ? '' : parseInt(e.target.value) || 0)} className="w-full border border-gray-200 rounded-lg p-2 text-xs outline-none focus:border-orange-400 font-bold" placeholder="0" />
+                    </div>
+                  );
+                })}
               </div>
             </FormCard>
 
@@ -1375,7 +1504,7 @@ const LandVerificationDashboard = () => {
 
             <FormCard title="9. DOCUMENTS" icon={FileText} colorTheme="blue">
               <div className="space-y-3">
-                {['PASSBOOK', 'AADHAR CARD', 'PREVIOUS TITLE DEEDS'].map((docType) => {
+                {DOC_TYPES.map((docType) => {
                   const existingDoc = (editFormData.documents || []).find(d => d.doc_type === docType);
                   
                   return (
@@ -1432,11 +1561,47 @@ const LandVerificationDashboard = () => {
             <FormCard title="11. MORTGAGE STATUS" icon={Building2} colorTheme="blue">
               <div className="space-y-4">
                 <div>
-                  <select value={editFormData.mortage_availability_status || 'AVAILABLE FOR MORTGAGE'} onChange={(e) => handleEditChange('mortage_availability_status', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-[11px] outline-none focus:border-blue-400 font-bold bg-white">
-                    <option value="AVAILABLE FOR MORTGAGE">AVAILABLE FOR MORTGAGE</option>
-                    <option value="CURRENTLY MORTGAGED">CURRENTLY MORTGAGED</option>
-                    <option value="NOT AVAILABLE">NOT AVAILABLE</option>
-                  </select>
+                  <div className="grid grid-cols-1 gap-2">
+                    {MORTGAGE_STATUS_OPTIONS.map(status => (
+                      <label key={status} className="flex items-center gap-1.5 cursor-pointer">
+                        <div className="relative flex items-center justify-center">
+                          <input 
+                            type="checkbox" 
+                            checked={(editFormData.mortage_availability_status || []).includes(status)} 
+                            onChange={(e) => handleArrayChange('mortage_availability_status', status, e.target.checked)} 
+                            className="peer appearance-none w-4 h-4 border-2 border-blue-400 rounded-sm checked:bg-white checked:border-blue-500 transition-all cursor-pointer" 
+                          />
+                          <div className="pointer-events-none absolute opacity-0 peer-checked:opacity-100 text-blue-500">
+                            <CheckCircle size={14} className="stroke-[3]" />
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-blue-800 uppercase tracking-wider">{status}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </FormCard>
+            
+            <FormCard title="14. GPS COORDINATES" icon={MapPin} colorTheme="blue">
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[9px] font-bold text-blue-800 uppercase mb-1 tracking-wider">Entry Latitude</label>
+                    <input type="text" value={editFormData.landDetails?.land_entry_latitude || ''} onChange={(e) => handleEditChange('landDetails.land_entry_latitude', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-blue-400 font-medium bg-white" placeholder="e.g. 17.123456" />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-blue-800 uppercase mb-1 tracking-wider">Entry Longitude</label>
+                    <input type="text" value={editFormData.landDetails?.land_entry_longitude || ''} onChange={(e) => handleEditChange('landDetails.land_entry_longitude', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-blue-400 font-medium bg-white" placeholder="e.g. 78.123456" />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-blue-800 uppercase mb-1 tracking-wider">Boundary Latitude</label>
+                    <input type="text" value={editFormData.landDetails?.land_boundary_latitude || ''} onChange={(e) => handleEditChange('landDetails.land_boundary_latitude', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-blue-400 font-medium bg-white" placeholder="e.g. 17.123456" />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-blue-800 uppercase mb-1 tracking-wider">Boundary Longitude</label>
+                    <input type="text" value={editFormData.landDetails?.land_boundary_longitude || ''} onChange={(e) => handleEditChange('landDetails.land_boundary_longitude', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-blue-400 font-medium bg-white" placeholder="e.g. 78.123456" />
+                  </div>
                 </div>
               </div>
             </FormCard>
@@ -1472,7 +1637,7 @@ const LandVerificationDashboard = () => {
                 {['Siblings Issue (own Brother or Sister)', 'Cousins Issue (of uncles family)', 'Boundary', 'Rocks In Land', 'Electric Poles', 'Sealing', 'path issue', 'No Path at all'].map(status => (
                   <label key={status} className="flex items-center gap-3 cursor-pointer group">
                     <div className="relative flex items-center justify-center">
-                      <input type="checkbox" value={status} checked={(editFormData.landDetails?.complaints || []).includes(status)} onChange={(e) => handleArrayChange('landDetails.complaints', status, e.target.checked)} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-sm checked:bg-white checked:border-orange-500 transition-all cursor-pointer" />
+                      <input type="checkbox" value={status} checked={(editFormData.landDetails?.complaints || []).some(c => c?.toLowerCase?.() === status.toLowerCase())} onChange={(e) => handleArrayChange('landDetails.complaints', status, e.target.checked)} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-sm checked:bg-white checked:border-orange-500 transition-all cursor-pointer" />
                       <div className="pointer-events-none absolute opacity-0 peer-checked:opacity-100 text-orange-500">
                         <CheckCircle size={14} className="stroke-[3]" />
                       </div>
