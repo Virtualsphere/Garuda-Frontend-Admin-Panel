@@ -216,7 +216,7 @@ export const LandEditForm = ({
                 </div>
                 
                 <div className="flex items-center gap-4 border-b border-gray-100 pb-3 mt-2">
-                  <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-wider w-1/2">NUMBER HAS WHATSAPP?</label>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-wider w-1/2">SAME NO. FOR WHATSAPP?</label>
                   <div className="flex gap-4">
                     <label className="flex items-center gap-1.5 cursor-pointer">
                       <div className="relative flex items-center justify-center">

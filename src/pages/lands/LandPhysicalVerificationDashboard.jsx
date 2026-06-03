@@ -674,6 +674,15 @@ const LandPhysicalVerificationDashboard = () => {
   const startEditing = (land) => {
     const clonedData = JSON.parse(JSON.stringify(land));
 
+    // Normalize has_whatsapp based on whatsapp number and phone
+    if (clonedData.farmerDetails) {
+      if (clonedData.farmerDetails.whatsapp && clonedData.farmerDetails.phone && String(clonedData.farmerDetails.whatsapp).trim() === String(clonedData.farmerDetails.phone).trim()) {
+        clonedData.farmerDetails.has_whatsapp = 'yes';
+      } else {
+        clonedData.farmerDetails.has_whatsapp = 'no';
+      }
+    }
+
     // Normalize landDetails - ensure it exists
     if (!clonedData.landDetails) {
       clonedData.landDetails = {};
@@ -943,7 +952,7 @@ const LandPhysicalVerificationDashboard = () => {
                 </div>
 
                 <div className="flex items-center gap-4 border-b border-gray-100 pb-3 mt-2">
-                  <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-wider w-1/2">NUMBER HAS WHATSAPP?</label>
+                  <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-wider w-1/2">SAME NO. FOR WHATSAPP?</label>
                   <div className="flex gap-4">
                     <label className="flex items-center gap-1.5 cursor-pointer">
                       <div className="relative flex items-center justify-center">
