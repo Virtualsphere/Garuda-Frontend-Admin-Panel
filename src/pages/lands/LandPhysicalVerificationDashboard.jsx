@@ -1179,20 +1179,22 @@ const LandPhysicalVerificationDashboard = () => {
                 <div>
                   <label className="block text-[9px] font-bold text-green-700 uppercase mb-2 tracking-wider">Electricity</label>
                   <div className="flex gap-4">
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <div className="relative flex items-center justify-center">
-                        <input type="radio" name="electricity_phase" checked={editFormData.landDetails?.electricity_phase === 'SINGLE' || (editFormData.landDetails?.electricity || []).some(e => e?.toLowerCase?.().includes('single'))} onChange={() => { handleEditChange('landDetails.electricity_phase', 'SINGLE'); handleEditChange('landDetails.electricity', ['single phase']); }} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-full checked:border-orange-500 transition-all cursor-pointer" />
-                        <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
-                      </div>
-                      <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">SINGLE</span>
-                    </label>
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <div className="relative flex items-center justify-center">
-                        <input type="radio" name="electricity_phase" checked={editFormData.landDetails?.electricity_phase === 'THREE' || (editFormData.landDetails?.electricity || []).some(e => e?.toLowerCase?.().includes('three'))} onChange={() => { handleEditChange('landDetails.electricity_phase', 'THREE'); handleEditChange('landDetails.electricity', ['three phase']); }} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-full checked:border-orange-500 transition-all cursor-pointer" />
-                        <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
-                      </div>
-                      <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">THREE</span>
-                    </label>
+                    {['single phase', 'three phase'].map(opt => (
+                      <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
+                        <div className="relative flex items-center justify-center">
+                          <input 
+                            type="checkbox" 
+                            checked={(editFormData.landDetails?.electricity || []).includes(opt)} 
+                            onChange={(e) => handleArrayChange('landDetails.electricity', opt, e.target.checked)} 
+                            className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-sm checked:bg-white checked:border-orange-500 transition-all cursor-pointer" 
+                          />
+                          <div className="pointer-events-none absolute opacity-0 peer-checked:opacity-100 text-orange-500">
+                            <CheckCircle size={14} className="stroke-[3]" />
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">{opt}</span>
+                      </label>
+                    ))}
                   </div>
                 </div>
               </div>

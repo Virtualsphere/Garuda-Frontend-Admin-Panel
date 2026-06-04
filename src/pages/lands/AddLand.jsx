@@ -1043,15 +1043,10 @@ const AddLand = () => {
           {ELECTRICITY_OPTIONS.map(opt => (
             <label key={opt} className="land-radio">
               <input
-                type="radio"
-                name="electricity_option"
+                type="checkbox"
+                name={`electricity_${opt}`}
                 checked={formData.landDetails.electricity.includes(opt)}
-                onChange={() => {
-                  setFormData(prev => ({
-                    ...prev,
-                    landDetails: { ...prev.landDetails, electricity: [opt] }
-                  }));
-                }}
+                onChange={(e) => handleNestedArrayChange('electricity', opt, e.target.checked)}
               />
               {opt.toUpperCase()}
             </label>
