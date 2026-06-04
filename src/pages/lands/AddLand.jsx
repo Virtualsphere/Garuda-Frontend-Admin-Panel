@@ -18,18 +18,18 @@ const INITIAL_FARMER_DETAILS = {
   name: '',
   phone: '',
   whatsapp: '',
-  ownership_type: 'Ancestral',
-  locality: 'Local',
-  ownership_status: 'Own',
-  age: 'Upto 30',
-  literacy: 'Illiterate',
-  nature: 'Calm',
+  ownership_type: '',
+  locality: '',
+  ownership_status: '',
+  age: '',
+  literacy: '',
+  nature: '',
 };
 
 const INITIAL_LAND_DETAILS = {
   total_acres: 0,
   guntas: 0,
-  price_per_acres: 0,
+  price_per_acres: '',
   total_value: 0,
   nearest_road_type: '',
   land_attached_to_road: 'no',
@@ -621,6 +621,7 @@ const AddLand = () => {
           value={formData.landDetails.price_per_acres}
           onChange={handleInputChange}
           className="land-input"
+          placeholder="e.g 5 for 5 lakhs"
         />
       </div>
       <div className="field-group">
@@ -817,6 +818,7 @@ const AddLand = () => {
             onChange={handleInputChange}
             className="land-select"
           >
+            <option value="">Select</option>
             {OWNERSHIP_TYPE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
           </select>
         </div>
@@ -828,6 +830,7 @@ const AddLand = () => {
             onChange={handleInputChange}
             className="land-select"
           >
+            <option value="">Select</option>
             {LOCALITY_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
           </select>
         </div>
@@ -839,6 +842,7 @@ const AddLand = () => {
             onChange={handleInputChange}
             className="land-select"
           >
+            <option value="">Select</option>
             {OWNERSHIP_STATUS_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
           </select>
         </div>
@@ -850,6 +854,7 @@ const AddLand = () => {
             onChange={handleInputChange}
             className="land-select"
           >
+            <option value="">Select</option>
             {AGE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
           </select>
         </div>
@@ -862,6 +867,7 @@ const AddLand = () => {
           onChange={handleInputChange}
           className="land-select"
         >
+          <option value="">Select</option>
           {LITERACY_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
         </select>
       </div>
@@ -873,6 +879,7 @@ const AddLand = () => {
           onChange={handleInputChange}
           className="land-select"
         >
+          <option value="">Select</option>
           {NATURE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
         </select>
       </div>

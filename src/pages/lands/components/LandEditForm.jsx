@@ -68,7 +68,7 @@ export const LandEditForm = ({
     return (
       <div className="pb-10 bg-[#f8f9fb]">
         {/* Dark Header */}
-        <div className="bg-[#0B1120] rounded-xl p-4 flex flex-col md:flex-row justify-between items-center mb-6 shadow-lg mx-6 mt-2 gap-4">
+        <div className="land-edit-form-header bg-[#0B1120] rounded-xl p-4 flex flex-col md:flex-row justify-between items-center mb-6 shadow-lg mx-3 sm:mx-6 mt-2 gap-4">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-gray-600 border-2 border-gray-400 overflow-hidden flex items-center justify-center text-xl font-bold text-white">
                {selectedLand.farmerDetails?.name?.charAt(0).toUpperCase() || 'U'}
@@ -80,7 +80,7 @@ export const LandEditForm = ({
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="land-edit-header-actions flex items-center gap-3 flex-wrap justify-center">
             <button 
               onClick={cancelEditing}
               className="px-4 py-2 bg-transparent border border-gray-600 text-gray-300 rounded-lg text-xs font-bold tracking-wide hover:bg-gray-800 transition-colors flex items-center gap-2"
@@ -107,7 +107,7 @@ export const LandEditForm = ({
         </div>
 
         {/* 4-Column Masonry Grid */}
-        <div className="px-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
+        <div className="land-edit-form-body land-edit-grid px-3 sm:px-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
           
           {/* COLUMN 1 */}
           <div className="flex flex-col gap-6">
@@ -302,7 +302,7 @@ export const LandEditForm = ({
               </div>
               <div className="mt-4">
                 <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Price per Acre (Lakhs)</label>
-                <input type="number" value={editFormData.landDetails?.price_per_acres || 0} onChange={(e) => handleEditChange('landDetails.price_per_acres', parseFloat(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm text-orange-500 font-bold outline-none focus:border-green-400" />
+                <input type="number" value={editFormData.landDetails?.price_per_acres || ''} onChange={(e) => handleEditChange('landDetails.price_per_acres', parseFloat(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm text-orange-500 font-bold outline-none focus:border-green-400" placeholder="e.g 5 for 5 lakhs" />
               </div>
               
               <div className="mt-4">

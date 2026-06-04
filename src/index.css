@@ -799,3 +799,251 @@
 .field-group:last-child {
   margin-bottom: 0;
 }
+
+/* =============================================
+   RESPONSIVE OVERRIDES FOR LAND DASHBOARDS
+   ============================================= */
+
+/* Ensure tables always scroll horizontally on small screens */
+.land-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ===== TABLET (max-width: 1024px) ===== */
+@media (max-width: 1024px) {
+  /* Header stacks vertically */
+  .land-dash-header {
+    flex-direction: column !important;
+    gap: 16px !important;
+    padding: 20px 16px 0 !important;
+  }
+
+  /* Search fills available width */
+  .land-dash-search input {
+    width: 100% !important;
+  }
+
+  /* Pipeline tabs scroll horizontally */
+  .land-dash-tabs {
+    margin-left: 16px !important;
+    margin-right: 16px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .land-dash-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .land-dash-tabs button {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    min-width: auto !important;
+  }
+
+  /* Table container reduced margins */
+  .land-dash-table-container {
+    margin-left: 16px !important;
+    margin-right: 16px !important;
+  }
+
+  /* Stats bar */
+  .land-dash-stats {
+    margin-left: 16px !important;
+    margin-right: 16px !important;
+  }
+
+  /* Edit form grid: 2 columns on tablet */
+  .land-edit-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Inbound pill */
+  .land-dash-inbound {
+    bottom: 16px !important;
+    right: 16px !important;
+    font-size: 11px !important;
+    padding: 8px 14px !important;
+  }
+
+  /* Final verification (Tailwind-based) */
+  .land-final-container {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+}
+
+/* ===== MOBILE (max-width: 768px) ===== */
+@media (max-width: 768px) {
+  /* Header */
+  .land-dash-header {
+    padding: 16px 12px 0 !important;
+    gap: 12px !important;
+  }
+
+  .land-dash-header h1 {
+    font-size: 20px !important;
+  }
+
+  /* Search */
+  .land-dash-search {
+    width: 100% !important;
+  }
+  .land-dash-search input {
+    width: 100% !important;
+  }
+
+  /* Pipeline tabs */
+  .land-dash-tabs {
+    margin-left: 12px !important;
+    margin-right: 12px !important;
+  }
+  .land-dash-tabs button {
+    padding: 10px 14px !important;
+    font-size: 10px !important;
+  }
+
+  /* Table container */
+  .land-dash-table-container {
+    margin-left: 12px !important;
+    margin-right: 12px !important;
+    border-radius: 8px !important;
+  }
+
+  /* Table cells compact */
+  .land-dash-table th {
+    padding: 10px 12px !important;
+    font-size: 9px !important;
+  }
+  .land-dash-table td {
+    padding: 12px !important;
+  }
+
+  /* Farmer cell – allow wrapping */
+  .land-dash-farmer-cell {
+    min-width: 160px !important;
+  }
+
+  /* Hide less-important columns on very small screens (handled via CSS) */
+  .land-dash-table .hide-mobile {
+    display: none !important;
+  }
+
+  /* Stats bar stacks */
+  .land-dash-stats {
+    flex-direction: column !important;
+    margin-left: 12px !important;
+    margin-right: 12px !important;
+    gap: 8px !important;
+  }
+
+  /* Edit form grid: 1 column on mobile */
+  .land-edit-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Edit form header buttons wrap */
+  .land-edit-header-actions {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 8px !important;
+  }
+  .land-edit-header-actions button {
+    font-size: 10px !important;
+    padding: 8px 12px !important;
+  }
+
+  /* Inline edit form header */
+  .land-edit-form-header {
+    margin-left: 12px !important;
+    margin-right: 12px !important;
+    padding: 12px !important;
+  }
+
+  /* Inline edit form grid padding */
+  .land-edit-form-body {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  /* Pagination compact */
+  .land-dash-pagination {
+    padding: 12px !important;
+  }
+
+  /* Inbound pill smaller */
+  .land-dash-inbound {
+    bottom: 12px !important;
+    right: 12px !important;
+    font-size: 10px !important;
+    padding: 8px 12px !important;
+    gap: 6px !important;
+  }
+
+  /* Final verification layout */
+  .land-final-container {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .land-final-container .mb-6 {
+    margin-bottom: 16px !important;
+  }
+
+  /* Action buttons in table rows */
+  .land-action-cell {
+    min-width: 120px !important;
+  }
+  .land-action-cell button {
+    font-size: 10px !important;
+    padding: 7px 12px !important;
+  }
+
+  /* Detail modal full screen on mobile */
+  .land-detail-modal-content {
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    max-height: 100vh !important;
+    height: 100vh !important;
+  }
+}
+
+/* ===== SMALL MOBILE (max-width: 480px) ===== */
+@media (max-width: 480px) {
+  .land-dash-header h1 {
+    font-size: 18px !important;
+  }
+
+  .land-dash-tabs button {
+    padding: 8px 10px !important;
+    font-size: 9px !important;
+    letter-spacing: 0.4px !important;
+  }
+
+  .land-dash-table th {
+    padding: 8px !important;
+    font-size: 8px !important;
+  }
+  .land-dash-table td {
+    padding: 8px !important;
+  }
+
+  /* Even more compact farmer cell */
+  .land-dash-farmer-cell {
+    gap: 8px !important;
+    min-width: 140px !important;
+  }
+  .land-dash-farmer-cell .land-avatar {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 13px !important;
+  }
+
+  /* Management buttons stack vertically */
+  .land-action-cell > div {
+    flex-direction: column !important;
+    gap: 4px !important;
+  }
+}
