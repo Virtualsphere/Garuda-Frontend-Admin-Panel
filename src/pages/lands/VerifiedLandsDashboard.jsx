@@ -1,33 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   Search,
   ChevronLeft,
   ChevronRight,
-  Eye,
   Edit,
   CheckCircle,
-  XCircle,
-  Clock,
   MapPin,
   Phone,
   Loader2,
   ShieldCheck,
-  User,
-  FileText,
-  Image as ImageIcon,
-  Video,
-  Upload,
-  Building2,
-  TreePine,
-  Droplets,
-  Zap,
-  ArrowRight,
-  Save,
-  X
+  Trash2
 } from 'lucide-react';
 import { BASE_URL } from '../../url/BaseUrl';
-import { fixUrl } from '../../utils/fixUrl';
 import { LandEditForm } from './components/LandEditForm';
 
 const API_BASE_URL = `${BASE_URL}/api`;
@@ -57,46 +42,7 @@ const formatPriceShort = (price) => {
   return `₹${price}`;
 };
 
-// Format price helper
-const formatPrice = (price) => {
-  if (!price) return 'N/A';
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0
-  }).format(price);
-};
 
-// Status badge component
-const StatusBadge = ({ status }) => {
-  const getStyles = () => {
-    switch (status?.toLowerCase()) {
-      case 'complete':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'rejected':
-        return 'bg-red-100 text-red-800';
-      case 'review':
-        return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getIcon = () => {
-    if (status === 'complete') return <CheckCircle className="w-3 h-3 mr-1" />;
-    if (status === 'rejected') return <XCircle className="w-3 h-3 mr-1" />;
-    return <Clock className="w-3 h-3 mr-1" />;
-  };
-
-  return (
-    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStyles()}`}>
-      {getIcon()}
-      {status || 'pending'}
-    </span>
-  );
-};
 
 // ============================================
 // INLINE STYLES (matching phone verification)
@@ -396,7 +342,6 @@ const VerifiedLandsDashboard = () => {
   const [updatingAction, setUpdatingAction] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [selectedMediaCategory, setSelectedMediaCategory] = useState('');
-  const [selectedDocType, setSelectedDocType] = useState('');
   const [error, setError] = useState(null);
   const [editTab, setEditTab] = useState('basic');
 
@@ -433,6 +378,7 @@ const VerifiedLandsDashboard = () => {
   };
 
   useEffect(() => {
+
     fetchVerifiedLands();
   }, []);
 
@@ -811,6 +757,32 @@ const VerifiedLandsDashboard = () => {
       setUpdatingAction(null);
     }
   };
+
+  // Delete land
+  const handleDeleteLand = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this land? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/land/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete land');
+      
+      setLands(prev => prev.filter(land => land.id !== id));
+      alert('Land deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting land:', error);
+      alert('Failed to delete land');
+    }
+  };
+
   // Filter lands by search
   const filteredLands = lands.filter(land =>
     land.village?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -828,16 +800,6 @@ const VerifiedLandsDashboard = () => {
   );
 
 const renderInlineEditForm = () => {
-    const uploadSpecificDocument = async (e, type) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      const url = await handleFileUpload(file, 'document');
-      if (url) {
-        const newDoc = { doc_type: type, file_url: url, created_at: new Date().toISOString() };
-        setEditFormData(prev => ({ ...prev, documents: [...(prev.documents || []), newDoc] }));
-      }
-    };
-
     return (
       <LandEditForm
         selectedLand={selectedLand}
@@ -881,12 +843,12 @@ const renderInlineEditForm = () => {
   return (
     <div style={styles.container}>
       {/* Header */}
-      <div style={styles.header}>
+      <div className="land-dash-header" style={styles.header}>
         <div style={styles.headerLeft}>
           <h1 style={styles.headerTitle}>VERIFIED LANDS</h1>
           <p style={styles.headerSubtitle}>All Successfully Verified Land Records</p>
         </div>
-        <div style={styles.searchContainer}>
+        <div className="land-dash-search" style={styles.searchContainer}>
           <Search size={15} style={styles.searchIcon} />
           <input
             type="text"
@@ -910,7 +872,7 @@ const renderInlineEditForm = () => {
       </div>
 
       {/* Stats Bar */}
-      <div style={styles.statsBar}>
+      <div className="land-dash-stats" style={styles.statsBar}>
         <div style={styles.statCard}>
           <div style={styles.statIcon('#22c55e')}>
             <ShieldCheck size={20} />
@@ -945,7 +907,7 @@ const renderInlineEditForm = () => {
       </div>
 
       {/* Table */}
-      <div style={styles.tableContainer}>
+      <div className="land-dash-table-container" style={styles.tableContainer}>
         {loading ? (
           <div style={styles.loadingContainer}>
             <Loader2 size={32} style={{ animation: 'spin 1s linear infinite', color: '#22c55e' }} />
@@ -959,13 +921,14 @@ const renderInlineEditForm = () => {
           </div>
         ) : (
           <>
-            <table style={styles.table}>
+            <div className="land-table-wrap">
+            <table className="land-dash-table" style={styles.table}>
               <thead style={styles.tableHead}>
                 <tr>
                   <th style={styles.th}>Farmer</th>
                   <th style={styles.th}>Address</th>
                   <th style={styles.th}>Unit Profile</th>
-                  <th style={styles.th}>Status</th>
+                  <th className="hide-mobile" style={styles.th}>Status</th>
                   <th style={{ ...styles.th, textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
@@ -986,8 +949,8 @@ const renderInlineEditForm = () => {
                     >
                       {/* Farmer */}
                       <td style={styles.td}>
-                        <div style={styles.farmerCell}>
-                          <div style={styles.avatar(avatarColor)}>
+                        <div className="land-dash-farmer-cell" style={styles.farmerCell}>
+                          <div className="land-avatar" style={styles.avatar(avatarColor)}>
                             {farmerName.charAt(0).toUpperCase()}
                           </div>
                           <div style={styles.farmerInfo}>
@@ -1024,7 +987,7 @@ const renderInlineEditForm = () => {
                       </td>
 
                       {/* Status */}
-                      <td style={styles.td}>
+                      <td className="hide-mobile" style={styles.td}>
                         <div style={styles.verifiedBadge}>
                           <ShieldCheck size={12} />
                           VERIFIED
@@ -1032,35 +995,66 @@ const renderInlineEditForm = () => {
                       </td>
 
                       {/* Actions */}
-                      <td style={{ ...styles.td, textAlign: 'right' }}>
-                        <button
-                          style={{
-                            ...styles.viewBtn,
-                            background: 'linear-gradient(135deg, #f97316, #ea580c)',
-                            boxShadow: '0 2px 8px rgba(249, 115, 22, 0.35)',
-                          }}
-                          onClick={() => startEditing(land)}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'translateY(-1px)';
-                            e.currentTarget.style.boxShadow = '0 4px 14px rgba(249, 115, 22, 0.5)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'translateY(0)';
-                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(249, 115, 22, 0.35)';
-                          }}
-                        >
-                          <Edit size={12} /> Edit
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      <td className="land-action-cell" style={{ ...styles.td, textAlign: 'right' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
+                          <button
+                            style={{
+                              ...styles.viewBtn,
+                              background: 'linear-gradient(135deg, #f97316, #ea580c)',
+                              boxShadow: '0 2px 8px rgba(249, 115, 22, 0.35)',
+                            }}
+                            onClick={() => startEditing(land)}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'translateY(-1px)';
+                              e.currentTarget.style.boxShadow = '0 4px 14px rgba(249, 115, 22, 0.5)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'translateY(0)';
+                              e.currentTarget.style.boxShadow = '0 2px 8px rgba(249, 115, 22, 0.35)';
+                            }}
+                          >
+                            <Edit size={12} /> Edit
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteLand(land.id);
+                            }}
+                            style={{ 
+                              background: '#fee2e2', 
+                              color: '#ef4444', 
+                              border: 'none', 
+                              borderRadius: '8px', 
+                              padding: '8px', 
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#fecaca';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = '#fee2e2';
+                            }}
+                            title="Delete Land"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div style={styles.pagination}>
+              <div className="land-dash-pagination" style={styles.pagination}>
                 <button
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}

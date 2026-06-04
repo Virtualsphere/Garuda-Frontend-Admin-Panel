@@ -22,7 +22,8 @@ import {
   Building2,
   TreePine,
   Droplets,
-  Zap
+  Zap,
+  Trash2
 } from 'lucide-react';
 import { BASE_URL } from '../../url/BaseUrl';
 import { fixUrl, IMAGE_NOT_FOUND_PLACEHOLDER } from '../../utils/fixUrl';
@@ -277,6 +278,31 @@ const LandFinalVerificationDashboard = () => {
     }
   };
 
+  // Delete land
+  const handleDeleteLand = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this land? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/land/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete land');
+      
+      setLands(prev => prev.filter(land => land.id !== id));
+      alert('Land deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting land:', error);
+      alert('Failed to delete land');
+    }
+  };
+
   // Handle edit form changes for nested objects
   const handleEditChange = (path, value) => {
     setEditFormData(prev => {
@@ -409,7 +435,7 @@ const LandFinalVerificationDashboard = () => {
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto py-4">
-        <div className="bg-white rounded-lg w-full max-w-5xl max-h-[95vh] overflow-y-auto">
+        <div className="land-detail-modal-content bg-white rounded-lg w-full max-w-5xl max-h-[95vh] overflow-y-auto mx-2 sm:mx-auto">
           {/* Header */}
           <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center z-10">
             <h2 className="text-xl font-bold">Edit Land #{selectedLand.id}</h2>
@@ -1494,7 +1520,7 @@ const LandFinalVerificationDashboard = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="land-final-container max-w-7xl mx-auto px-3 sm:px-4 py-6">
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
           <div className="flex flex-col md:flex-row justify-between gap-4">
@@ -1561,16 +1587,16 @@ const LandFinalVerificationDashboard = () => {
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              <div className="overflow-x-auto land-table-wrap">
+                <table className="w-full land-dash-table">
                   <thead className="bg-gray-50 border-b">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Farmer</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verification Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Physical Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Verification Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Physical Status</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
@@ -1588,20 +1614,32 @@ const LandFinalVerificationDashboard = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {land.farmerDetails?.phone || 'N/A'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
                           <StatusBadge status={land.verification_status} />
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
                           <StatusBadge status={land.physcial_verification_status} />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <button
-                            onClick={() => setSelectedLand(land)}
-                            className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                          >
-                            <Eye className="w-4 h-4" />
-                            View
-                          </button>
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => setSelectedLand(land)}
+                              className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                            >
+                              <Eye className="w-4 h-4" />
+                              View
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteLand(land.id);
+                              }}
+                              className="text-red-600 hover:text-red-800 flex items-center gap-1 p-1 rounded-md hover:bg-red-50 transition-colors"
+                              title="Delete Land"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

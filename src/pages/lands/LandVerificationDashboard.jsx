@@ -25,7 +25,8 @@ import {
   Droplets,
   Zap,
   ArrowRight,
-  Bell
+  Bell,
+  Trash2
 } from 'lucide-react';
 import { BASE_URL } from '../../url/BaseUrl';
 import LandPhysicalVerificationDashboard from './LandPhysicalVerificationDashboard';
@@ -746,6 +747,31 @@ const LandVerificationDashboard = () => {
     }
   };
 
+  // Delete land
+  const handleDeleteLand = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this land? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/land/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete land');
+      
+      setLands(prev => prev.filter(land => land.id !== id));
+      alert('Land deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting land:', error);
+      alert('Failed to delete land');
+    }
+  };
+
   // Handle edit form changes for nested objects
   const handleEditChange = (path, value) => {
     setEditFormData(prev => {
@@ -1042,7 +1068,7 @@ const LandVerificationDashboard = () => {
     return (
       <div className="pb-10 bg-[#f8f9fb]">
         {/* Dark Header */}
-        <div className="bg-[#0B1120] rounded-xl p-4 flex flex-col md:flex-row justify-between items-center mb-6 shadow-lg mx-6 mt-2 gap-4">
+        <div className="land-edit-form-header bg-[#0B1120] rounded-xl p-4 flex flex-col md:flex-row justify-between items-center mb-6 shadow-lg mx-3 sm:mx-6 mt-2 gap-4">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-gray-600 border-2 border-gray-400 overflow-hidden flex items-center justify-center text-xl font-bold text-white">
                {selectedLand.farmerDetails?.name?.charAt(0).toUpperCase() || 'U'}
@@ -1054,7 +1080,7 @@ const LandVerificationDashboard = () => {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="land-edit-header-actions flex items-center gap-3 flex-wrap">
             <button 
               onClick={cancelEditing}
               className="px-4 py-2 bg-transparent border border-gray-600 text-gray-300 rounded-lg text-xs font-bold tracking-wide hover:bg-gray-800 transition-colors flex items-center gap-2"
@@ -1081,7 +1107,7 @@ const LandVerificationDashboard = () => {
         </div>
 
         {/* 4-Column Masonry Grid */}
-        <div className="px-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
+        <div className="land-edit-form-body land-edit-grid px-3 sm:px-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
           
           {/* COLUMN 1 */}
           <div className="flex flex-col gap-6">
@@ -1919,12 +1945,12 @@ const LandVerificationDashboard = () => {
   return (
     <div style={styles.container}>
       {/* Header */}
-      <div style={styles.header}>
+      <div className="land-dash-header" style={styles.header}>
         <div style={styles.headerLeft}>
           <h1 style={styles.headerTitle}>VERIFICATION CENTER</h1>
           <p style={styles.headerSubtitle}>Administrative Ground-Truth Mission Pipeline</p>
         </div>
-        <div style={styles.searchContainer}>
+        <div className="land-dash-search" style={styles.searchContainer}>
           <Search size={15} style={styles.searchIcon} />
           <input
             type="text"
@@ -1948,7 +1974,7 @@ const LandVerificationDashboard = () => {
       </div>
 
       {/* Pipeline Tabs */}
-      <div style={styles.pipelineTabs}>
+      <div className="land-dash-tabs" style={styles.pipelineTabs}>
         {pipelineTabs.map((tab) => (
           <button
             key={tab.key}
@@ -1989,7 +2015,7 @@ const LandVerificationDashboard = () => {
           </div>
       ) : (
       /* Table (Phone Verification) */
-      <div style={styles.tableContainer}>
+      <div className="land-dash-table-container" style={styles.tableContainer}>
         {loading ? (
           <div style={styles.loadingContainer}>
             <Loader2 size={32} style={{ animation: 'spin 1s linear infinite', color: '#f97316' }} />
@@ -2003,13 +2029,14 @@ const LandVerificationDashboard = () => {
           </div>
         ) : (
           <>
-            <table style={styles.table}>
+            <div className="land-table-wrap">
+            <table className="land-dash-table" style={styles.table}>
               <thead style={styles.tableHead}>
                 <tr>
                   <th style={styles.th}>Farmer</th>
                   <th style={styles.th}>Address</th>
                   <th style={styles.th}>Unit Profile</th>
-                  <th style={styles.th}>Assigned Executive</th>
+                  <th className="hide-mobile" style={styles.th}>Assigned Executive</th>
                   <th style={{ ...styles.th, textAlign: 'right' }}>Management</th>
                 </tr>
               </thead>
@@ -2030,8 +2057,8 @@ const LandVerificationDashboard = () => {
                     >
                       {/* Farmer */}
                       <td style={styles.td}>
-                        <div style={styles.farmerCell}>
-                          <div style={styles.avatar(avatarColor)}>
+                        <div className="land-dash-farmer-cell" style={styles.farmerCell}>
+                          <div className="land-avatar" style={styles.avatar(avatarColor)}>
                             {farmerName.charAt(0).toUpperCase()}
                           </div>
                           <div style={styles.farmerInfo}>
@@ -2068,41 +2095,71 @@ const LandVerificationDashboard = () => {
                       </td>
 
                       {/* Assigned Executive */}
-                      <td style={styles.td}>
+                      <td className="hide-mobile" style={styles.td}>
                         <div style={styles.executiveName}>
                           {land.assigned_executive || land.employeeName || 'UNASSIGNED'}
                         </div>
                       </td>
 
                       {/* Management */}
-                      <td style={{ ...styles.td, textAlign: 'right' }}>
-                        <button
-                          style={styles.verifyBtn}
-                          onClick={() => {
-                            setSelectedLand(land);
-                            startEditing(land);
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'translateY(-1px)';
-                            e.currentTarget.style.boxShadow = '0 4px 14px rgba(249, 115, 22, 0.5)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'translateY(0)';
-                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(249, 115, 22, 0.35)';
-                          }}
-                        >
-                          Start Verify <ArrowRight size={13} />
-                        </button>
+                      <td className="land-action-cell" style={{ ...styles.td, textAlign: 'right' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
+                          <button
+                            style={styles.verifyBtn}
+                            onClick={() => {
+                              setSelectedLand(land);
+                              startEditing(land);
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'translateY(-1px)';
+                              e.currentTarget.style.boxShadow = '0 4px 14px rgba(249, 115, 22, 0.5)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'translateY(0)';
+                              e.currentTarget.style.boxShadow = '0 2px 8px rgba(249, 115, 22, 0.35)';
+                            }}
+                          >
+                            Start Verify <ArrowRight size={13} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteLand(land.id);
+                            }}
+                            style={{ 
+                              background: '#fee2e2', 
+                              color: '#ef4444', 
+                              border: 'none', 
+                              borderRadius: '8px', 
+                              padding: '8px', 
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#fecaca';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = '#fee2e2';
+                            }}
+                            title="Delete Land"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
+            </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div style={styles.pagination}>
+              <div className="land-dash-pagination" style={styles.pagination}>
                 <button
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
@@ -2149,6 +2206,7 @@ const LandVerificationDashboard = () => {
 
       {/* Inbound Signals Pill */}
       <div
+        className="land-dash-inbound"
         style={styles.inboundPill}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'translateY(-2px)';
