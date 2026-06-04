@@ -403,10 +403,26 @@ const AddLand = () => {
     setError(null);
     setSuccess(null);
 
-    const submitData = {
+    const sanitizeData = (obj) => {
+      if (Array.isArray(obj)) return obj.map(sanitizeData);
+      if (obj !== null && typeof obj === 'object') {
+        const newObj = {};
+        for (const key in obj) {
+          if (obj[key] === "") {
+            newObj[key] = null;
+          } else {
+            newObj[key] = sanitizeData(obj[key]);
+          }
+        }
+        return newObj;
+      }
+      return obj;
+    };
+
+    const submitData = sanitizeData({
       ...formData,
       form_status: status,
-    };
+    });
 
     // Get token from localStorage (assuming JWT is stored here)
     const token = localStorage.getItem('token');

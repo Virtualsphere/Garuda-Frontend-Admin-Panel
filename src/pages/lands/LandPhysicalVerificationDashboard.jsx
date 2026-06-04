@@ -656,6 +656,7 @@ const LandPhysicalVerificationDashboard = () => {
 
   // Handle edit form changes for nested objects
   const handleEditChange = (path, value) => {
+    const finalValue = value === "" ? null : value;
     setEditFormData(prev => {
       const newData = JSON.parse(JSON.stringify(prev));
       const keys = path.split('.');
@@ -665,7 +666,7 @@ const LandPhysicalVerificationDashboard = () => {
         if (!current[keys[i]]) current[keys[i]] = {};
         current = current[keys[i]];
       }
-      current[keys[keys.length - 1]] = value;
+      current[keys[keys.length - 1]] = finalValue;
 
       return newData;
     });
