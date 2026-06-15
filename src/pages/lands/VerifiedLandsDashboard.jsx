@@ -572,8 +572,54 @@ const VerifiedLandsDashboard = () => {
 
   // Initialize edit form when editing starts
   const startEditing = async (land) => {
-    const clonedData = JSON.parse(JSON.stringify(land));
+    // Fetch full land details (the list endpoint may not include tree/relations data)
+    let fullLand = land;
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/land/${land.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          fullLand = result.data;
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching full land details for editing:', err);
+    }
+
+    const clonedData = JSON.parse(JSON.stringify(fullLand));
     
+    // Map tree array from backend to landDetails fields if tree array exists
+    if (clonedData.tree && Array.isArray(clonedData.tree)) {
+      if (!clonedData.landDetails) clonedData.landDetails = {};
+      clonedData.tree.forEach(t => {
+        if (t.type && t.count) {
+          const keyMap = {
+            'mango': 'mango_trees_number',
+            'coconut': 'coconut_trees_number',
+            'neem': 'neem_trees_number',
+            'baniyan': 'baniyan_trees_number',
+            'banyan': 'baniyan_trees_number',
+            'tamarind': 'tamarind_trees_number',
+            'sapoto': 'sapoto_trees_number',
+            'sapota': 'sapoto_trees_number',
+            'guava': 'guava_trees_number',
+            'teak': 'teak_trees_number',
+            'other': 'other_trees_number'
+          };
+          const normalizedType = t.type.toLowerCase();
+          if (keyMap[normalizedType]) {
+            clonedData.landDetails[keyMap[normalizedType]] = Number(t.count) || 0;
+          }
+        }
+      });
+    }
+
     // Normalize has_whatsapp based on whatsapp number and phone
     if (clonedData.farmerDetails) {
       if (clonedData.farmerDetails.whatsapp && clonedData.farmerDetails.phone && String(clonedData.farmerDetails.whatsapp).trim() === String(clonedData.farmerDetails.phone).trim()) {
@@ -733,17 +779,42 @@ const VerifiedLandsDashboard = () => {
     setSelectedLand(null);
   };
 
+  // Helper: convert flat tree fields from landDetails into the `trees` array
+  // that the backend expects for the land_tree table
+  const buildTreesArray = (landDetails) => {
+    const treeFieldMap = [
+      { field: 'mango_trees_number', type: 'Mango' },
+      { field: 'coconut_trees_number', type: 'Coconut' },
+      { field: 'neem_trees_number', type: 'Neem' },
+      { field: 'baniyan_trees_number', type: 'Banyan' },
+      { field: 'tamarind_trees_number', type: 'Tamarind' },
+      { field: 'sapoto_trees_number', type: 'Sapota' },
+      { field: 'guava_trees_number', type: 'Guava' },
+      { field: 'teak_trees_number', type: 'Teak' },
+      { field: 'other_trees_number', type: 'Other' },
+    ];
+    const trees = [];
+    treeFieldMap.forEach(({ field, type }) => {
+      const count = Number(landDetails?.[field]) || 0;
+      if (count > 0) {
+        trees.push({ type, count });
+      }
+    });
+    return trees;
+  };
+
   const saveLandChanges = async () => {
     setUpdatingAction('save');
     try {
       const token = localStorage.getItem('token');
+      const dataWithTrees = { ...editFormData, trees: buildTreesArray(editFormData.landDetails) };
       const response = await fetch(`${API_BASE_URL}/land/${selectedLand.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(editFormData)
+        body: JSON.stringify(dataWithTrees)
       });
       if (!response.ok) throw new Error('Failed to update land');
       

@@ -20,13 +20,14 @@ import {
   Loader2,
   Phone,
   Building2,
-  TreePine,
   Droplets,
   Zap,
+  Check,
   Trash2
 } from 'lucide-react';
 import { BASE_URL } from '../../url/BaseUrl';
 import { fixUrl, IMAGE_NOT_FOUND_PLACEHOLDER } from '../../utils/fixUrl';
+import NearestTownsFields from './components/NearestTownsFields';
 
 const API_BASE_URL = `${BASE_URL}/api`;
 
@@ -53,11 +54,11 @@ const COMPLAINT_OPTIONS = [
   'path issue',
   'No Path at all'
 ];
-const MEDIA_CATEGORIES = ['farmer_photo', 'land_soil', 'fencing', 'farm_pond', 'residence', 'shed', 'water_source', 'trees', 'rocks', 'electric_poles', 'farmer_aggrement', 'others', 'video'];
+const MEDIA_CATEGORIES = ['farmer_photo', 'land_soil', 'fencing', 'farm_pond', 'residence', 'shed', 'water_source', 'trees', 'rocks', 'electric_poles', 'farmer_aggrement', 'others', 'video', 'cards'];
 const DOC_TYPES = ['PASSBOOK', 'AADHAR', 'TITLE_DEED'];
 
 // Status badge component
-const StatusBadge = ({ status, type }) => {
+const StatusBadge = ({ status }) => {
   const getStyles = () => {
     switch (status?.toLowerCase()) {
       case 'complete':
@@ -115,7 +116,7 @@ const LandFinalVerificationDashboard = () => {
   const [selectedMediaCategory, setSelectedMediaCategory] = useState('');
   const [selectedDocType, setSelectedDocType] = useState('');
   const [error, setError] = useState(null);
-  const [previewMedia, setPreviewMedia] = useState(null);
+  
 
   // Fetch lands based on status filter
   const fetchLands = async () => {
@@ -145,7 +146,9 @@ const LandFinalVerificationDashboard = () => {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchLands();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
   // File upload handler
@@ -245,21 +248,46 @@ const LandFinalVerificationDashboard = () => {
     }));
   };
 
+  // Helper: convert flat tree fields from landDetails into the `trees` array
+  // that the backend expects for the land_tree table
+  const buildTreesArray = (landDetails) => {
+    const treeFieldMap = [
+      { field: 'mango_trees_number', type: 'Mango' },
+      { field: 'coconut_trees_number', type: 'Coconut' },
+      { field: 'neem_trees_number', type: 'Neem' },
+      { field: 'baniyan_trees_number', type: 'Banyan' },
+      { field: 'tamarind_trees_number', type: 'Tamarind' },
+      { field: 'sapoto_trees_number', type: 'Sapota' },
+      { field: 'guava_trees_number', type: 'Guava' },
+      { field: 'teak_trees_number', type: 'Teak' },
+      { field: 'other_trees_number', type: 'Other' },
+    ];
+    const trees = [];
+    treeFieldMap.forEach(({ field, type }) => {
+      const count = Number(landDetails?.[field]) || 0;
+      if (count > 0) {
+        trees.push({ type, count });
+      }
+    });
+    return trees;
+  };
+
   // Update land data
   const updateLand = async (id, data) => {
     setUpdating(true);
     try {
       const token = localStorage.getItem('token');
+      const dataWithTrees = { ...data, trees: buildTreesArray(data.landDetails) };
       const response = await fetch(`${API_BASE_URL}/land/${id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(dataWithTrees)
       });
       if (!response.ok) throw new Error('Failed to update land');
-      const result = await response.json();
+      await response.json();
       
       await fetchLands();
       
@@ -347,9 +375,55 @@ const LandFinalVerificationDashboard = () => {
   };
 
   // Initialize edit form when editing starts
-  const startEditing = (land) => {
-    const clonedData = JSON.parse(JSON.stringify(land));
+  const startEditing = async (land) => {
+    // Fetch full land details (the list endpoint may not include tree/relations data)
+    let fullLand = land;
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/land/${land.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          fullLand = result.data;
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching full land details for editing:', err);
+    }
+
+    const clonedData = JSON.parse(JSON.stringify(fullLand));
     
+    // Map tree array from backend to landDetails fields if tree array exists
+    if (clonedData.tree && Array.isArray(clonedData.tree)) {
+      if (!clonedData.landDetails) clonedData.landDetails = {};
+      clonedData.tree.forEach(t => {
+        if (t.type && t.count) {
+          const keyMap = {
+            'mango': 'mango_trees_number',
+            'coconut': 'coconut_trees_number',
+            'neem': 'neem_trees_number',
+            'baniyan': 'baniyan_trees_number',
+            'banyan': 'baniyan_trees_number',
+            'tamarind': 'tamarind_trees_number',
+            'sapoto': 'sapoto_trees_number',
+            'sapota': 'sapoto_trees_number',
+            'guava': 'guava_trees_number',
+            'teak': 'teak_trees_number',
+            'other': 'other_trees_number'
+          };
+          const normalizedType = t.type.toLowerCase();
+          if (keyMap[normalizedType]) {
+            clonedData.landDetails[keyMap[normalizedType]] = Number(t.count) || 0;
+          }
+        }
+      });
+    }
+
     // Normalize has_whatsapp based on whatsapp number and phone
     if (clonedData.farmerDetails) {
       if (clonedData.farmerDetails.whatsapp && clonedData.farmerDetails.phone && String(clonedData.farmerDetails.whatsapp).trim() === String(clonedData.farmerDetails.phone).trim()) {
@@ -405,7 +479,7 @@ const LandFinalVerificationDashboard = () => {
                       src={fixUrl(item.url)} 
                       alt={category} 
                       className="w-full h-40 object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                      onClick={() => setPreviewMedia(item)}
+                      onClick={() => {}}
                       onError={(e) => {
                         e.target.onerror = null;
                         e.target.src = IMAGE_NOT_FOUND_PLACEHOLDER;
@@ -548,7 +622,48 @@ const LandFinalVerificationDashboard = () => {
                 </div>
 
                 <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-lg mb-4">Verification Status</h3>
+                  <h3 className="font-semibold text-lg mb-4">GPS Coordinates</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">GPS Latitude</label>
+                      <input
+                        type="text"
+                        value={editFormData.gps?.latitude || ''}
+                        onChange={(e) => handleEditChange('gps.latitude', e.target.value)}
+                        className="w-full border rounded-lg p-2"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">GPS Longitude</label>
+                      <input
+                        type="text"
+                        value={editFormData.gps?.longitude || ''}
+                        onChange={(e) => handleEditChange('gps.longitude', e.target.value)}
+                        className="w-full border rounded-lg p-2"
+                      />
+                    </div>
+                  </div>
+
+                  <h3 className="font-semibold text-lg mb-4 mt-6">Nearest Towns</h3>
+                  <NearestTownsFields 
+                    editFormData={{ landDetails: editFormData.landDetails }}
+                    handleEditChange={(key, value) => {
+                      if (key.startsWith('landDetails.')) {
+                        const actualKey = key.split('.')[1];
+                        setEditFormData(prev => ({
+                          ...prev,
+                          landDetails: {
+                            ...prev.landDetails,
+                            [actualKey]: value
+                          }
+                        }));
+                      } else {
+                        handleEditChange(key, value);
+                      }
+                    }}
+                  />
+
+                  <h3 className="font-semibold text-lg mb-4 mt-6">Verification Status</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-1">Verification Status</label>
@@ -1079,39 +1194,163 @@ const LandFinalVerificationDashboard = () => {
             {/* STATUS & OPTIONS TAB */}
             {editTab === 'status' && (
               <div className="space-y-6">
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-lg mb-4">Land Sale Status</h3>
-                  <div className="flex flex-wrap gap-3">
-                    {LAND_SALE_STATUS_OPTIONS.map(status => (
-                      <label key={status} className="inline-flex items-center">
-                        <input
-                          type="checkbox"
-                          value={status}
-                          checked={(editFormData.land_sale_available_status || []).includes(status)}
-                          onChange={(e) => handleArrayChange('land_sale_available_status', status, e.target.checked)}
-                          className="rounded border-gray-300 text-blue-600"
-                        />
-                        <span className="ml-2 text-sm text-gray-700">{status}</span>
+                <div className="border border-gray-200 rounded-xl p-5 bg-white shadow-sm">
+                  <div className="flex items-center gap-2 mb-5">
+                    <span className="text-orange-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
+                    </span>
+                    <h3 className="font-semibold text-[15px] text-gray-800">Sale Status</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-y-4 gap-x-4">
+                    {[{value: 'TOKEN RECEIVED', label: 'Token Received'}, {value: 'AGREEMENT Made', label: 'Agreement Made'}, {value: 'SOLD', label: 'Sold'}].map(opt => (
+                      <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+                        <div className="relative flex items-center justify-center w-4 h-4">
+                          <input 
+                            type="checkbox" 
+                            checked={(editFormData.land_sale_available_status || []).includes(opt.value)} 
+                            onChange={(e) => handleArrayChange('land_sale_available_status', opt.value, e.target.checked)} 
+                            className="peer appearance-none w-4 h-4 border border-gray-300 rounded-[3px] checked:bg-orange-500 checked:border-orange-500 transition-all cursor-pointer m-0" 
+                          />
+                          <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none text-white flex items-center justify-center w-full h-full">
+                            <Check size={12} strokeWidth={4} />
+                          </div>
+                        </div>
+                        <span className="text-xs text-gray-700 font-medium">{opt.label}</span>
                       </label>
                     ))}
                   </div>
+
+                  <hr className="border-gray-200 my-5" />
+
+                  <div className="space-y-3">
+                    <div className="text-xs font-medium text-gray-800">Available for Sale</div>
+                    <div className="flex gap-6">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <div className="relative flex items-center justify-center">
+                          <input
+                            type="radio"
+                            name="final_available_for_sale"
+                            checked={(editFormData.land_sale_available_status || []).includes('AVAILABLE FOR SALE')}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                let arr = [...(editFormData.land_sale_available_status || [])];
+                                arr = arr.filter(x => x !== 'NOT AVAILABLE');
+                                if (!arr.includes('AVAILABLE FOR SALE')) arr.push('AVAILABLE FOR SALE');
+                                handleArrayChange('land_sale_available_status', 'AVAILABLE FOR SALE', true); // trigger proper state update if handleArrayChange exists
+                                // But handleArrayChange might just toggle. Let's do it safely:
+                                setEditFormData(prev => ({...prev, land_sale_available_status: arr}));
+                              }
+                            }}
+                            className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-orange-500 transition-all cursor-pointer"
+                          />
+                          <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+                        </div>
+                        <span className="text-xs text-gray-700 font-medium">Yes</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <div className="relative flex items-center justify-center">
+                          <input
+                            type="radio"
+                            name="final_available_for_sale"
+                            checked={(editFormData.land_sale_available_status || []).includes('NOT AVAILABLE')}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                let arr = [...(editFormData.land_sale_available_status || [])];
+                                arr = arr.filter(x => x !== 'AVAILABLE FOR SALE');
+                                if (!arr.includes('NOT AVAILABLE')) arr.push('NOT AVAILABLE');
+                                setEditFormData(prev => ({...prev, land_sale_available_status: arr}));
+                              }
+                            }}
+                            className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-orange-500 transition-all cursor-pointer"
+                          />
+                          <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+                        </div>
+                        <span className="text-xs text-gray-700 font-medium">No</span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-lg mb-4">Mortgage Availability Status</h3>
-                  <div className="flex flex-wrap gap-3">
-                    {MORTGAGE_STATUS_OPTIONS.map(status => (
-                      <label key={status} className="inline-flex items-center">
-                        <input
-                          type="checkbox"
-                          value={status}
-                          checked={(editFormData.mortage_availability_status || []).includes(status)}
-                          onChange={(e) => handleArrayChange('mortage_availability_status', status, e.target.checked)}
-                          className="rounded border-gray-300 text-blue-600"
+                <div className="border border-gray-200 rounded-xl p-5 bg-white shadow-sm">
+                  <div className="flex items-center gap-2 mb-5">
+                    <span className="text-orange-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                    </span>
+                    <h3 className="font-semibold text-[15px] text-gray-800">Mortgage Status</h3>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <div className="relative flex items-center justify-center w-4 h-4">
+                        <input 
+                          type="checkbox" 
+                          checked={(editFormData.mortage_availability_status || []).includes('CURRENTLY MORTGAGED')} 
+                          onChange={(e) => {
+                            let arr = [...(editFormData.mortage_availability_status || [])];
+                            if (e.target.checked) {
+                                if (!arr.includes('CURRENTLY MORTGAGED')) arr.push('CURRENTLY MORTGAGED');
+                            } else {
+                                arr = arr.filter(x => x !== 'CURRENTLY MORTGAGED');
+                            }
+                            setEditFormData(prev => ({...prev, mortage_availability_status: arr}));
+                          }} 
+                          className="peer appearance-none w-4 h-4 border border-gray-300 rounded-[3px] checked:bg-orange-500 checked:border-orange-500 transition-all cursor-pointer m-0" 
                         />
-                        <span className="ml-2 text-sm text-gray-700">{status}</span>
-                      </label>
-                    ))}
+                        <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none text-white flex items-center justify-center w-full h-full">
+                          <Check size={12} strokeWidth={4} />
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-700 font-medium">Mortgaged</span>
+                    </label>
+
+                    <hr className="border-gray-200 my-5" />
+
+                    <div className="space-y-3">
+                      <div className="text-xs font-medium text-gray-800">Available for Mortgage</div>
+                      <div className="flex gap-6">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <div className="relative flex items-center justify-center">
+                            <input
+                              type="radio"
+                              name="final_available_for_mortgage"
+                              checked={(editFormData.mortage_availability_status || []).includes('AVAILABLE FOR MORTGAGE')}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  let arr = [...(editFormData.mortage_availability_status || [])];
+                                  arr = arr.filter(x => x !== 'NOT AVAILABLE');
+                                  if (!arr.includes('AVAILABLE FOR MORTGAGE')) arr.push('AVAILABLE FOR MORTGAGE');
+                                  setEditFormData(prev => ({...prev, mortage_availability_status: arr}));
+                                }
+                              }}
+                              className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-orange-500 transition-all cursor-pointer"
+                            />
+                            <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+                          </div>
+                          <span className="text-xs text-gray-700 font-medium">Yes</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <div className="relative flex items-center justify-center">
+                            <input
+                              type="radio"
+                              name="final_available_for_mortgage"
+                              checked={(editFormData.mortage_availability_status || []).includes('NOT AVAILABLE')}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  let arr = [...(editFormData.mortage_availability_status || [])];
+                                  arr = arr.filter(x => x !== 'AVAILABLE FOR MORTGAGE');
+                                  if (!arr.includes('NOT AVAILABLE')) arr.push('NOT AVAILABLE');
+                                  setEditFormData(prev => ({...prev, mortage_availability_status: arr}));
+                                }
+                              }}
+                              className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-orange-500 transition-all cursor-pointer"
+                            />
+                            <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+                          </div>
+                          <span className="text-xs text-gray-700 font-medium">No</span>
+                        </label>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -1190,7 +1429,7 @@ const LandFinalVerificationDashboard = () => {
                             src={fixUrl(item.url)} 
                             alt={item.category} 
                             className="w-full h-32 object-cover rounded cursor-pointer hover:opacity-90 transition-opacity"
-                            onClick={() => setPreviewMedia(item)}
+                            onClick={() => {}}
                             onError={(e) => {
                               e.target.onerror = null;
                               e.target.src = IMAGE_NOT_FOUND_PLACEHOLDER;
@@ -1330,6 +1569,17 @@ const LandFinalVerificationDashboard = () => {
                   <div><strong>District:</strong> {selectedLand.district || 'N/A'}</div>
                   <div><strong>Mandal:</strong> {selectedLand.mandal || 'N/A'}</div>
                   <div><strong>Village:</strong> {selectedLand.village || 'N/A'}</div>
+                  
+                  {selectedLand.landDetails?.nearest_town_state && (
+                    <div className="col-span-1 md:col-span-2 mt-2 p-3 bg-gray-50 border border-gray-100 rounded-lg">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-2">Nearest Town</h4>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div><span className="text-gray-500">State:</span> {selectedLand.landDetails.nearest_town_state}</div>
+                        <div><span className="text-gray-500">District:</span> {selectedLand.landDetails.nearest_town_district || 'N/A'}</div>
+                      </div>
+                    </div>
+                  )}
+
                   <div><strong>Location:</strong> {selectedLand.location_latitude}, {selectedLand.location_longitude}</div>
                   <div><strong>Verification Status:</strong> <StatusBadge status={selectedLand.verification_status} /></div>
                   <div><strong>Physical Status:</strong> <StatusBadge status={selectedLand.physcial_verification_status} /></div>
@@ -1438,6 +1688,20 @@ const LandFinalVerificationDashboard = () => {
                       {selectedLand.landDetails.water_source.map((w, i) => (
                         <span key={i} className="bg-cyan-100 text-cyan-800 px-2 py-1 rounded text-sm flex items-center gap-1">
                           <Droplets className="w-3 h-3" /> {w}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Trees Information */}
+                {selectedLand.tree && selectedLand.tree.length > 0 && (
+                  <div>
+                    <strong>Trees Information:</strong>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {selectedLand.tree.map((t, i) => (
+                        <span key={i} className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-sm">
+                          {t.type}: {t.count}
                         </span>
                       ))}
                     </div>
