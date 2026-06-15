@@ -146,6 +146,18 @@ export default function DataTable({
             </tr>
           </thead>
           <tbody>
+            {towns.map((town) => (
+              <tr key={town.id}>
+                <td className="loc-table__name">{town.name}</td>
+                <td><span className="loc-code-badge">{town.code || '—'}</span></td>
+                <td className="loc-table__meta">Urban Context</td>
+                <td className="loc-table__meta loc-table__meta--blue">Calculated on commit</td>
+                <td className="loc-table__actions">
+                  <button onClick={() => onEdit(town)} className="loc-action-btn loc-action-btn--icon" title="Edit"><Edit size={14} /></button>
+                  <button onClick={() => onDelete('towns', town.id)} className="loc-action-btn loc-action-btn--delete" title="Delete"><Trash2 size={14} /></button>
+                </td>
+              </tr>
+            ))}
             {towns.length === 0 && (
               <tr><td colSpan="5" className="loc-table__empty">No towns found. Add a town using the form above.</td></tr>
             )}

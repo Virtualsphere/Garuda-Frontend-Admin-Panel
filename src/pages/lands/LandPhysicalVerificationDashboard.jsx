@@ -625,7 +625,7 @@ const LandPhysicalVerificationDashboard = () => {
       trees: buildTreesArray(data.landDetails),
       call_verification_status: 'complete',
       physcial_verification_status: 'complete',
-      verification_status: 'pending', // Set to pending so it goes to final verification
+      verification_status: 'complete', // Set to complete to bypass final verification and go straight to verified
     };
     try {
       const token = localStorage.getItem('token');

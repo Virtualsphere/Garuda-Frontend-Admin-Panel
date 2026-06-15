@@ -9,7 +9,7 @@ import {
   LayoutGrid, UserCheck, CalendarCheck,
   UploadCloud, MapPin, CheckCircle, Save, 
   IndianRupee, Layers, Image as ImageIcon, 
-  Video, Trash2, Camera, Compass, ShieldCheck
+  Video, Trash2, Camera, Compass, ShieldCheck, Check
 } from 'lucide-react';
 import LandVerificationDashboard from './LandVerificationDashboard';
 import VerifiedLandsDashboard from './VerifiedLandsDashboard';
@@ -172,6 +172,7 @@ const AddLand = () => {
   const [mandals, setMandals] = useState([]);
   const [villages, setVillages] = useState([]);
   const [nearestTownDistricts, setNearestTownDistricts] = useState([]);
+  const [nearestTowns, setNearestTowns] = useState([]);
 
   // File upload states
   const [uploading, setUploading] = useState(false);
@@ -258,6 +259,7 @@ const AddLand = () => {
       landDetails: { ...prev.landDetails, nearest_town_state: stateName, nearest_town_district: '' }
     }));
     setNearestTownDistricts([]);
+    setNearestTowns([]);
 
     if (stateId) {
       try {
@@ -274,8 +276,27 @@ const AddLand = () => {
   const handleNearestTownDistrictChange = async (districtName, districtId) => {
     setFormData(prev => ({
       ...prev,
-      landDetails: { ...prev.landDetails, nearest_town_district: districtName }
+      landDetails: { 
+        ...prev.landDetails, 
+        nearest_town_district: districtName,
+        nearest_town_1: '',
+        nearest_town_2: '',
+        nearest_town_3: ''
+      }
     }));
+    
+    setNearestTowns([]);
+
+    if (districtId) {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/location/towns/${districtId}`);
+        if (response.data.success) {
+          setNearestTowns(response.data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching nearest towns:', err);
+      }
+    }
   };
 
   // Generic input handler
@@ -477,6 +498,11 @@ const AddLand = () => {
 
     // Get token from localStorage (assuming JWT is stored here)
     const token = localStorage.getItem('token');
+    
+    // In the Admin Panel, all newly added lands bypass phone verification
+    // and go straight to physical audit.
+    submitData.call_verification_status = 'complete';
+    submitData.physcial_verification_status = 'pending';
 
     try {
       const response = await axios.post(`${API_BASE_URL}/land`, submitData, {
@@ -1206,17 +1232,69 @@ const AddLand = () => {
 
   const renderMortgageCard = () => (
     <CardWrapper color="teal" icon="🏦" title="MORTGAGE AVAILABILITY STATUS" watermark="💳">
-      <div>
-        {MORTGAGE_STATUS_OPTIONS.map(status => (
-          <label key={status} className="land-checkbox">
-            <input
-              type="checkbox"
-              checked={formData.mortage_availability_status.includes(status)}
-              onChange={(e) => handleArrayChange('mortage_availability_status', status, e.target.checked)}
+      <div className="space-y-4 pt-2">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <div className="relative flex items-center justify-center w-4 h-4">
+            <input 
+              type="checkbox" 
+              checked={formData.mortage_availability_status.includes('CURRENTLY MORTGAGED')} 
+              onChange={(e) => handleArrayChange('mortage_availability_status', 'CURRENTLY MORTGAGED', e.target.checked)} 
+              className="peer appearance-none w-4 h-4 border border-gray-300 rounded-[3px] checked:bg-teal-600 checked:border-teal-600 transition-all cursor-pointer m-0" 
             />
-            {status}
-          </label>
-        ))}
+            <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none text-white flex items-center justify-center w-full h-full">
+              <Check size={12} strokeWidth={4} />
+            </div>
+          </div>
+          <span className="text-[11px] text-gray-700 font-medium">Mortgaged</span>
+        </label>
+        
+        <hr className="border-gray-200 my-4" />
+
+        <div className="space-y-2">
+          <div className="text-[11px] font-medium text-gray-800">Available for Mortgage</div>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <div className="relative flex items-center justify-center">
+                <input
+                  type="radio"
+                  name="add_available_for_mortgage"
+                  checked={formData.mortage_availability_status.includes('AVAILABLE FOR MORTGAGE')}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      let arr = [...formData.mortage_availability_status];
+                      arr = arr.filter(x => x !== 'NOT AVAILABLE');
+                      if (!arr.includes('AVAILABLE FOR MORTGAGE')) arr.push('AVAILABLE FOR MORTGAGE');
+                      setFormData(prev => ({ ...prev, mortage_availability_status: arr }));
+                    }
+                  }}
+                  className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-teal-600 transition-all cursor-pointer"
+                />
+                <div className="absolute w-2 h-2 bg-teal-600 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+              </div>
+              <span className="text-[11px] text-gray-700 font-medium">Yes</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <div className="relative flex items-center justify-center">
+                <input
+                  type="radio"
+                  name="add_available_for_mortgage"
+                  checked={formData.mortage_availability_status.includes('NOT AVAILABLE')}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      let arr = [...formData.mortage_availability_status];
+                      arr = arr.filter(x => x !== 'AVAILABLE FOR MORTGAGE');
+                      if (!arr.includes('NOT AVAILABLE')) arr.push('NOT AVAILABLE');
+                      setFormData(prev => ({ ...prev, mortage_availability_status: arr }));
+                    }
+                  }}
+                  className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-teal-600 transition-all cursor-pointer"
+                />
+                <div className="absolute w-2 h-2 bg-teal-600 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+              </div>
+              <span className="text-[11px] text-gray-700 font-medium">No</span>
+            </label>
+          </div>
+        </div>
       </div>
     </CardWrapper>
   );
@@ -1240,17 +1318,73 @@ const AddLand = () => {
 
   const renderLandSaleStatusCard = () => (
     <CardWrapper color="teal" icon="🟢" title="LAND SALE AVAILABLE STATUS" watermark="💰">
-      <div>
-        {LAND_SALE_STATUS_OPTIONS.map(status => (
-          <label key={status} className="land-checkbox">
-            <input
-              type="checkbox"
-              checked={formData.land_sale_available_status.includes(status)}
-              onChange={(e) => handleArrayChange('land_sale_available_status', status, e.target.checked)}
-            />
-            {status}
-          </label>
-        ))}
+      <div className="space-y-4 pt-2">
+        <div className="grid grid-cols-2 gap-y-4 gap-x-2">
+          {[{value: 'TOKEN RECEIVED', label: 'Token Received'}, {value: 'AGREEMENT Made', label: 'Agreement Made'}, {value: 'SOLD', label: 'Sold'}].map(opt => (
+            <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+              <div className="relative flex items-center justify-center w-4 h-4">
+                <input 
+                  type="checkbox" 
+                  checked={formData.land_sale_available_status.includes(opt.value)} 
+                  onChange={(e) => handleArrayChange('land_sale_available_status', opt.value, e.target.checked)} 
+                  className="peer appearance-none w-4 h-4 border border-gray-300 rounded-[3px] checked:bg-teal-600 checked:border-teal-600 transition-all cursor-pointer m-0" 
+                />
+                <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none text-white flex items-center justify-center w-full h-full">
+                  <Check size={12} strokeWidth={4} />
+                </div>
+              </div>
+              <span className="text-[11px] text-gray-700 font-medium">{opt.label}</span>
+            </label>
+          ))}
+        </div>
+
+        <hr className="border-gray-200 my-4" />
+
+        <div className="space-y-2">
+          <div className="text-[11px] font-medium text-gray-800">Available for Sale</div>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <div className="relative flex items-center justify-center">
+                <input
+                  type="radio"
+                  name="add_available_for_sale"
+                  checked={formData.land_sale_available_status.includes('AVAILABLE FOR SALE')}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      let arr = [...formData.land_sale_available_status];
+                      arr = arr.filter(x => x !== 'NOT AVAILABLE');
+                      if (!arr.includes('AVAILABLE FOR SALE')) arr.push('AVAILABLE FOR SALE');
+                      setFormData(prev => ({ ...prev, land_sale_available_status: arr }));
+                    }
+                  }}
+                  className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-teal-600 transition-all cursor-pointer"
+                />
+                <div className="absolute w-2 h-2 bg-teal-600 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+              </div>
+              <span className="text-[11px] text-gray-700 font-medium">Yes</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <div className="relative flex items-center justify-center">
+                <input
+                  type="radio"
+                  name="add_available_for_sale"
+                  checked={formData.land_sale_available_status.includes('NOT AVAILABLE')}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      let arr = [...formData.land_sale_available_status];
+                      arr = arr.filter(x => x !== 'AVAILABLE FOR SALE');
+                      if (!arr.includes('NOT AVAILABLE')) arr.push('NOT AVAILABLE');
+                      setFormData(prev => ({ ...prev, land_sale_available_status: arr }));
+                    }
+                  }}
+                  className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-teal-600 transition-all cursor-pointer"
+                />
+                <div className="absolute w-2 h-2 bg-teal-600 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+              </div>
+              <span className="text-[11px] text-gray-700 font-medium">No</span>
+            </label>
+          </div>
+        </div>
       </div>
     </CardWrapper>
   );
@@ -1346,20 +1480,44 @@ const AddLand = () => {
       </div>
       <div className="field-group">
         <label className="land-label">Primary Urban Hub</label>
-        <select className="land-select">
+        <select 
+          className="land-select"
+          value={formData.landDetails.nearest_town_1 || ''}
+          onChange={(e) => setFormData(prev => ({ ...prev, landDetails: { ...prev.landDetails, nearest_town_1: e.target.value } }))}
+          disabled={!formData.landDetails.nearest_town_district}
+        >
           <option value="">Pick Primary Town</option>
+          {nearestTowns.map(town => (
+            <option key={town.id} value={town.name}>{town.name}</option>
+          ))}
         </select>
       </div>
       <div className="field-group">
         <label className="land-label">Secondary Node</label>
-        <select className="land-select">
+        <select 
+          className="land-select"
+          value={formData.landDetails.nearest_town_2 || ''}
+          onChange={(e) => setFormData(prev => ({ ...prev, landDetails: { ...prev.landDetails, nearest_town_2: e.target.value } }))}
+          disabled={!formData.landDetails.nearest_town_district}
+        >
           <option value="">Pick Secondary Town</option>
+          {nearestTowns.map(town => (
+            <option key={town.id} value={town.name}>{town.name}</option>
+          ))}
         </select>
       </div>
       <div>
         <label className="land-label">Tertiary Node</label>
-        <select className="land-select">
+        <select 
+          className="land-select"
+          value={formData.landDetails.nearest_town_3 || ''}
+          onChange={(e) => setFormData(prev => ({ ...prev, landDetails: { ...prev.landDetails, nearest_town_3: e.target.value } }))}
+          disabled={!formData.landDetails.nearest_town_district}
+        >
           <option value="">Pick Tertiary Town</option>
+          {nearestTowns.map(town => (
+            <option key={town.id} value={town.name}>{town.name}</option>
+          ))}
         </select>
       </div>
     </CardWrapper>
