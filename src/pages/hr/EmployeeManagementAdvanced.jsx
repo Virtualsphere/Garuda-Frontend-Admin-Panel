@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, Plus, Edit2, Trash2, Eye, EyeOff, Upload, X, Search, Filter, Download, Upload as UploadIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronDown, Plus, Edit2, Trash2, Eye, EyeOff, Upload, X, Search, Filter, Download, Upload as UploadIcon, ChevronLeft, ChevronRight, Shield } from 'lucide-react';
 import { BASE_URL } from '../../url/BaseUrl';
 const API_BASE = `${BASE_URL}/api`;
 const ITEMS_PER_PAGE = 10;
@@ -17,6 +17,13 @@ export default function EmployeeManagementAdvanced() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedEmployees, setSelectedEmployees] = useState(new Set());
+  
+  // Role modal states
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+  const [newRoleName, setNewRoleName] = useState('');
+  const [rolesList, setRolesList] = useState([]);
+  const [editingRoleId, setEditingRoleId] = useState(null);
+  const [editRoleName, setEditRoleName] = useState('');
   
   // Form states
   const [formData, setFormData] = useState({
@@ -74,7 +81,20 @@ export default function EmployeeManagementAdvanced() {
   useEffect(() => {
     fetchEmployees();
     fetchLocations();
+    fetchRolesList();
   }, []);
+
+  const fetchRolesList = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/role`);
+      if (response.ok) {
+        const data = await response.json();
+        setRolesList(data.data || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch roles', err);
+    }
+  };
 
   const fetchEmployees = async () => {
     setLoading(true);
@@ -390,6 +410,91 @@ export default function EmployeeManagementAdvanced() {
     setLoading(false);
   };
 
+  const handleAddRole = async () => {
+    if (!newRoleName.trim()) return;
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/role`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name: newRoleName.toUpperCase().replace(/\s+/g, '_') })
+      });
+      
+      if (!response.ok) throw new Error('Failed to add role');
+      
+      setSuccess('Role added successfully');
+      setNewRoleName('');
+      fetchRolesList();
+      setTimeout(() => setSuccess(''), 3000);
+      
+    } catch (err) {
+      setError(err.message || 'Error adding role');
+      setTimeout(() => setError(''), 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateRole = async (id) => {
+    if (!editRoleName.trim()) return;
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/role/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name: editRoleName.toUpperCase().replace(/\s+/g, '_') })
+      });
+      
+      if (!response.ok) throw new Error('Failed to update role');
+      
+      setSuccess('Role updated successfully');
+      setEditingRoleId(null);
+      setEditRoleName('');
+      fetchRolesList();
+      setTimeout(() => setSuccess(''), 3000);
+      
+    } catch (err) {
+      setError(err.message || 'Error updating role');
+      setTimeout(() => setError(''), 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteRole = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this role?')) return;
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/role/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete role');
+      
+      setSuccess('Role deleted successfully');
+      fetchRolesList();
+      setTimeout(() => setSuccess(''), 3000);
+      
+    } catch (err) {
+      setError(err.message || 'Error deleting role');
+      setTimeout(() => setError(''), 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleExportCSV = () => {
     if (filteredEmployees.length === 0) {
       setError('No employees to export');
@@ -543,6 +648,14 @@ export default function EmployeeManagementAdvanced() {
         <h2 className="text-3xl font-bold text-gray-900">Employees</h2>
         <div className="flex gap-2">
           <button
+            onClick={() => setIsRoleModalOpen(true)}
+            className="flex items-center gap-2 bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold"
+            title="Add New Role"
+          >
+            <Shield size={20} />
+            Add Roles
+          </button>
+          <button
             onClick={handleExportCSV}
             disabled={filteredEmployees.length === 0}
             className="flex items-center gap-2 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:opacity-50"
@@ -587,11 +700,19 @@ export default function EmployeeManagementAdvanced() {
           className="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="all">All Roles</option>
-          <option value="FIELD_AGENT">Field Agent</option>
-          <option value="FIELD_EXECUTIVE">Field Executive</option>
-          <option value="MANAGER">Manager</option>
-          <option value="SUPERVISOR">Supervisor</option>
-          <option value="ADMIN">Admin</option>
+          {rolesList.length > 0 ? (
+            rolesList.map(role => (
+              <option key={role.id} value={role.name}>{role.name}</option>
+            ))
+          ) : (
+            <>
+              <option value="FIELD_AGENT">Field Agent</option>
+              <option value="FIELD_EXECUTIVE">Field Executive</option>
+              <option value="MANAGER">Manager</option>
+              <option value="SUPERVISOR">Supervisor</option>
+              <option value="ADMIN">Admin</option>
+            </>
+          )}
         </select>
         <select
           value={filterStatus}
@@ -766,6 +887,105 @@ export default function EmployeeManagementAdvanced() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Manage Roles Modal */}
+      {isRoleModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2"><Shield size={24} className="text-purple-600"/> Manage Roles</h3>
+              <button onClick={() => setIsRoleModalOpen(false)} className="text-gray-500 hover:text-gray-700">
+                <X size={24} />
+              </button>
+            </div>
+            
+            {/* Add Role Form */}
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Add New Role</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newRoleName}
+                  onChange={(e) => setNewRoleName(e.target.value)}
+                  placeholder="e.g. HR MANAGER"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+                <button
+                  onClick={handleAddRole}
+                  disabled={!newRoleName.trim() || loading}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center gap-1"
+                >
+                  <Plus size={18}/>
+                  Add
+                </button>
+              </div>
+            </div>
+
+            {/* Roles List */}
+            <div className="flex-1 overflow-y-auto">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">Existing Roles</h4>
+              {rolesList.length === 0 ? (
+                <p className="text-gray-500 text-sm text-center py-4">No roles found.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {rolesList.map(role => (
+                    <li key={role.id} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:border-purple-300 transition-colors">
+                      {editingRoleId === role.id ? (
+                        <div className="flex gap-2 flex-1 mr-2">
+                          <input
+                            type="text"
+                            value={editRoleName}
+                            onChange={(e) => setEditRoleName(e.target.value)}
+                            className="flex-1 px-3 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => handleUpdateRole(role.id)}
+                            disabled={!editRoleName.trim() || loading}
+                            className="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditingRoleId(null)}
+                            className="text-xs px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <span className="font-medium text-gray-800 text-sm">{role.name}</span>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                setEditingRoleId(role.id);
+                                setEditRoleName(role.name);
+                              }}
+                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                              title="Edit Role"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteRole(role.id)}
+                              className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                              title="Delete Role"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            
+          </div>
+        </div>
       )}
     </div>
   );
@@ -945,11 +1165,19 @@ export default function EmployeeManagementAdvanced() {
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option>FIELD_AGENT</option>
-                <option>FIELD_EXECUTIVE</option>
-                <option>MANAGER</option>
-                <option>SUPERVISOR</option>
-                <option>ADMIN</option>
+                {rolesList.length > 0 ? (
+                  rolesList.map(role => (
+                    <option key={role.id} value={role.name}>{role.name}</option>
+                  ))
+                ) : (
+                  <>
+                    <option>FIELD_AGENT</option>
+                    <option>FIELD_EXECUTIVE</option>
+                    <option>MANAGER</option>
+                    <option>SUPERVISOR</option>
+                    <option>ADMIN</option>
+                  </>
+                )}
               </select>
             </div>
             <div>

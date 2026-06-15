@@ -1,0 +1,72 @@
+﻿Created At: 2026-06-15T10:34:04Z
+Completed At: 2026-06-15T10:34:04Z
+File Path: `file:///d:/development/Garuda-Frontend-Admin-Panel/src/pages/lands/AddLand.jsx`
+Total Lines: 1683
+Total Bytes: 66130
+Showing lines 1428 to 1490
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1428:   const renderNearestTownsCard = () => (
+1429:     <CardWrapper color="teal" icon="ðŸ“" title="NEAREST TOWNS" watermark="ðŸ“">
+1430:       <div className="field-group">
+1431:         <label className="land-label">State</label>
+1432:         <select
+1433:           value={formData.landDetails.nearest_town_state}
+1434:           onChange={(e) => {
+1435:             const selectedState = states.find(s => s.name === e.target.value);
+1436:             handleNearestTownStateChange(e.target.value, selectedState?.id);
+1437:           }}
+1438:           className="land-select"
+1439:         >
+1440:           <option value="">Select State</option>
+1441:           {states.map(state => (
+1442:             <option key={state.id} value={state.name}>{state.name}</option>
+1443:           ))}
+1444:         </select>
+1445:       </div>
+1446:       <div className="field-group">
+1447:         <label className="land-label">District</label>
+1448:         <select
+1449:           value={formData.landDetails.nearest_town_district}
+1450:           onChange={(e) => {
+1451:             const selectedDistrict = nearestTownDistricts.find(d => d.name === e.target.value);
+1452:             handleNearestTownDistrictChange(e.target.value, selectedDistrict?.id);
+1453:           }}
+1454:           className="land-select"
+1455:           disabled={!formData.landDetails.nearest_town_state}
+1456:         >
+1457:           <option value="">Select District</option>
+1458:           {nearestTownDistricts.map(district => (
+1459:             <option key={district.id} value={district.name}>{district.name}</option>
+1460:           ))}
+1461:         </select>
+1462:       </div>
+1463:       <div className="field-group">
+1464:         <label className="land-label">Mandal</label>
+1465:         <select
+1466:           value={formData.landDetails.nearest_town_mandal}
+1467:           onChange={(e) => {
+1468:             setFormData(prev => ({
+1469:               ...prev,
+1470:               landDetails: { ...prev.landDetails, nearest_town_mandal: e.target.value }
+1471:             }));
+1472:           }}
+1473:           className="land-select"
+1474:           disabled={!formData.landDetails.nearest_town_district}
+1475:         >
+1476:           <option value="">Select Mandal</option>
+1477:           {nearestTownMandals.map(mandal => (
+1478:             <option key={mandal.id} value={mandal.name}>{mandal.name}</option>
+1479:           ))}
+1480:         </select>
+1481:       </div>
+1482:       <div className="field-group">
+1483:         <label className="land-label">Primary Urban Hub</label>
+1484:         <select className="land-select">
+1485:           <option value="">Pick Primary Town</option>
+1486:         </select>
+1487:       </div>
+1488:       <div className="field-group">
+1489:         <label className="land-label">Secondary Node</label>
+1490:         <select className="land-select">
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
+

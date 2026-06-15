@@ -1,10 +1,10 @@
-  // Render edit form INLINE (not modal)
+// Render edit form INLINE (not modal)
   import React from 'react';
 import {
   Search, ChevronLeft, ChevronRight, Eye, Edit, Save, X,
   CheckCircle, XCircle, Clock, MapPin, User, FileText,
   Image as ImageIcon, Video, Upload, Loader2, Phone,
-  Building2, TreePine, Droplets, Zap, ArrowRight, Bell
+  Building2, TreePine, Droplets, Zap, ArrowRight, Bell, Flag, ShieldCheck, Check
 } from 'lucide-react';
 import { FormCard } from './FormCard';
 import { styles } from '../utils/styles';
@@ -16,6 +16,7 @@ import {
   MORTGAGE_STATUS_OPTIONS, WATER_SOURCE_OPTIONS
 } from '../utils/constants';
 import { getAvatarColor, formatPriceShort, formatPrice, StatusBadge } from '../utils/helpers';
+import NearestTownsFields from './NearestTownsFields';
 
 export const LandEditForm = ({
   selectedLand,
@@ -197,6 +198,14 @@ export const LandEditForm = ({
                 <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Address / Landmark</label>
                 <input type="text" value={editFormData.address || ''} onChange={(e) => handleEditChange('address', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" placeholder="Enter address or nearby landmark" />
               </div>
+            </FormCard>
+
+            <FormCard title="1A. NEAREST TOWNS" icon={MapPin} colorTheme="teal">
+              <NearestTownsFields 
+                editFormData={editFormData}
+                handleEditChange={handleEditChange}
+                states={locationStates || []}
+              />
             </FormCard>
 
             <FormCard title="2. FARMER DETAILS" icon={User} colorTheme="red">
@@ -394,7 +403,7 @@ export const LandEditForm = ({
               <div className="space-y-4">
                 <div>
                   <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Soil Type</label>
-                  <select value={editFormData.landDetails?.soil_type || ''} onChange={(e) => handleEditChange('landDetails.soil_type', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white mb-2">
+                  <select value={editFormData.landDetails?.soil_type || ''} onChange={(e) => handleEditChange('landDetails.soil_type', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white">
                     <option value="">Select</option>
                     <option value="Red Soil">Red Soil</option>
                     <option value="Black Soil">Black Soil</option>
@@ -402,7 +411,6 @@ export const LandEditForm = ({
                     <option value="Clay Soil">Clay Soil</option>
                     <option value="Loamy Soil">Loamy Soil</option>
                   </select>
-                  <input type="text" value={editFormData.landDetails?.soil_type_details || ''} onChange={(e) => handleEditChange('landDetails.soil_type_details', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium" placeholder="Additional details..." />
                 </div>
                 <div>
                   <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Fencing Status</label>
@@ -515,7 +523,7 @@ export const LandEditForm = ({
             <FormCard title="8. MULTIMEDIA REGISTRY" icon={ImageIcon} colorTheme="blue">
               <div className="grid grid-cols-3 gap-2">
                 {[1,2,3,4,5,6,7,8,9].map((i) => {
-                  const validMedia = (editFormData.media || []).filter(m => m.category && m.category.toLowerCase() !== 'default');
+                  const validMedia = (editFormData.media || []).filter(m => m.category && m.category.toLowerCase() !== 'default' && MEDIA_CATEGORIES.includes(m.category.toLowerCase()) && m.url && typeof m.url === 'string' && m.url.trim() !== '');
                   const mediaItem = validMedia[i-1];
                   return (
                     <div key={i} className="aspect-square bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-300 hover:bg-gray-100 transition-colors relative">
@@ -575,51 +583,137 @@ export const LandEditForm = ({
           {/* COLUMN 4 */}
           <div className="flex flex-col gap-6">
             
-            <FormCard title="10. SALE STATUS" icon={CheckCircle} colorTheme="green">
-              <div className="space-y-4">
-                <div>
-                  <div className="grid grid-cols-1 gap-2">
-                    {LAND_SALE_STATUS.map(opt => (
-                      <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
-                        <div className="relative flex items-center justify-center">
-                          <input 
-                            type="checkbox" 
-                            checked={(editFormData.land_sale_available_status || []).includes(opt)} 
-                            onChange={(e) => handleArrayChange('land_sale_available_status', opt, e.target.checked)} 
-                            className="peer appearance-none w-4 h-4 border-2 border-green-400 rounded-sm checked:bg-white checked:border-green-500 transition-all cursor-pointer" 
-                          />
-                          <div className="pointer-events-none absolute opacity-0 peer-checked:opacity-100 text-green-500">
-                            <CheckCircle size={14} className="stroke-[3]" />
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">{opt}</span>
-                      </label>
-                    ))}
-                  </div>
+            <FormCard title="10. SALE STATUS" icon={Flag} colorTheme="orange">
+              <div className="grid grid-cols-2 gap-y-4 gap-x-2">
+                {[{value: 'TOKEN RECEIVED', label: 'Token Received'}, {value: 'AGREEMENT Made', label: 'Agreement Made'}, {value: 'SOLD', label: 'Sold'}].map(opt => (
+                  <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+                    <div className="relative flex items-center justify-center w-4 h-4">
+                      <input 
+                        type="checkbox" 
+                        checked={(editFormData.land_sale_available_status || []).includes(opt.value)} 
+                        onChange={(e) => handleArrayChange('land_sale_available_status', opt.value, e.target.checked)} 
+                        className="peer appearance-none w-4 h-4 border border-gray-300 rounded-[3px] checked:bg-orange-500 checked:border-orange-500 transition-all cursor-pointer m-0" 
+                      />
+                      <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none text-white flex items-center justify-center w-full h-full">
+                        <Check size={12} strokeWidth={4} />
+                      </div>
+                    </div>
+                    <span className="text-[11px] text-gray-700 font-medium">{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+
+              <hr className="border-gray-200 my-4" />
+
+              <div className="space-y-2">
+                <div className="text-[11px] font-medium text-gray-800">Available for Sale</div>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <div className="relative flex items-center justify-center">
+                      <input
+                        type="radio"
+                        name="available_for_sale"
+                        checked={(editFormData.land_sale_available_status || []).includes('AVAILABLE FOR SALE')}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            let arr = [...(editFormData.land_sale_available_status || [])];
+                            arr = arr.filter(x => x !== 'NOT AVAILABLE');
+                            if (!arr.includes('AVAILABLE FOR SALE')) arr.push('AVAILABLE FOR SALE');
+                            handleEditChange('land_sale_available_status', arr);
+                          }
+                        }}
+                        className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-orange-500 transition-all cursor-pointer"
+                      />
+                      <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+                    </div>
+                    <span className="text-[11px] text-gray-700 font-medium">Yes</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <div className="relative flex items-center justify-center">
+                      <input
+                        type="radio"
+                        name="available_for_sale"
+                        checked={(editFormData.land_sale_available_status || []).includes('NOT AVAILABLE')}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            let arr = [...(editFormData.land_sale_available_status || [])];
+                            arr = arr.filter(x => x !== 'AVAILABLE FOR SALE');
+                            if (!arr.includes('NOT AVAILABLE')) arr.push('NOT AVAILABLE');
+                            handleEditChange('land_sale_available_status', arr);
+                          }
+                        }}
+                        className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-orange-500 transition-all cursor-pointer"
+                      />
+                      <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+                    </div>
+                    <span className="text-[11px] text-gray-700 font-medium">No</span>
+                  </label>
                 </div>
               </div>
             </FormCard>
 
-            <FormCard title="11. MORTGAGE STATUS" icon={Building2} colorTheme="blue">
+            <FormCard title="11. MORTGAGE STATUS" icon={ShieldCheck} colorTheme="orange">
               <div className="space-y-4">
-                <div>
-                  <div className="grid grid-cols-1 gap-2">
-                    {MORTGAGE_STATUS_OPTIONS.map(status => (
-                      <label key={status} className="flex items-center gap-1.5 cursor-pointer">
-                        <div className="relative flex items-center justify-center">
-                          <input 
-                            type="checkbox" 
-                            checked={(editFormData.mortage_availability_status || []).includes(status)} 
-                            onChange={(e) => handleArrayChange('mortage_availability_status', status, e.target.checked)} 
-                            className="peer appearance-none w-4 h-4 border-2 border-blue-400 rounded-sm checked:bg-white checked:border-blue-500 transition-all cursor-pointer" 
-                          />
-                          <div className="pointer-events-none absolute opacity-0 peer-checked:opacity-100 text-blue-500">
-                            <CheckCircle size={14} className="stroke-[3]" />
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-bold text-blue-800 uppercase tracking-wider">{status}</span>
-                      </label>
-                    ))}
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <div className="relative flex items-center justify-center w-4 h-4">
+                    <input 
+                      type="checkbox" 
+                      checked={(editFormData.mortage_availability_status || []).includes('CURRENTLY MORTGAGED')} 
+                      onChange={(e) => handleArrayChange('mortage_availability_status', 'CURRENTLY MORTGAGED', e.target.checked)} 
+                      className="peer appearance-none w-4 h-4 border border-gray-300 rounded-[3px] checked:bg-orange-500 checked:border-orange-500 transition-all cursor-pointer m-0" 
+                    />
+                    <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none text-white flex items-center justify-center w-full h-full">
+                      <Check size={12} strokeWidth={4} />
+                    </div>
+                  </div>
+                  <span className="text-[11px] text-gray-700 font-medium">Mortgaged</span>
+                </label>
+
+                <hr className="border-gray-200 my-4" />
+
+                <div className="space-y-2">
+                  <div className="text-[11px] font-medium text-gray-800">Available for Mortgage</div>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <div className="relative flex items-center justify-center">
+                        <input
+                          type="radio"
+                          name="available_for_mortgage"
+                          checked={(editFormData.mortage_availability_status || []).includes('AVAILABLE FOR MORTGAGE')}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              let arr = [...(editFormData.mortage_availability_status || [])];
+                              arr = arr.filter(x => x !== 'NOT AVAILABLE');
+                              if (!arr.includes('AVAILABLE FOR MORTGAGE')) arr.push('AVAILABLE FOR MORTGAGE');
+                              handleEditChange('mortage_availability_status', arr);
+                            }
+                          }}
+                          className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-orange-500 transition-all cursor-pointer"
+                        />
+                        <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+                      </div>
+                      <span className="text-[11px] text-gray-700 font-medium">Yes</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <div className="relative flex items-center justify-center">
+                        <input
+                          type="radio"
+                          name="available_for_mortgage"
+                          checked={(editFormData.mortage_availability_status || []).includes('NOT AVAILABLE')}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              let arr = [...(editFormData.mortage_availability_status || [])];
+                              arr = arr.filter(x => x !== 'AVAILABLE FOR MORTGAGE');
+                              if (!arr.includes('NOT AVAILABLE')) arr.push('NOT AVAILABLE');
+                              handleEditChange('mortage_availability_status', arr);
+                            }
+                          }}
+                          className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-orange-500 transition-all cursor-pointer"
+                        />
+                        <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+                      </div>
+                      <span className="text-[11px] text-gray-700 font-medium">No</span>
+                    </label>
                   </div>
                 </div>
               </div>

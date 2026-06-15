@@ -57,6 +57,8 @@ const INITIAL_LAND_DETAILS = {
   teak_trees_number: '',
   other_trees_number: '',
   complaints: [],
+  nearest_town_state: '',
+  nearest_town_district: '',
 };
 
 const INITIAL_FORM_DATA = {
@@ -169,6 +171,7 @@ const AddLand = () => {
   const [districts, setDistricts] = useState([]);
   const [mandals, setMandals] = useState([]);
   const [villages, setVillages] = useState([]);
+  const [nearestTownDistricts, setNearestTownDistricts] = useState([]);
 
   // File upload states
   const [uploading, setUploading] = useState(false);
@@ -247,6 +250,32 @@ const AddLand = () => {
         console.error('Error fetching villages:', err);
       }
     }
+  };
+
+  const handleNearestTownStateChange = async (stateName, stateId) => {
+    setFormData(prev => ({
+      ...prev,
+      landDetails: { ...prev.landDetails, nearest_town_state: stateName, nearest_town_district: '' }
+    }));
+    setNearestTownDistricts([]);
+
+    if (stateId) {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/location/districts/${stateId}`);
+        if (response.data.success) {
+          setNearestTownDistricts(response.data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching nearest town districts:', err);
+      }
+    }
+  };
+
+  const handleNearestTownDistrictChange = async (districtName, districtId) => {
+    setFormData(prev => ({
+      ...prev,
+      landDetails: { ...prev.landDetails, nearest_town_district: districtName }
+    }));
   };
 
   // Generic input handler
@@ -423,6 +452,28 @@ const AddLand = () => {
       ...formData,
       form_status: status,
     });
+
+    // Convert flat tree fields from landDetails into the `trees` array format
+    // that the backend expects for the land_tree table
+    const treeFieldMap = [
+      { field: 'mango_trees_number', type: 'Mango' },
+      { field: 'coconut_trees_number', type: 'Coconut' },
+      { field: 'neem_trees_number', type: 'Neem' },
+      { field: 'baniyan_trees_number', type: 'Banyan' },
+      { field: 'tamarind_trees_number', type: 'Tamarind' },
+      { field: 'sapoto_trees_number', type: 'Sapota' },
+      { field: 'guava_trees_number', type: 'Guava' },
+      { field: 'teak_trees_number', type: 'Teak' },
+      { field: 'other_trees_number', type: 'Other' },
+    ];
+    const treesArray = [];
+    treeFieldMap.forEach(({ field, type }) => {
+      const count = Number(submitData.landDetails?.[field]) || 0;
+      if (count > 0) {
+        treesArray.push({ type, count });
+      }
+    });
+    submitData.trees = treesArray;
 
     // Get token from localStorage (assuming JWT is stored here)
     const token = localStorage.getItem('token');
@@ -1259,18 +1310,39 @@ const AddLand = () => {
   );
 
   const renderNearestTownsCard = () => (
-    <CardWrapper color="teal" icon="🏙️" title="NEAREST TOWNS" watermark="🌆">
+    <CardWrapper color="teal" icon="📍" title="NEAREST TOWNS" watermark="📍">
       <div className="field-group">
-        <label className="land-label">Mandal</label>
-        <input type="text" className="land-input" placeholder="Mandal" value={formData.mandal} readOnly />
+        <label className="land-label">State</label>
+        <select
+          value={formData.landDetails.nearest_town_state}
+          onChange={(e) => {
+            const selectedState = states.find(s => s.name === e.target.value);
+            handleNearestTownStateChange(e.target.value, selectedState?.id);
+          }}
+          className="land-select"
+        >
+          <option value="">Select State</option>
+          {states.map(state => (
+            <option key={state.id} value={state.name}>{state.name}</option>
+          ))}
+        </select>
       </div>
       <div className="field-group">
-        <label className="land-label">Village</label>
-        <input type="text" className="land-input" placeholder="Village" value={formData.village} readOnly />
-      </div>
-      <div className="field-group">
-        <label className="land-label">Town</label>
-        <input type="text" className="land-input" placeholder="Town" />
+        <label className="land-label">District</label>
+        <select
+          value={formData.landDetails.nearest_town_district}
+          onChange={(e) => {
+            const selectedDistrict = nearestTownDistricts.find(d => d.name === e.target.value);
+            handleNearestTownDistrictChange(e.target.value, selectedDistrict?.id);
+          }}
+          className="land-select"
+          disabled={!formData.landDetails.nearest_town_state}
+        >
+          <option value="">Select District</option>
+          {nearestTownDistricts.map(district => (
+            <option key={district.id} value={district.name}>{district.name}</option>
+          ))}
+        </select>
       </div>
       <div className="field-group">
         <label className="land-label">Primary Urban Hub</label>
@@ -1462,7 +1534,7 @@ const AddLand = () => {
               {renderUrgencyListingCard()}
               {renderMortgageCard()}
               {renderLandSaleStatusCard()}
-              {renderSuggestedFarmerCard()}
+              {activeNavItem !== 'Edit data' && renderSuggestedFarmerCard()}
               {renderNearestTownsCard()}
               {renderPhotoGridCard()}
             </div>

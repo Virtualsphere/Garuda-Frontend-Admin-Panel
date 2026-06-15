@@ -24,6 +24,9 @@ import {
   TreePine,
   Droplets,
   Zap,
+  Flag,
+  ShieldCheck,
+  Check,
   ArrowRight,
   Bell,
   Trash2
@@ -31,6 +34,7 @@ import {
 import { BASE_URL } from '../../url/BaseUrl';
 import LandPhysicalVerificationDashboard from './LandPhysicalVerificationDashboard';
 import { fixUrl, IMAGE_NOT_FOUND_PLACEHOLDER } from "../../utils/fixUrl";
+import NearestTownsFields from './components/NearestTownsFields';
 
 const API_BASE_URL = `${BASE_URL}/api`;
 
@@ -57,7 +61,7 @@ const COMPLAINT_OPTIONS = [
   'path issue',
   'No Path at all'
 ];
-const MEDIA_CATEGORIES = ['farmer_photo', 'land_soil', 'fencing', 'farm_pond', 'residence', 'shed', 'water_source', 'trees', 'rocks', 'electric_poles', 'others', 'video', 'farmer_agreement'];
+const MEDIA_CATEGORIES = ['farmer_photo', 'land_soil', 'fencing', 'farm_pond', 'residence', 'shed', 'water_source', 'trees', 'rocks', 'electric_poles', 'others', 'video', 'farmer_agreement', 'cards'];
 const DOC_TYPES = ['PASSBOOK', 'AADHAR', 'TITLE_DEED'];
 
 // Avatar colors for farmer initials
@@ -665,11 +669,36 @@ const LandVerificationDashboard = () => {
     }));
   };
 
+  // Helper: convert flat tree fields from landDetails into the `trees` array
+  // that the backend expects for the land_tree table
+  const buildTreesArray = (landDetails) => {
+    const treeFieldMap = [
+      { field: 'mango_trees_number', type: 'Mango' },
+      { field: 'coconut_trees_number', type: 'Coconut' },
+      { field: 'neem_trees_number', type: 'Neem' },
+      { field: 'baniyan_trees_number', type: 'Banyan' },
+      { field: 'tamarind_trees_number', type: 'Tamarind' },
+      { field: 'sapoto_trees_number', type: 'Sapota' },
+      { field: 'guava_trees_number', type: 'Guava' },
+      { field: 'teak_trees_number', type: 'Teak' },
+      { field: 'other_trees_number', type: 'Other' },
+    ];
+    const trees = [];
+    treeFieldMap.forEach(({ field, type }) => {
+      const count = Number(landDetails?.[field]) || 0;
+      if (count > 0) {
+        trees.push({ type, count });
+      }
+    });
+    return trees;
+  };
+
   // Update land data (Verify)
   const verifyLand = async (id, data) => {
     setUpdatingAction('verify');
     const payload = {
       ...data,
+      trees: buildTreesArray(data.landDetails),
       call_verification_status: 'complete',
       physcial_verification_status: 'complete',
       verification_status: 'complete',
@@ -711,6 +740,7 @@ const LandVerificationDashboard = () => {
     setUpdatingAction('physical');
     const payload = {
       ...data,
+      trees: buildTreesArray(data.landDetails),
       call_verification_status: 'complete',
       physcial_verification_status: 'pending',
       verification_status: 'pending',
@@ -817,8 +847,54 @@ const LandVerificationDashboard = () => {
 
   // Initialize edit form when editing starts
   const startEditing = async (land) => {
-    const clonedData = JSON.parse(JSON.stringify(land));
+    // Fetch full land details (the list endpoint may not include tree/relations data)
+    let fullLand = land;
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/land/${land.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          fullLand = result.data;
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching full land details for editing:', err);
+    }
+
+    const clonedData = JSON.parse(JSON.stringify(fullLand));
     
+    // Map tree array from backend to landDetails fields if tree array exists
+    if (clonedData.tree && Array.isArray(clonedData.tree)) {
+      if (!clonedData.landDetails) clonedData.landDetails = {};
+      clonedData.tree.forEach(t => {
+        if (t.type && t.count) {
+          const keyMap = {
+            'mango': 'mango_trees_number',
+            'coconut': 'coconut_trees_number',
+            'neem': 'neem_trees_number',
+            'baniyan': 'baniyan_trees_number',
+            'banyan': 'baniyan_trees_number',
+            'tamarind': 'tamarind_trees_number',
+            'sapoto': 'sapoto_trees_number',
+            'sapota': 'sapoto_trees_number',
+            'guava': 'guava_trees_number',
+            'teak': 'teak_trees_number',
+            'other': 'other_trees_number'
+          };
+          const normalizedType = t.type.toLowerCase();
+          if (keyMap[normalizedType]) {
+            clonedData.landDetails[keyMap[normalizedType]] = Number(t.count) || 0;
+          }
+        }
+      });
+    }
+
     // Normalize has_whatsapp based on whatsapp number and phone
     if (clonedData.farmerDetails) {
       if (clonedData.farmerDetails.whatsapp && clonedData.farmerDetails.phone && String(clonedData.farmerDetails.whatsapp).trim() === String(clonedData.farmerDetails.phone).trim()) {
@@ -1200,6 +1276,14 @@ const LandVerificationDashboard = () => {
               </div>
             </FormCard>
 
+            <FormCard title="1A. NEAREST TOWNS" icon={MapPin} colorTheme="teal">
+              <NearestTownsFields 
+                editFormData={editFormData}
+                handleEditChange={handleEditChange}
+                states={locationStates || []}
+              />
+            </FormCard>
+
             <FormCard title="2. FARMER DETAILS" icon={User} colorTheme="red">
               <div className="space-y-4">
                 <div>
@@ -1395,7 +1479,7 @@ const LandVerificationDashboard = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Soil Type</label>
-                  <select value={editFormData.landDetails?.soil_type || ''} onChange={(e) => handleEditChange('landDetails.soil_type', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white mb-2">
+                  <select value={editFormData.landDetails?.soil_type || ''} onChange={(e) => handleEditChange('landDetails.soil_type', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white">
                     <option value="">Select</option>
                     <option value="Red Soil">Red Soil</option>
                     <option value="Black Soil">Black Soil</option>
@@ -1403,7 +1487,6 @@ const LandVerificationDashboard = () => {
                     <option value="Clay Soil">Clay Soil</option>
                     <option value="Loamy Soil">Loamy Soil</option>
                   </select>
-                  <input type="text" value={editFormData.landDetails?.soil_type_details || ''} onChange={(e) => handleEditChange('landDetails.soil_type_details', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium" placeholder="Additional details..." />
                 </div>
                 <div>
                   <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Fencing Status</label>
@@ -1515,7 +1598,7 @@ const LandVerificationDashboard = () => {
             <FormCard title="8. MULTIMEDIA REGISTRY" icon={ImageIcon} colorTheme="blue">
               <div className="grid grid-cols-3 gap-2">
                 {[1,2,3,4,5,6,7,8,9].map((i) => {
-                  const validMedia = (editFormData.media || []).filter(m => m.category && m.category.toLowerCase() !== 'default');
+                  const validMedia = (editFormData.media || []).filter(m => m.category && m.category.toLowerCase() !== 'default' && MEDIA_CATEGORIES.includes(m.category.toLowerCase()) && m.url && typeof m.url === 'string' && m.url.trim() !== '');
                   const mediaItem = validMedia[i-1];
                   return (
                     <div key={i} className="aspect-square bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-300 hover:bg-gray-100 transition-colors relative">
@@ -1575,51 +1658,145 @@ const LandVerificationDashboard = () => {
           {/* COLUMN 4 */}
           <div className="flex flex-col gap-6">
             
-            <FormCard title="10. SALE STATUS" icon={CheckCircle} colorTheme="green">
-              <div className="space-y-4">
-                <div>
-                  <div className="grid grid-cols-1 gap-2">
-                    {['TOKEN RECEIVED', 'AVAILABLE FOR SALE', 'AGREEMENT Made', 'NOT AVAILABLE', 'SOLD'].map(opt => (
-                      <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
-                        <div className="relative flex items-center justify-center">
-                          <input 
-                            type="checkbox" 
-                            checked={(editFormData.land_sale_available_status || []).includes(opt)} 
-                            onChange={(e) => handleArrayChange('land_sale_available_status', opt, e.target.checked)} 
-                            className="peer appearance-none w-4 h-4 border-2 border-green-400 rounded-sm checked:bg-white checked:border-green-500 transition-all cursor-pointer" 
-                          />
-                          <div className="pointer-events-none absolute opacity-0 peer-checked:opacity-100 text-green-500">
-                            <CheckCircle size={14} className="stroke-[3]" />
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">{opt}</span>
-                      </label>
-                    ))}
-                  </div>
+            <FormCard title="10. SALE STATUS" icon={Flag} colorTheme="orange">
+              <div className="grid grid-cols-2 gap-y-4 gap-x-2">
+                {[{value: 'TOKEN RECEIVED', label: 'Token Received'}, {value: 'AGREEMENT Made', label: 'Agreement Made'}, {value: 'SOLD', label: 'Sold'}].map(opt => (
+                  <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+                    <div className="relative flex items-center justify-center w-4 h-4">
+                      <input 
+                        type="checkbox" 
+                        checked={(editFormData.land_sale_available_status || []).includes(opt.value)} 
+                        onChange={(e) => handleArrayChange('land_sale_available_status', opt.value, e.target.checked)} 
+                        className="peer appearance-none w-4 h-4 border border-gray-300 rounded-[3px] checked:bg-orange-500 checked:border-orange-500 transition-all cursor-pointer m-0" 
+                      />
+                      <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none text-white flex items-center justify-center w-full h-full">
+                        <Check size={12} strokeWidth={4} />
+                      </div>
+                    </div>
+                    <span className="text-[11px] text-gray-700 font-medium">{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+
+              <hr className="border-gray-200 my-4" />
+
+              <div className="space-y-2">
+                <div className="text-[11px] font-medium text-gray-800">Available for Sale</div>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <div className="relative flex items-center justify-center">
+                      <input
+                        type="radio"
+                        name="verification_available_for_sale"
+                        checked={(editFormData.land_sale_available_status || []).includes('AVAILABLE FOR SALE')}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            let arr = [...(editFormData.land_sale_available_status || [])];
+                            arr = arr.filter(x => x !== 'NOT AVAILABLE');
+                            if (!arr.includes('AVAILABLE FOR SALE')) arr.push('AVAILABLE FOR SALE');
+                            handleEditChange('land_sale_available_status', arr);
+                          }
+                        }}
+                        className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-orange-500 transition-all cursor-pointer"
+                      />
+                      <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+                    </div>
+                    <span className="text-[11px] text-gray-700 font-medium">Yes</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <div className="relative flex items-center justify-center">
+                      <input
+                        type="radio"
+                        name="verification_available_for_sale"
+                        checked={(editFormData.land_sale_available_status || []).includes('NOT AVAILABLE')}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            let arr = [...(editFormData.land_sale_available_status || [])];
+                            arr = arr.filter(x => x !== 'AVAILABLE FOR SALE');
+                            if (!arr.includes('NOT AVAILABLE')) arr.push('NOT AVAILABLE');
+                            handleEditChange('land_sale_available_status', arr);
+                          }
+                        }}
+                        className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-orange-500 transition-all cursor-pointer"
+                      />
+                      <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+                    </div>
+                    <span className="text-[11px] text-gray-700 font-medium">No</span>
+                  </label>
                 </div>
               </div>
             </FormCard>
 
-            <FormCard title="11. MORTGAGE STATUS" icon={Building2} colorTheme="blue">
+            <FormCard title="11. MORTGAGE STATUS" icon={ShieldCheck} colorTheme="orange">
               <div className="space-y-4">
-                <div>
-                  <div className="grid grid-cols-1 gap-2">
-                    {MORTGAGE_STATUS_OPTIONS.map(status => (
-                      <label key={status} className="flex items-center gap-1.5 cursor-pointer">
-                        <div className="relative flex items-center justify-center">
-                          <input 
-                            type="checkbox" 
-                            checked={(editFormData.mortage_availability_status || []).includes(status)} 
-                            onChange={(e) => handleArrayChange('mortage_availability_status', status, e.target.checked)} 
-                            className="peer appearance-none w-4 h-4 border-2 border-blue-400 rounded-sm checked:bg-white checked:border-blue-500 transition-all cursor-pointer" 
-                          />
-                          <div className="pointer-events-none absolute opacity-0 peer-checked:opacity-100 text-blue-500">
-                            <CheckCircle size={14} className="stroke-[3]" />
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-bold text-blue-800 uppercase tracking-wider">{status}</span>
-                      </label>
-                    ))}
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <div className="relative flex items-center justify-center w-4 h-4">
+                    <input 
+                      type="checkbox" 
+                      checked={(editFormData.mortage_availability_status || []).includes('CURRENTLY MORTGAGED')} 
+                      onChange={(e) => {
+                         let arr = [...(editFormData.mortage_availability_status || [])];
+                         if (e.target.checked) {
+                             if (!arr.includes('CURRENTLY MORTGAGED')) arr.push('CURRENTLY MORTGAGED');
+                         } else {
+                             arr = arr.filter(x => x !== 'CURRENTLY MORTGAGED');
+                         }
+                         handleEditChange('mortage_availability_status', arr);
+                      }} 
+                      className="peer appearance-none w-4 h-4 border border-gray-300 rounded-[3px] checked:bg-orange-500 checked:border-orange-500 transition-all cursor-pointer m-0" 
+                    />
+                    <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none text-white flex items-center justify-center w-full h-full">
+                      <Check size={12} strokeWidth={4} />
+                    </div>
+                  </div>
+                  <span className="text-[11px] text-gray-700 font-medium">Mortgaged</span>
+                </label>
+
+                <hr className="border-gray-200 my-4" />
+
+                <div className="space-y-2">
+                  <div className="text-[11px] font-medium text-gray-800">Available for Mortgage</div>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <div className="relative flex items-center justify-center">
+                        <input
+                          type="radio"
+                          name="verification_available_for_mortgage"
+                          checked={(editFormData.mortage_availability_status || []).includes('AVAILABLE FOR MORTGAGE')}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              let arr = [...(editFormData.mortage_availability_status || [])];
+                              arr = arr.filter(x => x !== 'NOT AVAILABLE');
+                              if (!arr.includes('AVAILABLE FOR MORTGAGE')) arr.push('AVAILABLE FOR MORTGAGE');
+                              handleEditChange('mortage_availability_status', arr);
+                            }
+                          }}
+                          className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-orange-500 transition-all cursor-pointer"
+                        />
+                        <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+                      </div>
+                      <span className="text-[11px] text-gray-700 font-medium">Yes</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <div className="relative flex items-center justify-center">
+                        <input
+                          type="radio"
+                          name="verification_available_for_mortgage"
+                          checked={(editFormData.mortage_availability_status || []).includes('NOT AVAILABLE')}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              let arr = [...(editFormData.mortage_availability_status || [])];
+                              arr = arr.filter(x => x !== 'AVAILABLE FOR MORTGAGE');
+                              if (!arr.includes('NOT AVAILABLE')) arr.push('NOT AVAILABLE');
+                              handleEditChange('mortage_availability_status', arr);
+                            }
+                          }}
+                          className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-orange-500 transition-all cursor-pointer"
+                        />
+                        <div className="absolute w-2 h-2 bg-orange-500 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+                      </div>
+                      <span className="text-[11px] text-gray-700 font-medium">No</span>
+                    </label>
                   </div>
                 </div>
               </div>
@@ -1753,6 +1930,16 @@ const LandVerificationDashboard = () => {
                   <div><strong>District:</strong> {selectedLand.district || 'N/A'}</div>
                   <div><strong>Mandal:</strong> {selectedLand.mandal || 'N/A'}</div>
                   <div><strong>Village:</strong> {selectedLand.village || 'N/A'}</div>
+                  
+                  {selectedLand.landDetails?.nearest_town_state && (
+                    <div className="col-span-1 md:col-span-2 mt-2 p-2 bg-gray-50 border border-gray-100 rounded-lg">
+                      <h4 className="text-[10px] font-bold text-gray-500 uppercase mb-1">Nearest Town</h4>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div><span className="text-gray-500">State:</span> {selectedLand.landDetails.nearest_town_state}</div>
+                        <div><span className="text-gray-500">District:</span> {selectedLand.landDetails.nearest_town_district || 'N/A'}</div>
+                      </div>
+                    </div>
+                  )}
                   <div><strong>Location:</strong> {selectedLand.location_latitude}, {selectedLand.location_longitude}</div>
                   <div><strong>Call Status:</strong> <StatusBadge status={selectedLand.call_verification_status} /></div>
                   <div><strong>Form Status:</strong> <StatusBadge status={selectedLand.form_status} /></div>
@@ -1823,7 +2010,7 @@ const LandVerificationDashboard = () => {
                   <div><strong>Nearest Road:</strong> {selectedLand.landDetails.nearest_road_type || 'N/A'}</div>
                   <div><strong>Attached to Road:</strong> {selectedLand.landDetails.land_attached_to_road || 'N/A'}</div>
                   <div><strong>Path Ownership:</strong> {selectedLand.landDetails.path_ownership || 'N/A'}</div>
-                  <div><strong>Soil Type:</strong> {selectedLand.landDetails.soil_type || 'N/A'} {selectedLand.landDetails.soil_type_details ? `(${selectedLand.landDetails.soil_type_details})` : ''}</div>
+                  <div><strong>Soil Type:</strong> {selectedLand.landDetails?.soil_type || 'N/A'}</div>
                   <div><strong>Fencing Status:</strong> {selectedLand.landDetails.fencing_status || 'N/A'}</div>
                   <div><strong>Farm Pond:</strong> {selectedLand.landDetails.farm_pond ? 'Yes' : 'No'}</div>
                   <div><strong>Number of Bores:</strong> {selectedLand.landDetails.number_of_bores || 0}</div>
@@ -1862,6 +2049,20 @@ const LandVerificationDashboard = () => {
                       {selectedLand.landDetails.water_source.map((w, i) => (
                         <span key={i} className="bg-cyan-100 text-cyan-800 px-2 py-1 rounded text-sm flex items-center gap-1">
                           <Droplets className="w-3 h-3" /> {w}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Trees Information */}
+                {selectedLand.tree && selectedLand.tree.length > 0 && (
+                  <div>
+                    <strong>Trees Information:</strong>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {selectedLand.tree.map((t, i) => (
+                        <span key={i} className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-sm">
+                          {t.type}: {t.count}
                         </span>
                       ))}
                     </div>
