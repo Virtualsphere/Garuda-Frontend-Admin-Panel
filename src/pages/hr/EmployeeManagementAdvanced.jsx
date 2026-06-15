@@ -725,6 +725,7 @@ export default function EmployeeManagementAdvanced() {
           <option value="all">All Status</option>
           <option value="ACTIVE">Active</option>
           <option value="DEACTIVE">Inactive</option>
+          <option value="TRAINEE">Trainee</option>
         </select>
       </div>
 
@@ -813,7 +814,9 @@ export default function EmployeeManagementAdvanced() {
                       <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
                         employee.status === 'ACTIVE'
                           ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
+                          : employee.status === 'TRAINEE'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-red-100 text-red-800'
                       }`}>
                         {employee.status}
                       </span>
@@ -1190,6 +1193,7 @@ export default function EmployeeManagementAdvanced() {
               >
                 <option>ACTIVE</option>
                 <option>DEACTIVE</option>
+                <option>TRAINEE</option>
               </select>
             </div>
           </div>
@@ -1489,7 +1493,9 @@ export default function EmployeeManagementAdvanced() {
                 <span className={`inline-block mt-1 px-3 py-1 rounded-full text-sm font-semibold ${
                   selectedEmployee?.status === 'ACTIVE'
                     ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800'
+                    : selectedEmployee?.status === 'TRAINEE'
+                      ? 'bg-blue-100 text-blue-800'
+                      : 'bg-red-100 text-red-800'
                 }`}>
                   {selectedEmployee?.status}
                 </span>

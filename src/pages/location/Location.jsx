@@ -64,7 +64,8 @@ export default function Location() {
     if (activeTab === 'states') api.fetchStates();
     else if (activeTab === 'districts' && stateContext) api.fetchDistricts(stateContext);
     else if (activeTab === 'districts' && !stateContext) api.clearDistricts();
-    else if (activeTab === 'towns') api.clearTowns();
+    else if (activeTab === 'towns' && districtContext) api.fetchTowns(districtContext);
+    else if (activeTab === 'towns' && !districtContext) api.clearTowns();
     else if (activeTab === 'mandals' && districtContext) api.fetchMandals(districtContext);
     else if (activeTab === 'mandals' && !districtContext) api.clearMandals();
     else if (activeTab === 'villages' && mandalContext) api.fetchVillages(mandalContext);
@@ -90,6 +91,7 @@ export default function Location() {
     api.clearDistricts();
     api.clearMandals();
     api.clearVillages();
+    api.clearTowns();
     if (val) api.fetchDistricts(val);
   };
 
@@ -98,7 +100,11 @@ export default function Location() {
     setMandalContext('');
     api.clearMandals();
     api.clearVillages();
-    if (val) api.fetchMandals(val);
+    api.clearTowns();
+    if (val) {
+      if (activeTab === 'towns') api.fetchTowns(val);
+      else api.fetchMandals(val);
+    }
   };
 
   const handleMandalChange = (val) => {
@@ -121,6 +127,13 @@ export default function Location() {
   // ═══════════════════════════════════════════════════════════
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    
+    // Context Validations
+    if (activeTab === 'districts' && !stateContext) return api.setError('Please select a State first.');
+    if (activeTab === 'mandals' && !districtContext) return api.setError('Please select a District first.');
+    if (activeTab === 'towns' && !districtContext) return api.setError('Please select a District first.');
+    if (activeTab === 'villages' && !mandalContext) return api.setError('Please select a Mandal first.');
+
     let success = false;
 
     if (editingItem) {
@@ -128,11 +141,13 @@ export default function Location() {
       else if (activeTab === 'districts') success = await api.updateDistrict(editingItem.id, formData.name, stateContext);
       else if (activeTab === 'mandals') success = await api.updateMandal(editingItem.id, formData.name, districtContext);
       else if (activeTab === 'villages') success = await api.updateVillage(editingItem.id, formData.name, mandalContext);
+      else if (activeTab === 'towns') success = await api.updateTown(editingItem.id, formData.name, districtContext);
     } else {
       if (activeTab === 'states') success = await api.createState(formData.name);
       else if (activeTab === 'districts') success = await api.createDistrict(formData.name, stateContext);
       else if (activeTab === 'mandals') success = await api.createMandal(formData.name, districtContext);
       else if (activeTab === 'villages') success = await api.createVillage(formData.name, mandalContext);
+      else if (activeTab === 'towns') success = await api.createTown(formData.name, districtContext);
     }
 
     if (success) {
@@ -156,12 +171,13 @@ export default function Location() {
     if (type === 'districts') api.deleteDistrict(id, stateContext);
     if (type === 'mandals') api.deleteMandal(id, districtContext);
     if (type === 'villages') api.deleteVillage(id, mandalContext);
+    if (type === 'towns') api.deleteTown(id, districtContext);
   };
 
   const handleDrillDown = (targetTab, contextId) => {
     setActiveTab(targetTab);
     if (targetTab === 'districts') handleStateChange(contextId.toString());
-    if (targetTab === 'mandals') handleDistrictChange(contextId.toString());
+    if (targetTab === 'mandals' || targetTab === 'towns') handleDistrictChange(contextId.toString());
     if (targetTab === 'villages') handleMandalChange(contextId.toString());
   };
 

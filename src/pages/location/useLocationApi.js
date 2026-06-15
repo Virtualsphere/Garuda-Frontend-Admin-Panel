@@ -107,6 +107,23 @@ export default function useLocationApi() {
     }
   };
 
+  const fetchTowns = async (districtId) => {
+    if (!districtId) { setTowns([]); return; }
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/location/towns/${districtId}`);
+      const data = await response.json();
+      if (data.success) setTowns(data.data);
+      else if (Array.isArray(data)) setTowns(data);
+    } catch (err) {
+      console.error('Failed to fetch towns:', err);
+      setTowns([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   /** Sectors — currently uses mock data. Replace with API call when backend is ready. */
   const fetchSectors = async () => {
     setSectors([
@@ -183,6 +200,19 @@ export default function useLocationApi() {
     } catch (err) { setError('Failed to create village'); return false; }
   };
 
+  const createTown = async (name, districtId) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/location/town`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, district_id: parseInt(districtId) }),
+      });
+      const data = await res.json();
+      if (data.success) { await fetchTowns(districtId); return true; }
+      return false;
+    } catch (err) { setError('Failed to create town'); return false; }
+  };
+
   // ═══════════════════════════════════════════════════════════
   // UPDATE (PUT) Operations
   // ═══════════════════════════════════════════════════════════
@@ -239,6 +269,19 @@ export default function useLocationApi() {
     } catch (err) { setError('Failed to update village'); return false; }
   };
 
+  const updateTown = async (id, name, districtId) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/location/town/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      const data = await res.json();
+      if (data.success) { await fetchTowns(districtId); return true; }
+      return false;
+    } catch (err) { setError('Failed to update town'); return false; }
+  };
+
   // ═══════════════════════════════════════════════════════════
   // DELETE Operations
   // ═══════════════════════════════════════════════════════════
@@ -283,6 +326,16 @@ export default function useLocationApi() {
     } catch (err) { setError('Failed to delete village'); }
   };
 
+  const deleteTown = async (id, districtId) => {
+    if (!window.confirm('Delete this town?')) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/location/town/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) await fetchTowns(districtId);
+      else setError('Failed to delete town');
+    } catch (err) { setError('Failed to delete town'); }
+  };
+
   // ─── Utility: Add infrastructure locally ──────────────────
   const addRoad = (road) => {
     setRoadsPaths(prev => [...prev, road]);
@@ -304,17 +357,17 @@ export default function useLocationApi() {
     loading, error,
 
     // Fetch
-    fetchStates, fetchDistricts, fetchMandals, fetchVillages,
+    fetchStates, fetchDistricts, fetchMandals, fetchVillages, fetchTowns,
     fetchSectors, fetchRoadsPaths,
 
-    // Create
-    createState, createDistrict, createMandal, createVillage,
+    // CRUD Create
+    createState, createDistrict, createMandal, createVillage, createTown,
 
-    // Update
-    updateState, updateDistrict, updateMandal, updateVillage,
+    // CRUD Update
+    updateState, updateDistrict, updateMandal, updateVillage, updateTown,
 
-    // Delete
-    deleteState, deleteDistrict, deleteMandal, deleteVillage,
+    // CRUD Delete
+    deleteState, deleteDistrict, deleteMandal, deleteVillage, deleteTown,
 
     // Utility
     addRoad, clearDistricts, clearMandals, clearVillages, clearTowns,
