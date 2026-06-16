@@ -496,6 +496,30 @@ const AddLand = () => {
     });
     submitData.trees = treesArray;
 
+    // Pack nearest town data into top-level fields since backend landDetails doesn't store state/district
+    const packTown = (state, district, town) => {
+      if (!town) return null;
+      return JSON.stringify({ state: state || '', district: district || '', town });
+    };
+    const state = submitData.landDetails?.nearest_town_state || '';
+    const district = submitData.landDetails?.nearest_town_district || '';
+    if (submitData.landDetails?.nearest_town_1) {
+      submitData.nearest_town_1 = packTown(state, district, submitData.landDetails.nearest_town_1);
+    }
+    if (submitData.landDetails?.nearest_town_2) {
+      submitData.nearest_town_2 = packTown(state, district, submitData.landDetails.nearest_town_2);
+    }
+    if (submitData.landDetails?.nearest_town_3) {
+      submitData.nearest_town_3 = packTown(state, district, submitData.landDetails.nearest_town_3);
+    }
+    if (submitData.landDetails) {
+      delete submitData.landDetails.nearest_town_state;
+      delete submitData.landDetails.nearest_town_district;
+      delete submitData.landDetails.nearest_town_1;
+      delete submitData.landDetails.nearest_town_2;
+      delete submitData.landDetails.nearest_town_3;
+    }
+
     // Get token from localStorage (assuming JWT is stored here)
     const token = localStorage.getItem('token');
     

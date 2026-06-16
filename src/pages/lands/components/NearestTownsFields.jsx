@@ -1,18 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { BASE_URL } from '../../../url/BaseUrl';
 
-// Assume API_BASE_URL is imported or passed. We can use BASE_URL from url/BaseUrl
-const API_BASE_URL = BASE_URL;
+const API_BASE_URL = `${BASE_URL}/api`;
 
-const NearestTownsFields = ({ editFormData, handleEditChange, states = [] }) => {
-  const [localStates, setLocalStates] = useState(states);
+const NearestTownsFields = ({ editFormData, handleEditChange, states }) => {
+  const [localStates, setLocalStates] = useState([]);
   const [nearestTownDistricts, setNearestTownDistricts] = useState([]);
   const [nearestTowns, setNearestTowns] = useState([]);
+  const hasFetchedStates = useRef(false);
+  const hasHydrated = useRef(false);
 
-  // Fetch states if not provided
+  // Fetch states: prefer the prop, otherwise self-fetch once
   useEffect(() => {
-    if (states.length === 0) {
+    if (states && states.length > 0) {
+      setLocalStates(states);
+      hasFetchedStates.current = true;
+    } else if (!hasFetchedStates.current) {
+      hasFetchedStates.current = true;
       const fetchStates = async () => {
         try {
           const res = await axios.get(`${API_BASE_URL}/location`);
@@ -20,51 +25,73 @@ const NearestTownsFields = ({ editFormData, handleEditChange, states = [] }) => 
             setLocalStates(res.data.data);
           }
         } catch (err) {
-          console.error('Error fetching states:', err);
+          console.error('Error fetching states for NearestTownsFields:', err);
         }
       };
       fetchStates();
-    } else {
-      setLocalStates(states);
     }
   }, [states]);
 
-  // Hydrate districts and mandals if editing an existing record
+  // Hydrate districts and towns when editing an existing record
   useEffect(() => {
-    const fetchHydrationData = async () => {
-      const stateName = editFormData?.landDetails?.nearest_town_state;
-      const districtName = editFormData?.landDetails?.nearest_town_district;
+    if (localStates.length === 0) return;
 
-      if (stateName) {
-        const selectedState = localStates.find(s => s.name === stateName);
-        if (selectedState && selectedState.id) {
+    const stateName = editFormData?.landDetails?.nearest_town_state;
+    const districtName = editFormData?.landDetails?.nearest_town_district;
+
+    if (!stateName) return;
+
+    const hydrateDropdowns = async () => {
+      let stateIdToUse = stateName;
+      let districtIdToUse = districtName;
+
+      // Check if stateName is actually an ID, or find it in localStates
+      let selectedState = localStates.find(s => s.name == stateName || s.id == stateName);
+      if (!selectedState) {
+        // Fallback: try fetching state directly by ID if it looks like an ID
+        if (!isNaN(stateName)) {
           try {
-            const res = await axios.get(`${API_BASE_URL}/location/districts/${selectedState.id}`);
-            if (res.data.success) {
-              setNearestTownDistricts(res.data.data);
-              
-              // If we have districtName, fetch towns
-              if (districtName) {
-                const selectedDistrict = res.data.data.find(d => d.name === districtName);
-                if (selectedDistrict && selectedDistrict.id) {
-                  const townRes = await axios.get(`${API_BASE_URL}/location/towns/${selectedDistrict.id}`);
-                  if (townRes.data.success) {
-                    setNearestTowns(townRes.data.data);
-                  }
-                }
-              }
+            const stateRes = await axios.get(`${API_BASE_URL}/location/state/${stateName}`);
+            if (stateRes.data.success) {
+              selectedState = stateRes.data.data;
             }
-          } catch (err) {
-            console.error('Error hydrating nearest towns location data:', err);
+          } catch (e) {
+            console.error('Error fetching state by ID:', e);
           }
         }
       }
+
+      if (!selectedState || !selectedState.id) return;
+      stateIdToUse = selectedState.id;
+
+      try {
+        const res = await axios.get(`${API_BASE_URL}/location/districts/${stateIdToUse}`);
+        if (res.data.success) {
+          setNearestTownDistricts(res.data.data);
+
+          // If we also have a district, fetch towns
+          if (districtName) {
+            let selectedDistrict = res.data.data.find(d => d.name == districtName || d.id == districtName);
+            if (!selectedDistrict && !isNaN(districtName)) {
+              // The districtName might be an ID. In res.data.data, we might find it.
+              selectedDistrict = res.data.data.find(d => d.id == districtName);
+            }
+            if (selectedDistrict && selectedDistrict.id) {
+              const townRes = await axios.get(`${API_BASE_URL}/location/towns/${selectedDistrict.id}`);
+              if (townRes.data.success) {
+                setNearestTowns(townRes.data.data);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error hydrating nearest towns location data:', err);
+      }
     };
 
-    if (localStates.length > 0) {
-      fetchHydrationData();
-    }
-  }, [editFormData?.landDetails?.nearest_town_state, localStates]);
+    hydrateDropdowns();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localStates, editFormData?.landDetails?.nearest_town_state, editFormData?.landDetails?.nearest_town_district]);
 
   const handleStateChange = async (e) => {
     const stateName = e.target.value;
@@ -77,7 +104,10 @@ const NearestTownsFields = ({ editFormData, handleEditChange, states = [] }) => 
     setNearestTownDistricts([]);
     setNearestTowns([]);
 
-    const selectedState = localStates.find(s => s.name === stateName);
+    let selectedState = localStates.find(s => s.name == stateName || s.id == stateName);
+    if (!selectedState && !isNaN(stateName)) {
+      selectedState = { id: stateName }; // Assume it's an ID
+    }
     if (selectedState && selectedState.id) {
       try {
         const response = await axios.get(`${API_BASE_URL}/location/districts/${selectedState.id}`);
@@ -99,7 +129,10 @@ const NearestTownsFields = ({ editFormData, handleEditChange, states = [] }) => 
     
     setNearestTowns([]);
 
-    const selectedDistrict = nearestTownDistricts.find(d => d.name === districtName);
+    let selectedDistrict = nearestTownDistricts.find(d => d.name == districtName || d.id == districtName);
+    if (!selectedDistrict && !isNaN(districtName)) {
+      selectedDistrict = { id: districtName }; // Assume it's an ID
+    }
     if (selectedDistrict && selectedDistrict.id) {
       try {
         const response = await axios.get(`${API_BASE_URL}/location/towns/${selectedDistrict.id}`);
@@ -122,6 +155,10 @@ const NearestTownsFields = ({ editFormData, handleEditChange, states = [] }) => 
           className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white"
         >
           <option value="">Select State</option>
+          {/* Show current state value even if not in the loaded list */}
+          {editFormData?.landDetails?.nearest_town_state && !localStates.some(s => s.name === editFormData.landDetails.nearest_town_state) && (
+            <option value={editFormData.landDetails.nearest_town_state}>{editFormData.landDetails.nearest_town_state}</option>
+          )}
           {localStates.map(state => (
             <option key={state.id} value={state.name}>{state.name}</option>
           ))}
@@ -137,6 +174,10 @@ const NearestTownsFields = ({ editFormData, handleEditChange, states = [] }) => 
           className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white disabled:bg-gray-100 disabled:text-gray-400"
         >
           <option value="">Select District</option>
+          {/* Show current district value even if not in the loaded list */}
+          {editFormData?.landDetails?.nearest_town_district && !nearestTownDistricts.some(d => d.name === editFormData.landDetails.nearest_town_district) && (
+            <option value={editFormData.landDetails.nearest_town_district}>{editFormData.landDetails.nearest_town_district}</option>
+          )}
           {nearestTownDistricts.map(district => (
             <option key={district.id} value={district.name}>{district.name}</option>
           ))}
@@ -151,6 +192,10 @@ const NearestTownsFields = ({ editFormData, handleEditChange, states = [] }) => 
           className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white disabled:bg-gray-100 disabled:text-gray-400"
         >
           <option value="">Pick Primary Town</option>
+          {/* Show current town value even if not in the loaded list */}
+          {editFormData?.landDetails?.nearest_town_1 && !nearestTowns.some(t => t.name === editFormData.landDetails.nearest_town_1) && (
+            <option value={editFormData.landDetails.nearest_town_1}>{editFormData.landDetails.nearest_town_1}</option>
+          )}
           {nearestTowns.map(town => (
             <option key={town.id} value={town.name}>{town.name}</option>
           ))}
@@ -166,6 +211,9 @@ const NearestTownsFields = ({ editFormData, handleEditChange, states = [] }) => 
           className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white disabled:bg-gray-100 disabled:text-gray-400"
         >
           <option value="">Pick Secondary Town</option>
+          {editFormData?.landDetails?.nearest_town_2 && !nearestTowns.some(t => t.name === editFormData.landDetails.nearest_town_2) && (
+            <option value={editFormData.landDetails.nearest_town_2}>{editFormData.landDetails.nearest_town_2}</option>
+          )}
           {nearestTowns.map(town => (
             <option key={town.id} value={town.name}>{town.name}</option>
           ))}
@@ -181,6 +229,9 @@ const NearestTownsFields = ({ editFormData, handleEditChange, states = [] }) => 
           className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white disabled:bg-gray-100 disabled:text-gray-400"
         >
           <option value="">Pick Tertiary Town</option>
+          {editFormData?.landDetails?.nearest_town_3 && !nearestTowns.some(t => t.name === editFormData.landDetails.nearest_town_3) && (
+            <option value={editFormData.landDetails.nearest_town_3}>{editFormData.landDetails.nearest_town_3}</option>
+          )}
           {nearestTowns.map(town => (
             <option key={town.id} value={town.name}>{town.name}</option>
           ))}

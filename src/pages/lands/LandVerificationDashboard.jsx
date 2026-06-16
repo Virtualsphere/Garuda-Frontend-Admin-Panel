@@ -482,6 +482,39 @@ const LandVerificationDashboard = () => {
       let landsData = result.data || result;
       if (!Array.isArray(landsData)) landsData = [landsData];
       
+      // Unpack nearest town data for each land
+      landsData = landsData.map(land => {
+        if (!land.landDetails) land.landDetails = {};
+        const unpackTown = (packedStr) => {
+          if (!packedStr) return null;
+          try {
+            const parsed = JSON.parse(packedStr);
+            if (parsed && typeof parsed === 'object' && parsed.town) {
+              return parsed;
+            }
+          } catch (e) {
+            return { state: '', district: '', town: packedStr };
+          }
+          return { state: '', district: '', town: packedStr };
+        };
+
+        if (land.nearest_town_1) {
+          const unpacked = unpackTown(land.nearest_town_1);
+          land.landDetails.nearest_town_state = unpacked?.state || '';
+          land.landDetails.nearest_town_district = unpacked?.district || '';
+          land.landDetails.nearest_town_1 = unpacked?.town || '';
+        }
+        if (land.nearest_town_2) {
+          const unpacked = unpackTown(land.nearest_town_2);
+          land.landDetails.nearest_town_2 = unpacked?.town || '';
+        }
+        if (land.nearest_town_3) {
+          const unpacked = unpackTown(land.nearest_town_3);
+          land.landDetails.nearest_town_3 = unpacked?.town || '';
+        }
+        return land;
+      });
+
       setLands(landsData);
     } catch (error) {
       console.error('Error fetching lands:', error);
@@ -696,13 +729,32 @@ const LandVerificationDashboard = () => {
   // Update land data (Verify)
   const verifyLand = async (id, data) => {
     setUpdatingAction('verify');
+    
+    const packTown = (state, district, town) => {
+      if (!town) return null;
+      return JSON.stringify({ state: state || '', district: district || '', town });
+    };
+    const state = data.landDetails?.nearest_town_state || '';
+    const district = data.landDetails?.nearest_town_district || '';
+    
     const payload = {
       ...data,
       trees: buildTreesArray(data.landDetails),
       call_verification_status: 'complete',
       physcial_verification_status: 'complete',
       verification_status: 'complete',
+      nearest_town_1: data.landDetails?.nearest_town_1 ? packTown(state, district, data.landDetails.nearest_town_1) : data.nearest_town_1,
+      nearest_town_2: data.landDetails?.nearest_town_2 ? packTown(state, district, data.landDetails.nearest_town_2) : data.nearest_town_2,
+      nearest_town_3: data.landDetails?.nearest_town_3 ? packTown(state, district, data.landDetails.nearest_town_3) : data.nearest_town_3,
     };
+    if (payload.landDetails) {
+      delete payload.landDetails.nearest_town_state;
+      delete payload.landDetails.nearest_town_district;
+      delete payload.landDetails.nearest_town_1;
+      delete payload.landDetails.nearest_town_2;
+      delete payload.landDetails.nearest_town_3;
+    }
+    
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/land/call/verify/${id}`, {
@@ -738,13 +790,30 @@ const LandVerificationDashboard = () => {
   // Suggest Physical Verification — moves the land to the Physical Audit section
   const physicalVerifyLand = async (id, data) => {
     setUpdatingAction('physical');
+    const packTown = (state, district, town) => {
+      if (!town) return null;
+      return JSON.stringify({ state: state || '', district: district || '', town });
+    };
+    const state = data.landDetails?.nearest_town_state || '';
+    const district = data.landDetails?.nearest_town_district || '';
+    
     const payload = {
       ...data,
       trees: buildTreesArray(data.landDetails),
       call_verification_status: 'complete',
       physcial_verification_status: 'pending',
       verification_status: 'pending',
+      nearest_town_1: data.landDetails?.nearest_town_1 ? packTown(state, district, data.landDetails.nearest_town_1) : data.nearest_town_1,
+      nearest_town_2: data.landDetails?.nearest_town_2 ? packTown(state, district, data.landDetails.nearest_town_2) : data.nearest_town_2,
+      nearest_town_3: data.landDetails?.nearest_town_3 ? packTown(state, district, data.landDetails.nearest_town_3) : data.nearest_town_3,
     };
+    if (payload.landDetails) {
+      delete payload.landDetails.nearest_town_state;
+      delete payload.landDetails.nearest_town_district;
+      delete payload.landDetails.nearest_town_1;
+      delete payload.landDetails.nearest_town_2;
+      delete payload.landDetails.nearest_town_3;
+    }
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/land/${id}`, {
@@ -968,6 +1037,35 @@ const LandVerificationDashboard = () => {
     // Normalize village - trim whitespace/tab characters
     if (clonedData.village) {
       clonedData.village = clonedData.village.trim();
+    }
+    
+    // Unpack nearest town data
+    const unpackTown = (packedStr) => {
+      if (!packedStr) return null;
+      try {
+        const parsed = JSON.parse(packedStr);
+        if (parsed && typeof parsed === 'object' && parsed.town) {
+          return parsed;
+        }
+      } catch (e) {
+        return { state: '', district: '', town: packedStr };
+      }
+      return { state: '', district: '', town: packedStr };
+    };
+
+    if (clonedData.nearest_town_1) {
+      const unpacked = unpackTown(clonedData.nearest_town_1);
+      clonedData.landDetails.nearest_town_state = unpacked?.state || '';
+      clonedData.landDetails.nearest_town_district = unpacked?.district || '';
+      clonedData.landDetails.nearest_town_1 = unpacked?.town || '';
+    }
+    if (clonedData.nearest_town_2) {
+      const unpacked = unpackTown(clonedData.nearest_town_2);
+      clonedData.landDetails.nearest_town_2 = unpacked?.town || '';
+    }
+    if (clonedData.nearest_town_3) {
+      const unpacked = unpackTown(clonedData.nearest_town_3);
+      clonedData.landDetails.nearest_town_3 = unpacked?.town || '';
     }
     
     // Normalize arrays that might come as null from backend
@@ -1933,10 +2031,19 @@ const LandVerificationDashboard = () => {
                   
                   {selectedLand.landDetails?.nearest_town_state && (
                     <div className="col-span-1 md:col-span-2 mt-2 p-2 bg-gray-50 border border-gray-100 rounded-lg">
-                      <h4 className="text-[10px] font-bold text-gray-500 uppercase mb-1">Nearest Town</h4>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
+                      <h4 className="text-[10px] font-bold text-gray-500 uppercase mb-1">Nearest Towns</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
                         <div><span className="text-gray-500">State:</span> {selectedLand.landDetails.nearest_town_state}</div>
                         <div><span className="text-gray-500">District:</span> {selectedLand.landDetails.nearest_town_district || 'N/A'}</div>
+                        {selectedLand.landDetails.nearest_town_1 && (
+                          <div><span className="text-gray-500">Primary Town:</span> {selectedLand.landDetails.nearest_town_1}</div>
+                        )}
+                        {selectedLand.landDetails.nearest_town_2 && (
+                          <div><span className="text-gray-500">Secondary Town:</span> {selectedLand.landDetails.nearest_town_2}</div>
+                        )}
+                        {selectedLand.landDetails.nearest_town_3 && (
+                          <div><span className="text-gray-500">Tertiary Town:</span> {selectedLand.landDetails.nearest_town_3}</div>
+                        )}
                       </div>
                     </div>
                   )}

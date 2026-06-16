@@ -135,6 +135,39 @@ const LandFinalVerificationDashboard = () => {
       let landsData = result.data || result;
       if (!Array.isArray(landsData)) landsData = [landsData];
       
+      // Unpack nearest town data for each land
+      landsData = landsData.map(land => {
+        if (!land.landDetails) land.landDetails = {};
+        const unpackTown = (packedStr) => {
+          if (!packedStr) return null;
+          try {
+            const parsed = JSON.parse(packedStr);
+            if (parsed && typeof parsed === 'object' && parsed.town) {
+              return parsed;
+            }
+          } catch (e) {
+            return { state: '', district: '', town: packedStr };
+          }
+          return { state: '', district: '', town: packedStr };
+        };
+
+        if (land.nearest_town_1) {
+          const unpacked = unpackTown(land.nearest_town_1);
+          land.landDetails.nearest_town_state = unpacked?.state || '';
+          land.landDetails.nearest_town_district = unpacked?.district || '';
+          land.landDetails.nearest_town_1 = unpacked?.town || '';
+        }
+        if (land.nearest_town_2) {
+          const unpacked = unpackTown(land.nearest_town_2);
+          land.landDetails.nearest_town_2 = unpacked?.town || '';
+        }
+        if (land.nearest_town_3) {
+          const unpacked = unpackTown(land.nearest_town_3);
+          land.landDetails.nearest_town_3 = unpacked?.town || '';
+        }
+        return land;
+      });
+
       setLands(landsData);
     } catch (error) {
       console.error('Error fetching lands:', error);
@@ -275,9 +308,28 @@ const LandFinalVerificationDashboard = () => {
   // Update land data
   const updateLand = async (id, data) => {
     setUpdating(true);
+    const packTown = (state, district, town) => {
+      if (!town) return null;
+      return JSON.stringify({ state: state || '', district: district || '', town });
+    };
+    const state = data.landDetails?.nearest_town_state || '';
+    const district = data.landDetails?.nearest_town_district || '';
     try {
       const token = localStorage.getItem('token');
-      const dataWithTrees = { ...data, trees: buildTreesArray(data.landDetails) };
+      const dataWithTrees = { 
+        ...data, 
+        trees: buildTreesArray(data.landDetails),
+        nearest_town_1: data.landDetails?.nearest_town_1 ? packTown(state, district, data.landDetails.nearest_town_1) : data.nearest_town_1,
+        nearest_town_2: data.landDetails?.nearest_town_2 ? packTown(state, district, data.landDetails.nearest_town_2) : data.nearest_town_2,
+        nearest_town_3: data.landDetails?.nearest_town_3 ? packTown(state, district, data.landDetails.nearest_town_3) : data.nearest_town_3,
+      };
+      if (dataWithTrees.landDetails) {
+        delete dataWithTrees.landDetails.nearest_town_state;
+        delete dataWithTrees.landDetails.nearest_town_district;
+        delete dataWithTrees.landDetails.nearest_town_1;
+        delete dataWithTrees.landDetails.nearest_town_2;
+        delete dataWithTrees.landDetails.nearest_town_3;
+      }
       const response = await fetch(`${API_BASE_URL}/land/${id}`, {
         method: 'PUT',
         headers: {
@@ -285,6 +337,7 @@ const LandFinalVerificationDashboard = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(dataWithTrees)
+
       });
       if (!response.ok) throw new Error('Failed to update land');
       await response.json();
@@ -432,6 +485,40 @@ const LandFinalVerificationDashboard = () => {
         clonedData.farmerDetails.has_whatsapp = 'no';
       }
     }
+    
+    // Unpack nearest town data
+    const unpackTown = (packedStr) => {
+      if (!packedStr) return null;
+      try {
+        const parsed = JSON.parse(packedStr);
+        if (parsed && typeof parsed === 'object' && parsed.town) {
+          return parsed;
+        }
+      } catch (e) {
+        return { state: '', district: '', town: packedStr };
+      }
+      return { state: '', district: '', town: packedStr };
+    };
+
+    if (!clonedData.landDetails) {
+      clonedData.landDetails = {};
+    }
+
+    if (clonedData.nearest_town_1) {
+      const unpacked = unpackTown(clonedData.nearest_town_1);
+      clonedData.landDetails.nearest_town_state = unpacked?.state || '';
+      clonedData.landDetails.nearest_town_district = unpacked?.district || '';
+      clonedData.landDetails.nearest_town_1 = unpacked?.town || '';
+    }
+    if (clonedData.nearest_town_2) {
+      const unpacked = unpackTown(clonedData.nearest_town_2);
+      clonedData.landDetails.nearest_town_2 = unpacked?.town || '';
+    }
+    if (clonedData.nearest_town_3) {
+      const unpacked = unpackTown(clonedData.nearest_town_3);
+      clonedData.landDetails.nearest_town_3 = unpacked?.town || '';
+    }
+
     setEditFormData(clonedData);
     setIsEditing(true);
     setEditTab('basic');
@@ -1572,10 +1659,19 @@ const LandFinalVerificationDashboard = () => {
                   
                   {selectedLand.landDetails?.nearest_town_state && (
                     <div className="col-span-1 md:col-span-2 mt-2 p-3 bg-gray-50 border border-gray-100 rounded-lg">
-                      <h4 className="text-sm font-semibold text-gray-700 mb-2">Nearest Town</h4>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-2">Nearest Towns</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                         <div><span className="text-gray-500">State:</span> {selectedLand.landDetails.nearest_town_state}</div>
                         <div><span className="text-gray-500">District:</span> {selectedLand.landDetails.nearest_town_district || 'N/A'}</div>
+                        {selectedLand.landDetails.nearest_town_1 && (
+                          <div><span className="text-gray-500">Primary Town:</span> {selectedLand.landDetails.nearest_town_1}</div>
+                        )}
+                        {selectedLand.landDetails.nearest_town_2 && (
+                          <div><span className="text-gray-500">Secondary Town:</span> {selectedLand.landDetails.nearest_town_2}</div>
+                        )}
+                        {selectedLand.landDetails.nearest_town_3 && (
+                          <div><span className="text-gray-500">Tertiary Town:</span> {selectedLand.landDetails.nearest_town_3}</div>
+                        )}
                       </div>
                     </div>
                   )}
