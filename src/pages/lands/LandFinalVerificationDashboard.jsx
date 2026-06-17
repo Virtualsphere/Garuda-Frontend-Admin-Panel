@@ -305,7 +305,25 @@ const LandFinalVerificationDashboard = () => {
     return trees;
   };
 
-  // Update land data
+  // Helper: pack shed dimensions
+  const buildShedArray = (landDetails) => {
+    const pLen = Number(landDetails?.poultry_shed_length) || null;
+    const pWid = Number(landDetails?.poultry_shed_width) || null;
+    const cLen = Number(landDetails?.cow_shed_length) || null;
+    const cWid = Number(landDetails?.cow_shed_width) || null;
+    
+    if (pLen || pWid || cLen || cWid) {
+      return [{
+        poultry_shed_length: pLen,
+        poultry_shed_width: pWid,
+        cow_shed_length: cLen,
+        cow_shed_width: cWid,
+      }];
+    }
+    return [];
+  };
+
+  // Update land data (PUT)
   const updateLand = async (id, data) => {
     setUpdating(true);
     const packTown = (state, district, town) => {
@@ -316,19 +334,20 @@ const LandFinalVerificationDashboard = () => {
     const district = data.landDetails?.nearest_town_district || '';
     try {
       const token = localStorage.getItem('token');
-      const dataWithTrees = { 
-        ...data, 
+      const payload = {
+        ...data,
         trees: buildTreesArray(data.landDetails),
+        shed: buildShedArray(data.landDetails),
         nearest_town_1: data.landDetails?.nearest_town_1 ? packTown(state, district, data.landDetails.nearest_town_1) : data.nearest_town_1,
         nearest_town_2: data.landDetails?.nearest_town_2 ? packTown(state, district, data.landDetails.nearest_town_2) : data.nearest_town_2,
         nearest_town_3: data.landDetails?.nearest_town_3 ? packTown(state, district, data.landDetails.nearest_town_3) : data.nearest_town_3,
       };
-      if (dataWithTrees.landDetails) {
-        delete dataWithTrees.landDetails.nearest_town_state;
-        delete dataWithTrees.landDetails.nearest_town_district;
-        delete dataWithTrees.landDetails.nearest_town_1;
-        delete dataWithTrees.landDetails.nearest_town_2;
-        delete dataWithTrees.landDetails.nearest_town_3;
+      if (payload.landDetails) {
+        delete payload.landDetails.nearest_town_state;
+        delete payload.landDetails.nearest_town_district;
+        delete payload.landDetails.nearest_town_1;
+        delete payload.landDetails.nearest_town_2;
+        delete payload.landDetails.nearest_town_3;
       }
       const response = await fetch(`${API_BASE_URL}/land/${id}`, {
         method: 'PUT',
@@ -336,7 +355,7 @@ const LandFinalVerificationDashboard = () => {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(dataWithTrees)
+        body: JSON.stringify(payload)
 
       });
       if (!response.ok) throw new Error('Failed to update land');
@@ -475,6 +494,16 @@ const LandFinalVerificationDashboard = () => {
           }
         }
       });
+    }
+
+    // Map shed array from backend to landDetails fields if shed array exists
+    if (clonedData.shed && Array.isArray(clonedData.shed) && clonedData.shed.length > 0) {
+      const shedObj = clonedData.shed[0];
+      if (!clonedData.landDetails) clonedData.landDetails = {};
+      if (shedObj.poultry_shed_length) clonedData.landDetails.poultry_shed_length = shedObj.poultry_shed_length;
+      if (shedObj.poultry_shed_width) clonedData.landDetails.poultry_shed_width = shedObj.poultry_shed_width;
+      if (shedObj.cow_shed_length) clonedData.landDetails.cow_shed_length = shedObj.cow_shed_length;
+      if (shedObj.cow_shed_width) clonedData.landDetails.cow_shed_width = shedObj.cow_shed_width;
     }
 
     // Normalize has_whatsapp based on whatsapp number and phone
@@ -1039,19 +1068,39 @@ const LandFinalVerificationDashboard = () => {
                       <input
                         type="number"
                         value={editFormData.landDetails?.poultry_shed_number || 0}
-                        onChange={(e) => handleEditChange('landDetails.poultry_shed_number', parseInt(e.target.value))}
+                        onChange={(e) => handleEditChange('landDetails.poultry_shed_number', parseInt(e.target.value) || 0)}
                         className="w-full border rounded-lg p-2"
                       />
                     </div>
+                    {editFormData.landDetails?.poultry_shed_number > 0 && (
+                      <div className="col-span-2 sm:col-span-1">
+                        <label className="block text-sm font-medium mb-1">Poultry Shed Dimensions (ft)</label>
+                        <div className="flex gap-2 items-center">
+                          <input type="number" value={editFormData.landDetails?.poultry_shed_length || ''} onChange={(e) => handleEditChange('landDetails.poultry_shed_length', e.target.value)} className="w-1/2 border rounded-lg p-2" placeholder="Length" />
+                          <span className="text-gray-500">x</span>
+                          <input type="number" value={editFormData.landDetails?.poultry_shed_width || ''} onChange={(e) => handleEditChange('landDetails.poultry_shed_width', e.target.value)} className="w-1/2 border rounded-lg p-2" placeholder="Width" />
+                        </div>
+                      </div>
+                    )}
                     <div>
                       <label className="block text-sm font-medium mb-1">Number of Cow Sheds</label>
                       <input
                         type="number"
                         value={editFormData.landDetails?.cow_shed_number || 0}
-                        onChange={(e) => handleEditChange('landDetails.cow_shed_number', parseInt(e.target.value))}
+                        onChange={(e) => handleEditChange('landDetails.cow_shed_number', parseInt(e.target.value) || 0)}
                         className="w-full border rounded-lg p-2"
                       />
                     </div>
+                    {editFormData.landDetails?.cow_shed_number > 0 && (
+                      <div className="col-span-2 sm:col-span-1">
+                        <label className="block text-sm font-medium mb-1">Cow Shed Dimensions (ft)</label>
+                        <div className="flex gap-2 items-center">
+                          <input type="number" value={editFormData.landDetails?.cow_shed_length || ''} onChange={(e) => handleEditChange('landDetails.cow_shed_length', e.target.value)} className="w-1/2 border rounded-lg p-2" placeholder="Length" />
+                          <span className="text-gray-500">x</span>
+                          <input type="number" value={editFormData.landDetails?.cow_shed_width || ''} onChange={(e) => handleEditChange('landDetails.cow_shed_width', e.target.value)} className="w-1/2 border rounded-lg p-2" placeholder="Width" />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 

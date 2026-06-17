@@ -650,6 +650,24 @@ const LandPhysicalVerificationDashboard = () => {
     return trees;
   };
 
+  // Helper: pack shed dimensions
+  const buildShedArray = (landDetails) => {
+    const pLen = Number(landDetails?.poultry_shed_length) || null;
+    const pWid = Number(landDetails?.poultry_shed_width) || null;
+    const cLen = Number(landDetails?.cow_shed_length) || null;
+    const cWid = Number(landDetails?.cow_shed_width) || null;
+    
+    if (pLen || pWid || cLen || cWid) {
+      return [{
+        poultry_shed_length: pLen,
+        poultry_shed_width: pWid,
+        cow_shed_length: cLen,
+        cow_shed_width: cWid,
+      }];
+    }
+    return [];
+  };
+
   // Update land data (physical audit commit → physical & overall verification complete)
   const updateLand = async (id, data) => {
     setUpdating(true);
@@ -663,6 +681,7 @@ const LandPhysicalVerificationDashboard = () => {
     const payload = {
       ...data,
       trees: buildTreesArray(data.landDetails),
+      shed: buildShedArray(data.landDetails),
       call_verification_status: 'complete',
       physcial_verification_status: 'complete',
       verification_status: 'complete', // Set to complete to bypass final verification and go straight to verified
@@ -825,6 +844,16 @@ const LandPhysicalVerificationDashboard = () => {
           }
         }
       });
+    }
+
+    // Map shed array from backend to landDetails fields if shed array exists
+    if (clonedData.shed && Array.isArray(clonedData.shed) && clonedData.shed.length > 0) {
+      const shedObj = clonedData.shed[0];
+      if (!clonedData.landDetails) clonedData.landDetails = {};
+      if (shedObj.poultry_shed_length) clonedData.landDetails.poultry_shed_length = shedObj.poultry_shed_length;
+      if (shedObj.poultry_shed_width) clonedData.landDetails.poultry_shed_width = shedObj.poultry_shed_width;
+      if (shedObj.cow_shed_length) clonedData.landDetails.cow_shed_length = shedObj.cow_shed_length;
+      if (shedObj.cow_shed_width) clonedData.landDetails.cow_shed_width = shedObj.cow_shed_width;
     }
 
     // Normalize has_whatsapp based on whatsapp number and phone
@@ -1263,7 +1292,15 @@ const LandPhysicalVerificationDashboard = () => {
                       </label>
                     </div>
                     {(editFormData.landDetails?.poultry_shed_number || 0) > 0 && (
-                      <input type="number" min="1" value={editFormData.landDetails?.poultry_shed_number || ''} onChange={(e) => handleEditChange('landDetails.poultry_shed_number', parseInt(e.target.value) || 0)} className="w-full border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-green-400 font-bold" placeholder="No. of sheds" />
+                      <div className="flex gap-2 items-center flex-wrap mt-2">
+                        <input type="number" min="1" value={editFormData.landDetails?.poultry_shed_number || ''} onChange={(e) => handleEditChange('landDetails.poultry_shed_number', parseInt(e.target.value) || 0)} className="w-24 border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-green-400 font-bold" placeholder="No. sheds" />
+                        <div className="flex gap-2 items-center">
+                          <input type="number" value={editFormData.landDetails?.poultry_shed_length || ''} onChange={(e) => handleEditChange('landDetails.poultry_shed_length', e.target.value)} className="w-16 border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-green-400" placeholder="Length" />
+                          <span className="text-xs text-gray-500">x</span>
+                          <input type="number" value={editFormData.landDetails?.poultry_shed_width || ''} onChange={(e) => handleEditChange('landDetails.poultry_shed_width', e.target.value)} className="w-16 border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-green-400" placeholder="Width" />
+                          <span className="text-xs text-gray-500">ft</span>
+                        </div>
+                      </div>
                     )}
                   </div>
                   <div>
@@ -1275,7 +1312,15 @@ const LandPhysicalVerificationDashboard = () => {
                       </label>
                     </div>
                     {(editFormData.landDetails?.cow_shed_number || 0) > 0 && (
-                      <input type="number" min="1" value={editFormData.landDetails?.cow_shed_number || ''} onChange={(e) => handleEditChange('landDetails.cow_shed_number', parseInt(e.target.value) || 0)} className="w-full border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-green-400 font-bold" placeholder="No. of sheds" />
+                      <div className="flex gap-2 items-center flex-wrap mt-2">
+                        <input type="number" min="1" value={editFormData.landDetails?.cow_shed_number || ''} onChange={(e) => handleEditChange('landDetails.cow_shed_number', parseInt(e.target.value) || 0)} className="w-24 border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-green-400 font-bold" placeholder="No. sheds" />
+                        <div className="flex gap-2 items-center">
+                          <input type="number" value={editFormData.landDetails?.cow_shed_length || ''} onChange={(e) => handleEditChange('landDetails.cow_shed_length', e.target.value)} className="w-16 border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-green-400" placeholder="Length" />
+                          <span className="text-xs text-gray-500">x</span>
+                          <input type="number" value={editFormData.landDetails?.cow_shed_width || ''} onChange={(e) => handleEditChange('landDetails.cow_shed_width', e.target.value)} className="w-16 border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-green-400" placeholder="Width" />
+                          <span className="text-xs text-gray-500">ft</span>
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>
