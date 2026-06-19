@@ -2,7 +2,6 @@
  * Breadcrumb — Top navigation trail
  * Shows: 🏛 REGISTRY > roads > {activeTab}
  */
-import React from 'react';
 import { ChevronRight, Maximize2 } from 'lucide-react';
 
 export default function Breadcrumb({ activeTab }) {

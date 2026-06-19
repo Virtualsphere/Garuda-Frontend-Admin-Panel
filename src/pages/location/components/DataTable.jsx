@@ -12,7 +12,6 @@
  *
  * All data and action handlers are received as props from the parent.
  */
-import React from 'react';
 import { Edit, Trash2, MapPin, ChevronRight, Search, Route, AlertCircle } from 'lucide-react';
 
 export default function DataTable({

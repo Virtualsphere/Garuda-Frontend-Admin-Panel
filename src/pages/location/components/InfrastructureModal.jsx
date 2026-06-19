@@ -1,7 +1,6 @@
 /**
  * InfrastructureModal — Register Infrastructure popup for Roads & Paths
  */
-import React from 'react';
 import { X } from 'lucide-react';
 import { INFRA_CATEGORIES, ROAD_TYPES, PATH_TYPES } from '../locationConfig';
 

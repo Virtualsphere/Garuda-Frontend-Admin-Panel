@@ -6,7 +6,6 @@
  *
  * Not rendered for Roads & Paths (uses the modal instead).
  */
-import React from 'react';
 import { PlusCircle, X } from 'lucide-react';
 import { FORM_CONFIG } from '../locationConfig';
 
