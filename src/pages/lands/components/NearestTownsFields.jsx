@@ -90,7 +90,7 @@ const NearestTownsFields = ({ editFormData, handleEditChange, states }) => {
     };
 
     hydrateDropdowns();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [localStates, editFormData?.landDetails?.nearest_town_state, editFormData?.landDetails?.nearest_town_district]);
 
   const handleStateChange = async (e) => {

@@ -7,7 +7,6 @@
  *   - Roads:       LIST (icon) | MAP (icon) + ADD INFRASTRUCTURE button
  *   - All others:  LIST | MAP ALLOTMENT
  */
-import React from 'react';
 import { List, Map, LayoutGrid, PlusCircle } from 'lucide-react';
 
 export default function LocationHeader({ config, activeTab, viewMode, onViewModeChange, onAddInfrastructure }) {

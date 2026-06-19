@@ -726,6 +726,24 @@ const LandVerificationDashboard = () => {
     return trees;
   };
 
+  // Helper: pack shed dimensions
+  const buildShedArray = (landDetails) => {
+    const pLen = Number(landDetails?.poultry_shed_length) || null;
+    const pWid = Number(landDetails?.poultry_shed_width) || null;
+    const cLen = Number(landDetails?.cow_shed_length) || null;
+    const cWid = Number(landDetails?.cow_shed_width) || null;
+    
+    if (pLen || pWid || cLen || cWid) {
+      return [{
+        poultry_shed_length: pLen,
+        poultry_shed_width: pWid,
+        cow_shed_length: cLen,
+        cow_shed_width: cWid,
+      }];
+    }
+    return [];
+  };
+
   // Update land data (Verify)
   const verifyLand = async (id, data) => {
     setUpdatingAction('verify');
@@ -740,6 +758,7 @@ const LandVerificationDashboard = () => {
     const payload = {
       ...data,
       trees: buildTreesArray(data.landDetails),
+      shed: buildShedArray(data.landDetails),
       call_verification_status: 'complete',
       physcial_verification_status: 'complete',
       verification_status: 'complete',
@@ -800,6 +819,7 @@ const LandVerificationDashboard = () => {
     const payload = {
       ...data,
       trees: buildTreesArray(data.landDetails),
+      shed: buildShedArray(data.landDetails),
       call_verification_status: 'complete',
       physcial_verification_status: 'pending',
       verification_status: 'pending',

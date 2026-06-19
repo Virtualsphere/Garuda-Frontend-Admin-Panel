@@ -2,8 +2,6 @@
  * PillNav — Horizontal tab navigation with icons
  * Renders one pill button per tab. Active tab gets orange highlight.
  */
-import React from 'react';
-
 export default function PillNav({ tabs, activeTab, onTabChange }) {
   return (
     <div className="loc-pill-nav">

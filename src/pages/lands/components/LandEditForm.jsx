@@ -349,7 +349,15 @@ export const LandEditForm = ({
                       </label>
                     </div>
                     {(editFormData.landDetails?.poultry_shed_number || 0) > 0 && (
-                      <input type="number" min="1" value={editFormData.landDetails?.poultry_shed_number || ''} onChange={(e) => handleEditChange('landDetails.poultry_shed_number', parseInt(e.target.value) || 0)} className="w-full border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-green-400 font-bold" placeholder="No. of sheds" />
+                      <div className="flex gap-2 items-center flex-wrap mt-2">
+                        <input type="number" min="1" value={editFormData.landDetails?.poultry_shed_number || ''} onChange={(e) => handleEditChange('landDetails.poultry_shed_number', parseInt(e.target.value) || 0)} className="w-24 border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-green-400 font-bold" placeholder="No. sheds" />
+                        <div className="flex gap-2 items-center">
+                          <input type="number" value={editFormData.landDetails?.poultry_shed_length || ''} onChange={(e) => handleEditChange('landDetails.poultry_shed_length', e.target.value)} className="w-16 border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-green-400" placeholder="Length" />
+                          <span className="text-xs text-gray-500">x</span>
+                          <input type="number" value={editFormData.landDetails?.poultry_shed_width || ''} onChange={(e) => handleEditChange('landDetails.poultry_shed_width', e.target.value)} className="w-16 border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-green-400" placeholder="Width" />
+                          <span className="text-xs text-gray-500">ft</span>
+                        </div>
+                      </div>
                     )}
                   </div>
                   <div>
@@ -361,7 +369,15 @@ export const LandEditForm = ({
                       </label>
                     </div>
                     {(editFormData.landDetails?.cow_shed_number || 0) > 0 && (
-                      <input type="number" min="1" value={editFormData.landDetails?.cow_shed_number || ''} onChange={(e) => handleEditChange('landDetails.cow_shed_number', parseInt(e.target.value) || 0)} className="w-full border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-green-400 font-bold" placeholder="No. of sheds" />
+                      <div className="flex gap-2 items-center flex-wrap mt-2">
+                        <input type="number" min="1" value={editFormData.landDetails?.cow_shed_number || ''} onChange={(e) => handleEditChange('landDetails.cow_shed_number', parseInt(e.target.value) || 0)} className="w-24 border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-green-400 font-bold" placeholder="No. sheds" />
+                        <div className="flex gap-2 items-center">
+                          <input type="number" value={editFormData.landDetails?.cow_shed_length || ''} onChange={(e) => handleEditChange('landDetails.cow_shed_length', e.target.value)} className="w-16 border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-green-400" placeholder="Length" />
+                          <span className="text-xs text-gray-500">x</span>
+                          <input type="number" value={editFormData.landDetails?.cow_shed_width || ''} onChange={(e) => handleEditChange('landDetails.cow_shed_width', e.target.value)} className="w-16 border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-green-400" placeholder="Width" />
+                          <span className="text-xs text-gray-500">ft</span>
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>

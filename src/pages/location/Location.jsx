@@ -7,8 +7,7 @@
  * It manages the top-level state (active tab, search, selected contexts)
  * and passes props down to the specialized components.
  */
-import React, { useState, useEffect } from 'react';
-
+import { useState, useEffect } from 'react';
 // Configuration
 import { TABS, TAB_CONFIG, INITIAL_FORM_DATA, INITIAL_INFRA_FORM } from './locationConfig';
 

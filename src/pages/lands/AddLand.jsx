@@ -43,7 +43,11 @@ const INITIAL_LAND_DETAILS = {
   electricity: [],
   residence: [],
   poultry_shed_number: 0,
+  poultry_shed_length: '',
+  poultry_shed_width: '',
   cow_shed_number: 0,
+  cow_shed_length: '',
+  cow_shed_width: '',
   water_source: [],
   number_of_bores: 0,
   farm_pond: false,
@@ -496,6 +500,21 @@ const AddLand = () => {
     });
     submitData.trees = treesArray;
 
+    // Pack shed dimensions into the expected array format for the backend
+    const pLen = Number(submitData.landDetails?.poultry_shed_length) || null;
+    const pWid = Number(submitData.landDetails?.poultry_shed_width) || null;
+    const cLen = Number(submitData.landDetails?.cow_shed_length) || null;
+    const cWid = Number(submitData.landDetails?.cow_shed_width) || null;
+    
+    if (pLen || pWid || cLen || cWid) {
+      submitData.shed = [{
+        poultry_shed_length: pLen,
+        poultry_shed_width: pWid,
+        cow_shed_length: cLen,
+        cow_shed_width: cWid,
+      }];
+    }
+
     // Pack nearest town data into top-level fields since backend landDetails doesn't store state/district
     const packTown = (state, district, town) => {
       if (!town) return null;
@@ -786,18 +805,46 @@ const AddLand = () => {
             />
           </div>
           {formData.landDetails.poultry_shed_number > 0 && (
-            <input 
-              type="number" 
-              min="1"
-              value={formData.landDetails.poultry_shed_number}
-              onChange={(e) => setFormData(prev => ({
-                ...prev,
-                landDetails: { ...prev.landDetails, poultry_shed_number: parseInt(e.target.value) || 0 }
-              }))}
-              className="land-input"
-              placeholder="Number of sheds"
-              style={{ padding: '8px 12px', fontSize: '12px' }}
-            />
+            <div style={{ marginTop: '8px', paddingLeft: '24px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <input
+                type="number"
+                min="1"
+                className="land-input"
+                style={{ width: '120px' }}
+                value={formData.landDetails.poultry_shed_number}
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  landDetails: { ...prev.landDetails, poultry_shed_number: parseInt(e.target.value) || 0 }
+                }))}
+                placeholder="Number of sheds"
+              />
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input
+                  type="number"
+                  className="land-input"
+                  style={{ width: '80px' }}
+                  value={formData.landDetails.poultry_shed_length || ''}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    landDetails: { ...prev.landDetails, poultry_shed_length: e.target.value }
+                  }))}
+                  placeholder="Length"
+                />
+                <span style={{ fontSize: '12px', color: '#666' }}>x</span>
+                <input
+                  type="number"
+                  className="land-input"
+                  style={{ width: '80px' }}
+                  value={formData.landDetails.poultry_shed_width || ''}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    landDetails: { ...prev.landDetails, poultry_shed_width: e.target.value }
+                  }))}
+                  placeholder="Width"
+                />
+                <span style={{ fontSize: '12px', color: '#666' }}>ft</span>
+              </div>
+            </div>
           )}
         </div>
         <div style={{ flex: 1 }}>
@@ -812,18 +859,46 @@ const AddLand = () => {
             />
           </div>
           {formData.landDetails.cow_shed_number > 0 && (
-            <input 
-              type="number" 
-              min="1"
-              value={formData.landDetails.cow_shed_number}
-              onChange={(e) => setFormData(prev => ({
-                ...prev,
-                landDetails: { ...prev.landDetails, cow_shed_number: parseInt(e.target.value) || 0 }
-              }))}
-              className="land-input"
-              placeholder="Number of sheds"
-              style={{ padding: '8px 12px', fontSize: '12px' }}
-            />
+            <div style={{ marginTop: '8px', paddingLeft: '24px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <input
+                type="number"
+                min="1"
+                className="land-input"
+                style={{ width: '120px' }}
+                value={formData.landDetails.cow_shed_number}
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  landDetails: { ...prev.landDetails, cow_shed_number: parseInt(e.target.value) || 0 }
+                }))}
+                placeholder="Number of sheds"
+              />
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input
+                  type="number"
+                  className="land-input"
+                  style={{ width: '80px' }}
+                  value={formData.landDetails.cow_shed_length || ''}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    landDetails: { ...prev.landDetails, cow_shed_length: e.target.value }
+                  }))}
+                  placeholder="Length"
+                />
+                <span style={{ fontSize: '12px', color: '#666' }}>x</span>
+                <input
+                  type="number"
+                  className="land-input"
+                  style={{ width: '80px' }}
+                  value={formData.landDetails.cow_shed_width || ''}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    landDetails: { ...prev.landDetails, cow_shed_width: e.target.value }
+                  }))}
+                  placeholder="Width"
+                />
+                <span style={{ fontSize: '12px', color: '#666' }}>ft</span>
+              </div>
+            </div>
           )}
         </div>
       </div>

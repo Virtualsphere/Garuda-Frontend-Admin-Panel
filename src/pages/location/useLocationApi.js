@@ -158,7 +158,7 @@ export default function useLocationApi() {
       const data = await res.json();
       if (data.success) { await fetchStates(); return true; }
       return false;
-    } catch (err) { setError('Failed to create state'); return false; }
+    } catch (err) { console.error(err); setError('Failed to create state'); return false; }
   };
 
   const createDistrict = async (name, stateId) => {
@@ -171,7 +171,7 @@ export default function useLocationApi() {
       const data = await res.json();
       if (data.success) { await fetchDistricts(stateId); return true; }
       return false;
-    } catch (err) { setError('Failed to create district'); return false; }
+    } catch (err) { console.error(err); setError('Failed to create district'); return false; }
   };
 
   const createMandal = async (name, districtId) => {
@@ -184,7 +184,7 @@ export default function useLocationApi() {
       const data = await res.json();
       if (data.success) { await fetchMandals(districtId); return true; }
       return false;
-    } catch (err) { setError('Failed to create mandal'); return false; }
+    } catch (err) { console.error(err); setError('Failed to create mandal'); return false; }
   };
 
   const createVillage = async (name, mandalId) => {
@@ -197,7 +197,7 @@ export default function useLocationApi() {
       const data = await res.json();
       if (data.success) { await fetchVillages(mandalId); return true; }
       return false;
-    } catch (err) { setError('Failed to create village'); return false; }
+    } catch (err) { console.error(err); setError('Failed to create village'); return false; }
   };
 
   const createTown = async (name, districtId) => {
@@ -210,7 +210,7 @@ export default function useLocationApi() {
       const data = await res.json();
       if (data.success) { await fetchTowns(districtId); return true; }
       return false;
-    } catch (err) { setError('Failed to create town'); return false; }
+    } catch (err) { console.error(err); setError('Failed to create town'); return false; }
   };
 
   // ═══════════════════════════════════════════════════════════
@@ -227,7 +227,7 @@ export default function useLocationApi() {
       const data = await res.json();
       if (data.success) { await fetchStates(); return true; }
       return false;
-    } catch (err) { setError('Failed to update state'); return false; }
+    } catch (err) { console.error(err); setError('Failed to update state'); return false; }
   };
 
   const updateDistrict = async (id, name, stateId) => {
@@ -240,7 +240,7 @@ export default function useLocationApi() {
       const data = await res.json();
       if (data.success) { await fetchDistricts(stateId); return true; }
       return false;
-    } catch (err) { setError('Failed to update district'); return false; }
+    } catch (err) { console.error(err); setError('Failed to update district'); return false; }
   };
 
   const updateMandal = async (id, name, districtId) => {
@@ -253,7 +253,7 @@ export default function useLocationApi() {
       const data = await res.json();
       if (data.success) { await fetchMandals(districtId); return true; }
       return false;
-    } catch (err) { setError('Failed to update mandal'); return false; }
+    } catch (err) { console.error(err); setError('Failed to update mandal'); return false; }
   };
 
   const updateVillage = async (id, name, mandalId) => {
@@ -266,7 +266,7 @@ export default function useLocationApi() {
       const data = await res.json();
       if (data.success) { await fetchVillages(mandalId); return true; }
       return false;
-    } catch (err) { setError('Failed to update village'); return false; }
+    } catch (err) { console.error(err); setError('Failed to update village'); return false; }
   };
 
   const updateTown = async (id, name, districtId) => {
@@ -279,7 +279,7 @@ export default function useLocationApi() {
       const data = await res.json();
       if (data.success) { await fetchTowns(districtId); return true; }
       return false;
-    } catch (err) { setError('Failed to update town'); return false; }
+    } catch (err) { console.error(err); setError('Failed to update town'); return false; }
   };
 
   // ═══════════════════════════════════════════════════════════
@@ -293,7 +293,7 @@ export default function useLocationApi() {
       const data = await res.json();
       if (data.success) await fetchStates();
       else setError('Failed to delete state');
-    } catch (err) { setError('Failed to delete state'); }
+    } catch (err) { console.error(err); setError('Failed to delete state'); }
   };
 
   const deleteDistrict = async (id, stateId) => {
@@ -303,7 +303,7 @@ export default function useLocationApi() {
       const data = await res.json();
       if (data.success) await fetchDistricts(stateId);
       else setError('Failed to delete district');
-    } catch (err) { setError('Failed to delete district'); }
+    } catch (err) { console.error(err); setError('Failed to delete district'); }
   };
 
   const deleteMandal = async (id, districtId) => {
@@ -313,7 +313,7 @@ export default function useLocationApi() {
       const data = await res.json();
       if (data.success) await fetchMandals(districtId);
       else setError('Failed to delete mandal');
-    } catch (err) { setError('Failed to delete mandal'); }
+    } catch (err) { console.error(err); setError('Failed to delete mandal'); }
   };
 
   const deleteVillage = async (id, mandalId) => {
@@ -323,7 +323,7 @@ export default function useLocationApi() {
       const data = await res.json();
       if (data.success) await fetchVillages(mandalId);
       else setError('Failed to delete village');
-    } catch (err) { setError('Failed to delete village'); }
+    } catch (err) { console.error(err); setError('Failed to delete village'); }
   };
 
   const deleteTown = async (id, districtId) => {
@@ -333,7 +333,7 @@ export default function useLocationApi() {
       const data = await res.json();
       if (data.success) await fetchTowns(districtId);
       else setError('Failed to delete town');
-    } catch (err) { setError('Failed to delete town'); }
+    } catch (err) { console.error(err); setError('Failed to delete town'); }
   };
 
   // ─── Utility: Add infrastructure locally ──────────────────

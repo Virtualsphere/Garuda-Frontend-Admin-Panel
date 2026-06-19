@@ -10,7 +10,6 @@
  *   - Villages:    STATE + DISTRICT + MANDAL
  *   - Roads:       none
  */
-import React from 'react';
 import { Filter } from 'lucide-react';
 
 export default function ContextFilters({
