@@ -159,10 +159,12 @@ const LandFinalVerificationDashboard = () => {
         }
         if (land.nearest_town_2) {
           const unpacked = unpackTown(land.nearest_town_2);
+          land.landDetails.nearest_town_district_2 = unpacked?.district || '';
           land.landDetails.nearest_town_2 = unpacked?.town || '';
         }
         if (land.nearest_town_3) {
           const unpacked = unpackTown(land.nearest_town_3);
+          land.landDetails.nearest_town_district_3 = unpacked?.district || '';
           land.landDetails.nearest_town_3 = unpacked?.town || '';
         }
         return land;
@@ -331,20 +333,24 @@ const LandFinalVerificationDashboard = () => {
       return JSON.stringify({ state: state || '', district: district || '', town });
     };
     const state = data.landDetails?.nearest_town_state || '';
-    const district = data.landDetails?.nearest_town_district || '';
+    const district1 = data.landDetails?.nearest_town_district || '';
+    const district2 = data.landDetails?.nearest_town_district_2 || '';
+    const district3 = data.landDetails?.nearest_town_district_3 || '';
     try {
       const token = localStorage.getItem('token');
       const payload = {
         ...data,
         trees: buildTreesArray(data.landDetails),
         shed: buildShedArray(data.landDetails),
-        nearest_town_1: data.landDetails?.nearest_town_1 ? packTown(state, district, data.landDetails.nearest_town_1) : data.nearest_town_1,
-        nearest_town_2: data.landDetails?.nearest_town_2 ? packTown(state, district, data.landDetails.nearest_town_2) : data.nearest_town_2,
-        nearest_town_3: data.landDetails?.nearest_town_3 ? packTown(state, district, data.landDetails.nearest_town_3) : data.nearest_town_3,
+        nearest_town_1: data.landDetails?.nearest_town_1 ? packTown(state, district1, data.landDetails.nearest_town_1) : data.nearest_town_1,
+        nearest_town_2: data.landDetails?.nearest_town_2 ? packTown(state, district2, data.landDetails.nearest_town_2) : data.nearest_town_2,
+        nearest_town_3: data.landDetails?.nearest_town_3 ? packTown(state, district3, data.landDetails.nearest_town_3) : data.nearest_town_3,
       };
       if (payload.landDetails) {
         delete payload.landDetails.nearest_town_state;
         delete payload.landDetails.nearest_town_district;
+        delete payload.landDetails.nearest_town_district_2;
+        delete payload.landDetails.nearest_town_district_3;
         delete payload.landDetails.nearest_town_1;
         delete payload.landDetails.nearest_town_2;
         delete payload.landDetails.nearest_town_3;
@@ -541,10 +547,12 @@ const LandFinalVerificationDashboard = () => {
     }
     if (clonedData.nearest_town_2) {
       const unpacked = unpackTown(clonedData.nearest_town_2);
+      clonedData.landDetails.nearest_town_district_2 = unpacked?.district || '';
       clonedData.landDetails.nearest_town_2 = unpacked?.town || '';
     }
     if (clonedData.nearest_town_3) {
       const unpacked = unpackTown(clonedData.nearest_town_3);
+      clonedData.landDetails.nearest_town_district_3 = unpacked?.district || '';
       clonedData.landDetails.nearest_town_3 = unpacked?.town || '';
     }
 
@@ -1023,15 +1031,7 @@ const LandFinalVerificationDashboard = () => {
                         <option value="no">No</option>
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Path Ownership</label>
-                      <input
-                        type="text"
-                        value={editFormData.landDetails?.path_ownership || ''}
-                        onChange={(e) => handleEditChange('landDetails.path_ownership', e.target.value)}
-                        className="w-full border rounded-lg p-2"
-                      />
-                    </div>
+
                     <div>
                       <label className="block text-sm font-medium mb-1">Soil Type</label>
                       <input
@@ -1709,17 +1709,16 @@ const LandFinalVerificationDashboard = () => {
                   {selectedLand.landDetails?.nearest_town_state && (
                     <div className="col-span-1 md:col-span-2 mt-2 p-3 bg-gray-50 border border-gray-100 rounded-lg">
                       <h4 className="text-sm font-semibold text-gray-700 mb-2">Nearest Towns</h4>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                         <div><span className="text-gray-500">State:</span> {selectedLand.landDetails.nearest_town_state}</div>
-                        <div><span className="text-gray-500">District:</span> {selectedLand.landDetails.nearest_town_district || 'N/A'}</div>
                         {selectedLand.landDetails.nearest_town_1 && (
-                          <div><span className="text-gray-500">Primary Town:</span> {selectedLand.landDetails.nearest_town_1}</div>
+                          <div><span className="text-gray-500">Primary:</span> {selectedLand.landDetails.nearest_town_1} <span className="text-gray-400 text-xs">({selectedLand.landDetails.nearest_town_district || 'N/A'})</span></div>
                         )}
                         {selectedLand.landDetails.nearest_town_2 && (
-                          <div><span className="text-gray-500">Secondary Town:</span> {selectedLand.landDetails.nearest_town_2}</div>
+                          <div><span className="text-gray-500">Secondary:</span> {selectedLand.landDetails.nearest_town_2} <span className="text-gray-400 text-xs">({selectedLand.landDetails.nearest_town_district_2 || 'N/A'})</span></div>
                         )}
                         {selectedLand.landDetails.nearest_town_3 && (
-                          <div><span className="text-gray-500">Tertiary Town:</span> {selectedLand.landDetails.nearest_town_3}</div>
+                          <div><span className="text-gray-500">Tertiary:</span> {selectedLand.landDetails.nearest_town_3} <span className="text-gray-400 text-xs">({selectedLand.landDetails.nearest_town_district_3 || 'N/A'})</span></div>
                         )}
                       </div>
                     </div>
@@ -1793,7 +1792,7 @@ const LandFinalVerificationDashboard = () => {
                   <div><strong>Total Value:</strong> {formatPrice(selectedLand.landDetails.total_value)}</div>
                   <div><strong>Nearest Road:</strong> {selectedLand.landDetails.nearest_road_type || 'N/A'}</div>
                   <div><strong>Attached to Road:</strong> {selectedLand.landDetails.land_attached_to_road || 'N/A'}</div>
-                  <div><strong>Path Ownership:</strong> {selectedLand.landDetails.path_ownership || 'N/A'}</div>
+
                   <div><strong>Soil Type:</strong> {selectedLand.landDetails.soil_type || 'N/A'}</div>
                   <div><strong>Fencing Status:</strong> {selectedLand.landDetails.fencing_status || 'N/A'}</div>
                   <div><strong>Farm Pond:</strong> {selectedLand.landDetails.farm_pond ? 'Yes' : 'No'}</div>

@@ -506,10 +506,12 @@ const LandPhysicalVerificationDashboard = () => {
         }
         if (land.nearest_town_2) {
           const unpacked = unpackTown(land.nearest_town_2);
+          land.landDetails.nearest_town_district_2 = unpacked?.district || '';
           land.landDetails.nearest_town_2 = unpacked?.town || '';
         }
         if (land.nearest_town_3) {
           const unpacked = unpackTown(land.nearest_town_3);
+          land.landDetails.nearest_town_district_3 = unpacked?.district || '';
           land.landDetails.nearest_town_3 = unpacked?.town || '';
         }
         return land;
@@ -676,7 +678,9 @@ const LandPhysicalVerificationDashboard = () => {
       return JSON.stringify({ state: state || '', district: district || '', town });
     };
     const state = data.landDetails?.nearest_town_state || '';
-    const district = data.landDetails?.nearest_town_district || '';
+    const district1 = data.landDetails?.nearest_town_district || '';
+    const district2 = data.landDetails?.nearest_town_district_2 || '';
+    const district3 = data.landDetails?.nearest_town_district_3 || '';
     
     const payload = {
       ...data,
@@ -685,14 +689,16 @@ const LandPhysicalVerificationDashboard = () => {
       call_verification_status: 'complete',
       physcial_verification_status: 'complete',
       verification_status: 'complete', // Set to complete to bypass final verification and go straight to verified
-      nearest_town_1: data.landDetails?.nearest_town_1 ? packTown(state, district, data.landDetails.nearest_town_1) : data.nearest_town_1,
-      nearest_town_2: data.landDetails?.nearest_town_2 ? packTown(state, district, data.landDetails.nearest_town_2) : data.nearest_town_2,
-      nearest_town_3: data.landDetails?.nearest_town_3 ? packTown(state, district, data.landDetails.nearest_town_3) : data.nearest_town_3,
+      nearest_town_1: data.landDetails?.nearest_town_1 ? packTown(state, district1, data.landDetails.nearest_town_1) : data.nearest_town_1,
+      nearest_town_2: data.landDetails?.nearest_town_2 ? packTown(state, district2, data.landDetails.nearest_town_2) : data.nearest_town_2,
+      nearest_town_3: data.landDetails?.nearest_town_3 ? packTown(state, district3, data.landDetails.nearest_town_3) : data.nearest_town_3,
     };
     
     if (payload.landDetails) {
       delete payload.landDetails.nearest_town_state;
       delete payload.landDetails.nearest_town_district;
+      delete payload.landDetails.nearest_town_district_2;
+      delete payload.landDetails.nearest_town_district_3;
       delete payload.landDetails.nearest_town_1;
       delete payload.landDetails.nearest_town_2;
       delete payload.landDetails.nearest_town_3;
@@ -952,10 +958,12 @@ const LandPhysicalVerificationDashboard = () => {
     }
     if (clonedData.nearest_town_2) {
       const unpacked = unpackTown(clonedData.nearest_town_2);
+      clonedData.landDetails.nearest_town_district_2 = unpacked?.district || '';
       clonedData.landDetails.nearest_town_2 = unpacked?.town || '';
     }
     if (clonedData.nearest_town_3) {
       const unpacked = unpackTown(clonedData.nearest_town_3);
+      clonedData.landDetails.nearest_town_district_3 = unpacked?.district || '';
       clonedData.landDetails.nearest_town_3 = unpacked?.town || '';
     }
 
@@ -1140,10 +1148,7 @@ const LandPhysicalVerificationDashboard = () => {
                 </div>
                 <div className="text-[7px] text-gray-400 mt-1.5 uppercase font-bold tracking-wider">CLICK GPS TO SUGGEST NEAREST VILLAGE</div>
               </div>
-              <div className="mt-4">
-                <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Address / Landmark</label>
-                <input type="text" value={editFormData.address || ''} onChange={(e) => handleEditChange('address', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" placeholder="Enter address or nearby landmark" />
-              </div>
+
             </FormCard>
 
             <FormCard title="1A. NEAREST TOWNS" icon={MapPin} colorTheme="teal">
@@ -1430,7 +1435,7 @@ const LandPhysicalVerificationDashboard = () => {
                   </div>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-3">
-                  {[...new Set(editFormData.landDetails?.water_source || [])].filter(opt => opt !== 'not available').map(opt => {
+                  {[...new Set(editFormData.landDetails?.water_source || [])].filter(opt => opt === 'borewell').map(opt => {
                     const fieldName = opt === 'borewell' ? 'number_of_bores' : `number_of_${opt.replace(/\s+/g, '_')}`;
                     return (
                       <div key={opt} className="flex-1 min-w-[45%]">
@@ -1797,17 +1802,16 @@ const LandPhysicalVerificationDashboard = () => {
                   {selectedLand.landDetails?.nearest_town_state && (
                     <div className="col-span-1 md:col-span-2 mt-2 p-2 bg-gray-50 border border-gray-100 rounded-lg">
                       <h4 className="text-[10px] font-bold text-gray-500 uppercase mb-1">Nearest Towns</h4>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
                         <div><span className="text-gray-500">State:</span> {selectedLand.landDetails.nearest_town_state}</div>
-                        <div><span className="text-gray-500">District:</span> {selectedLand.landDetails.nearest_town_district || 'N/A'}</div>
                         {selectedLand.landDetails.nearest_town_1 && (
-                          <div><span className="text-gray-500">Primary Town:</span> {selectedLand.landDetails.nearest_town_1}</div>
+                          <div><span className="text-gray-500">Primary:</span> {selectedLand.landDetails.nearest_town_1} <span className="text-gray-400 text-xs">({selectedLand.landDetails.nearest_town_district || 'N/A'})</span></div>
                         )}
                         {selectedLand.landDetails.nearest_town_2 && (
-                          <div><span className="text-gray-500">Secondary Town:</span> {selectedLand.landDetails.nearest_town_2}</div>
+                          <div><span className="text-gray-500">Secondary:</span> {selectedLand.landDetails.nearest_town_2} <span className="text-gray-400 text-xs">({selectedLand.landDetails.nearest_town_district_2 || 'N/A'})</span></div>
                         )}
                         {selectedLand.landDetails.nearest_town_3 && (
-                          <div><span className="text-gray-500">Tertiary Town:</span> {selectedLand.landDetails.nearest_town_3}</div>
+                          <div><span className="text-gray-500">Tertiary:</span> {selectedLand.landDetails.nearest_town_3} <span className="text-gray-400 text-xs">({selectedLand.landDetails.nearest_town_district_3 || 'N/A'})</span></div>
                         )}
                       </div>
                     </div>
@@ -1882,7 +1886,7 @@ const LandPhysicalVerificationDashboard = () => {
                   <div><strong>Total Value:</strong> {formatPrice(selectedLand.landDetails.total_value)}</div>
                   <div><strong>Nearest Road:</strong> {selectedLand.landDetails.nearest_road_type || 'N/A'}</div>
                   <div><strong>Attached to Road:</strong> {selectedLand.landDetails.land_attached_to_road || 'N/A'}</div>
-                  <div><strong>Path Ownership:</strong> {selectedLand.landDetails.path_ownership || 'N/A'}</div>
+
                   <div><strong>Soil Type:</strong> {selectedLand.landDetails?.soil_type || 'N/A'}</div>
                   <div><strong>Fencing Status:</strong> {selectedLand.landDetails.fencing_status || 'N/A'}</div>
                   <div><strong>Farm Pond:</strong> {selectedLand.landDetails.farm_pond ? 'Yes' : 'No'}</div>

@@ -63,6 +63,8 @@ const INITIAL_LAND_DETAILS = {
   complaints: [],
   nearest_town_state: '',
   nearest_town_district: '',
+  nearest_town_district_2: '',
+  nearest_town_district_3: '',
 };
 
 const INITIAL_FORM_DATA = {
@@ -177,6 +179,10 @@ const AddLand = () => {
   const [villages, setVillages] = useState([]);
   const [nearestTownDistricts, setNearestTownDistricts] = useState([]);
   const [nearestTowns, setNearestTowns] = useState([]);
+  const [nearestTownDistricts2, setNearestTownDistricts2] = useState([]);
+  const [nearestTowns2, setNearestTowns2] = useState([]);
+  const [nearestTownDistricts3, setNearestTownDistricts3] = useState([]);
+  const [nearestTowns3, setNearestTowns3] = useState([]);
 
   // File upload states
   const [uploading, setUploading] = useState(false);
@@ -260,16 +266,22 @@ const AddLand = () => {
   const handleNearestTownStateChange = async (stateName, stateId) => {
     setFormData(prev => ({
       ...prev,
-      landDetails: { ...prev.landDetails, nearest_town_state: stateName, nearest_town_district: '' }
+      landDetails: { ...prev.landDetails, nearest_town_state: stateName, nearest_town_district: '', nearest_town_district_2: '', nearest_town_district_3: '', nearest_town_1: '', nearest_town_2: '', nearest_town_3: '' }
     }));
     setNearestTownDistricts([]);
     setNearestTowns([]);
+    setNearestTownDistricts2([]);
+    setNearestTowns2([]);
+    setNearestTownDistricts3([]);
+    setNearestTowns3([]);
 
     if (stateId) {
       try {
         const response = await axios.get(`${API_BASE_URL}/location/districts/${stateId}`);
         if (response.data.success) {
           setNearestTownDistricts(response.data.data);
+          setNearestTownDistricts2(response.data.data);
+          setNearestTownDistricts3(response.data.data);
         }
       } catch (err) {
         console.error('Error fetching nearest town districts:', err);
@@ -283,9 +295,7 @@ const AddLand = () => {
       landDetails: { 
         ...prev.landDetails, 
         nearest_town_district: districtName,
-        nearest_town_1: '',
-        nearest_town_2: '',
-        nearest_town_3: ''
+        nearest_town_1: ''
       }
     }));
     
@@ -299,6 +309,54 @@ const AddLand = () => {
         }
       } catch (err) {
         console.error('Error fetching nearest towns:', err);
+      }
+    }
+  };
+
+  const handleNearestTownDistrictChange2 = async (districtName, districtId) => {
+    setFormData(prev => ({
+      ...prev,
+      landDetails: { 
+        ...prev.landDetails, 
+        nearest_town_district_2: districtName,
+        nearest_town_2: ''
+      }
+    }));
+    
+    setNearestTowns2([]);
+
+    if (districtId) {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/location/towns/${districtId}`);
+        if (response.data.success) {
+          setNearestTowns2(response.data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching nearest towns 2:', err);
+      }
+    }
+  };
+
+  const handleNearestTownDistrictChange3 = async (districtName, districtId) => {
+    setFormData(prev => ({
+      ...prev,
+      landDetails: { 
+        ...prev.landDetails, 
+        nearest_town_district_3: districtName,
+        nearest_town_3: ''
+      }
+    }));
+    
+    setNearestTowns3([]);
+
+    if (districtId) {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/location/towns/${districtId}`);
+        if (response.data.success) {
+          setNearestTowns3(response.data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching nearest towns 3:', err);
       }
     }
   };
@@ -520,20 +578,24 @@ const AddLand = () => {
       if (!town) return null;
       return JSON.stringify({ state: state || '', district: district || '', town });
     };
-    const state = submitData.landDetails?.nearest_town_state || '';
-    const district = submitData.landDetails?.nearest_town_district || '';
+    const ntState = submitData.landDetails?.nearest_town_state || '';
+    const ntDistrict1 = submitData.landDetails?.nearest_town_district || '';
+    const ntDistrict2 = submitData.landDetails?.nearest_town_district_2 || '';
+    const ntDistrict3 = submitData.landDetails?.nearest_town_district_3 || '';
     if (submitData.landDetails?.nearest_town_1) {
-      submitData.nearest_town_1 = packTown(state, district, submitData.landDetails.nearest_town_1);
+      submitData.nearest_town_1 = packTown(ntState, ntDistrict1, submitData.landDetails.nearest_town_1);
     }
     if (submitData.landDetails?.nearest_town_2) {
-      submitData.nearest_town_2 = packTown(state, district, submitData.landDetails.nearest_town_2);
+      submitData.nearest_town_2 = packTown(ntState, ntDistrict2, submitData.landDetails.nearest_town_2);
     }
     if (submitData.landDetails?.nearest_town_3) {
-      submitData.nearest_town_3 = packTown(state, district, submitData.landDetails.nearest_town_3);
+      submitData.nearest_town_3 = packTown(ntState, ntDistrict3, submitData.landDetails.nearest_town_3);
     }
     if (submitData.landDetails) {
       delete submitData.landDetails.nearest_town_state;
       delete submitData.landDetails.nearest_town_district;
+      delete submitData.landDetails.nearest_town_district_2;
+      delete submitData.landDetails.nearest_town_district_3;
       delete submitData.landDetails.nearest_town_1;
       delete submitData.landDetails.nearest_town_2;
       delete submitData.landDetails.nearest_town_3;
@@ -711,17 +773,7 @@ const AddLand = () => {
           </button>
         </div>
       </div>
-      <div className="field-group" style={{ marginTop: '12px' }}>
-        <label className="land-label">Address / Landmark</label>
-        <input
-          type="text"
-          name="address"
-          value={formData.address || ''}
-          onChange={handleInputChange}
-          className="land-input"
-          placeholder="Enter address or nearby landmark"
-        />
-      </div>
+
     </CardWrapper>
   );
 
@@ -1098,7 +1150,7 @@ const AddLand = () => {
       </div>
       
       <div className="field-row mt-4" style={{ marginTop: '16px', display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-        {(formData.landDetails.water_source || []).filter(opt => opt !== 'not available').map(opt => {
+        {(formData.landDetails.water_source || []).filter(opt => opt === 'borewell').map(opt => {
           const fieldName = opt === 'borewell' ? 'number_of_bores' : `number_of_${opt.replace(/\s+/g, '_')}`;
           return (
             <div key={opt} style={{ flex: '1 1 45%' }}>
@@ -1158,16 +1210,7 @@ const AddLand = () => {
           <option value="no">No</option>
         </select>
       </div>
-      <div className="field-group">
-        <label className="land-label">Path Ownership</label>
-        <input
-          type="text"
-          name="landDetails.path_ownership"
-          value={formData.landDetails.path_ownership}
-          onChange={handleInputChange}
-          className="land-input"
-        />
-      </div>
+
     </CardWrapper>
   );
 
@@ -1189,14 +1232,7 @@ const AddLand = () => {
           <option value="Clay Soil">Clay Soil</option>
           <option value="Loamy Soil">Loamy Soil</option>
         </select>
-        <input
-          type="text"
-          name="landDetails.soil_type_details"
-          value={formData.landDetails.soil_type_details || ''}
-          onChange={handleInputChange}
-          className="land-input"
-          placeholder="Additional Soil Details (Optional)"
-        />
+
       </div>
       <div className="field-group">
         <label className="land-label">Fencing Status</label>
@@ -1560,64 +1596,119 @@ const AddLand = () => {
           ))}
         </select>
       </div>
-      <div className="field-group">
-        <label className="land-label">District</label>
-        <select
-          value={formData.landDetails.nearest_town_district}
-          onChange={(e) => {
-            const selectedDistrict = nearestTownDistricts.find(d => d.name === e.target.value);
-            handleNearestTownDistrictChange(e.target.value, selectedDistrict?.id);
-          }}
-          className="land-select"
-          disabled={!formData.landDetails.nearest_town_state}
-        >
-          <option value="">Select District</option>
-          {nearestTownDistricts.map(district => (
-            <option key={district.id} value={district.name}>{district.name}</option>
-          ))}
-        </select>
+
+      {/* Block 1: District + Primary Urban Hub */}
+      <div style={{ border: '1px solid #ccfbf1', borderRadius: '8px', padding: '12px', background: 'rgba(204, 251, 241, 0.15)', marginTop: '8px' }}>
+        <div style={{ fontSize: '9px', fontWeight: 700, color: '#0d9488', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Primary Town</div>
+        <div className="field-row">
+          <div>
+            <label className="land-label">District</label>
+            <select
+              value={formData.landDetails.nearest_town_district}
+              onChange={(e) => {
+                const selectedDistrict = nearestTownDistricts.find(d => d.name === e.target.value);
+                handleNearestTownDistrictChange(e.target.value, selectedDistrict?.id);
+              }}
+              className="land-select"
+              disabled={!formData.landDetails.nearest_town_state}
+            >
+              <option value="">Select District</option>
+              {nearestTownDistricts.map(district => (
+                <option key={district.id} value={district.name}>{district.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="land-label">Primary Urban Hub</label>
+            <select 
+              className="land-select"
+              value={formData.landDetails.nearest_town_1 || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, landDetails: { ...prev.landDetails, nearest_town_1: e.target.value } }))}
+              disabled={!formData.landDetails.nearest_town_district}
+            >
+              <option value="">Pick Primary Town</option>
+              {nearestTowns.map(town => (
+                <option key={town.id} value={town.name}>{town.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
-      <div className="field-group">
-        <label className="land-label">Primary Urban Hub</label>
-        <select 
-          className="land-select"
-          value={formData.landDetails.nearest_town_1 || ''}
-          onChange={(e) => setFormData(prev => ({ ...prev, landDetails: { ...prev.landDetails, nearest_town_1: e.target.value } }))}
-          disabled={!formData.landDetails.nearest_town_district}
-        >
-          <option value="">Pick Primary Town</option>
-          {nearestTowns.map(town => (
-            <option key={town.id} value={town.name}>{town.name}</option>
-          ))}
-        </select>
+
+      {/* Block 2: District 2 + Secondary Node */}
+      <div style={{ border: '1px solid #ccfbf1', borderRadius: '8px', padding: '12px', background: 'rgba(204, 251, 241, 0.15)', marginTop: '8px' }}>
+        <div style={{ fontSize: '9px', fontWeight: 700, color: '#0d9488', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Secondary Town</div>
+        <div className="field-row">
+          <div>
+            <label className="land-label">District</label>
+            <select
+              value={formData.landDetails.nearest_town_district_2 || ''}
+              onChange={(e) => {
+                const selectedDistrict = nearestTownDistricts2.find(d => d.name === e.target.value);
+                handleNearestTownDistrictChange2(e.target.value, selectedDistrict?.id);
+              }}
+              className="land-select"
+              disabled={!formData.landDetails.nearest_town_state}
+            >
+              <option value="">Select District</option>
+              {nearestTownDistricts2.map(district => (
+                <option key={district.id} value={district.name}>{district.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="land-label">Secondary Node</label>
+            <select 
+              className="land-select"
+              value={formData.landDetails.nearest_town_2 || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, landDetails: { ...prev.landDetails, nearest_town_2: e.target.value } }))}
+              disabled={!formData.landDetails.nearest_town_district_2}
+            >
+              <option value="">Pick Secondary Town</option>
+              {nearestTowns2.map(town => (
+                <option key={town.id} value={town.name}>{town.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
-      <div className="field-group">
-        <label className="land-label">Secondary Node</label>
-        <select 
-          className="land-select"
-          value={formData.landDetails.nearest_town_2 || ''}
-          onChange={(e) => setFormData(prev => ({ ...prev, landDetails: { ...prev.landDetails, nearest_town_2: e.target.value } }))}
-          disabled={!formData.landDetails.nearest_town_district}
-        >
-          <option value="">Pick Secondary Town</option>
-          {nearestTowns.map(town => (
-            <option key={town.id} value={town.name}>{town.name}</option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="land-label">Tertiary Node</label>
-        <select 
-          className="land-select"
-          value={formData.landDetails.nearest_town_3 || ''}
-          onChange={(e) => setFormData(prev => ({ ...prev, landDetails: { ...prev.landDetails, nearest_town_3: e.target.value } }))}
-          disabled={!formData.landDetails.nearest_town_district}
-        >
-          <option value="">Pick Tertiary Town</option>
-          {nearestTowns.map(town => (
-            <option key={town.id} value={town.name}>{town.name}</option>
-          ))}
-        </select>
+
+      {/* Block 3: District 3 + Tertiary Node */}
+      <div style={{ border: '1px solid #ccfbf1', borderRadius: '8px', padding: '12px', background: 'rgba(204, 251, 241, 0.15)', marginTop: '8px' }}>
+        <div style={{ fontSize: '9px', fontWeight: 700, color: '#0d9488', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Tertiary Town</div>
+        <div className="field-row">
+          <div>
+            <label className="land-label">District</label>
+            <select
+              value={formData.landDetails.nearest_town_district_3 || ''}
+              onChange={(e) => {
+                const selectedDistrict = nearestTownDistricts3.find(d => d.name === e.target.value);
+                handleNearestTownDistrictChange3(e.target.value, selectedDistrict?.id);
+              }}
+              className="land-select"
+              disabled={!formData.landDetails.nearest_town_state}
+            >
+              <option value="">Select District</option>
+              {nearestTownDistricts3.map(district => (
+                <option key={district.id} value={district.name}>{district.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="land-label">Tertiary Node</label>
+            <select 
+              className="land-select"
+              value={formData.landDetails.nearest_town_3 || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, landDetails: { ...prev.landDetails, nearest_town_3: e.target.value } }))}
+              disabled={!formData.landDetails.nearest_town_district_3}
+            >
+              <option value="">Pick Tertiary Town</option>
+              {nearestTowns3.map(town => (
+                <option key={town.id} value={town.name}>{town.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
     </CardWrapper>
   );

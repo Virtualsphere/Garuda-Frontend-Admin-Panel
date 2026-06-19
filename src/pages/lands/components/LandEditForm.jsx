@@ -194,10 +194,7 @@ export const LandEditForm = ({
                 </div>
                 <div className="text-[7px] text-gray-400 mt-1.5 uppercase font-bold tracking-wider">CLICK GPS TO SUGGEST NEAREST VILLAGE</div>
               </div>
-              <div className="mt-4">
-                <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Address / Landmark</label>
-                <input type="text" value={editFormData.address || ''} onChange={(e) => handleEditChange('address', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-red-400 font-medium" placeholder="Enter address or nearby landmark" />
-              </div>
+
             </FormCard>
 
             <FormCard title="1A. NEAREST TOWNS" icon={MapPin} colorTheme="teal">
@@ -485,7 +482,7 @@ export const LandEditForm = ({
                   </div>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-3">
-                  {[...new Set(editFormData.landDetails?.water_source || [])].filter(opt => opt !== 'not available').map(opt => {
+                  {[...new Set(editFormData.landDetails?.water_source || [])].filter(opt => opt === 'borewell').map(opt => {
                     const fieldName = opt === 'borewell' ? 'number_of_bores' : `number_of_${opt.replace(/\s+/g, '_')}`;
                     return (
                       <div key={opt} className="flex-1 min-w-[45%]">
