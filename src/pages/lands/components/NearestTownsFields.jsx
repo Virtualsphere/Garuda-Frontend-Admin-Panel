@@ -266,6 +266,18 @@ const NearestTownsFields = ({ editFormData, handleEditChange, states }) => {
               ))}
             </select>
           </div>
+          <div className="md:col-span-2">
+            <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Distance (KM)</label>
+            <input
+              type="number"
+              step="0.1"
+              placeholder="e.g. 10.5"
+              value={editFormData?.landDetails?.nearest_town_distance_1 || ''}
+              onChange={(e) => handleEditChange('landDetails.nearest_town_distance_1', e.target.value)}
+              disabled={!editFormData?.landDetails?.nearest_town_1}
+              className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white disabled:bg-gray-100 disabled:text-gray-400"
+            />
+          </div>
         </div>
       </div>
 
@@ -307,6 +319,18 @@ const NearestTownsFields = ({ editFormData, handleEditChange, states }) => {
               ))}
             </select>
           </div>
+          <div className="md:col-span-2">
+            <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Distance (KM)</label>
+            <input
+              type="number"
+              step="0.1"
+              placeholder="e.g. 10.5"
+              value={editFormData?.landDetails?.nearest_town_distance_2 || ''}
+              onChange={(e) => handleEditChange('landDetails.nearest_town_distance_2', e.target.value)}
+              disabled={!editFormData?.landDetails?.nearest_town_2}
+              className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white disabled:bg-gray-100 disabled:text-gray-400"
+            />
+          </div>
         </div>
       </div>
 
@@ -347,6 +371,18 @@ const NearestTownsFields = ({ editFormData, handleEditChange, states }) => {
                 <option key={town.id} value={town.name}>{town.name}</option>
               ))}
             </select>
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Distance (KM)</label>
+            <input
+              type="number"
+              step="0.1"
+              placeholder="e.g. 10.5"
+              value={editFormData?.landDetails?.nearest_town_distance_3 || ''}
+              onChange={(e) => handleEditChange('landDetails.nearest_town_distance_3', e.target.value)}
+              disabled={!editFormData?.landDetails?.nearest_town_3}
+              className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white disabled:bg-gray-100 disabled:text-gray-400"
+            />
           </div>
         </div>
       </div>

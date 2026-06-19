@@ -65,6 +65,9 @@ const INITIAL_LAND_DETAILS = {
   nearest_town_district: '',
   nearest_town_district_2: '',
   nearest_town_district_3: '',
+  nearest_town_distance_1: '',
+  nearest_town_distance_2: '',
+  nearest_town_distance_3: '',
 };
 
 const INITIAL_FORM_DATA = {
@@ -574,22 +577,22 @@ const AddLand = () => {
     }
 
     // Pack nearest town data into top-level fields since backend landDetails doesn't store state/district
-    const packTown = (state, district, town) => {
+    const packTown = (state, district, town, distance) => {
       if (!town) return null;
-      return JSON.stringify({ state: state || '', district: district || '', town });
+      return JSON.stringify({ state: state || '', district: district || '', town, distance: distance || '' });
     };
     const ntState = submitData.landDetails?.nearest_town_state || '';
     const ntDistrict1 = submitData.landDetails?.nearest_town_district || '';
     const ntDistrict2 = submitData.landDetails?.nearest_town_district_2 || '';
     const ntDistrict3 = submitData.landDetails?.nearest_town_district_3 || '';
     if (submitData.landDetails?.nearest_town_1) {
-      submitData.nearest_town_1 = packTown(ntState, ntDistrict1, submitData.landDetails.nearest_town_1);
+      submitData.nearest_town_1 = packTown(ntState, ntDistrict1, submitData.landDetails.nearest_town_1, submitData.landDetails.nearest_town_distance_1);
     }
     if (submitData.landDetails?.nearest_town_2) {
-      submitData.nearest_town_2 = packTown(ntState, ntDistrict2, submitData.landDetails.nearest_town_2);
+      submitData.nearest_town_2 = packTown(ntState, ntDistrict2, submitData.landDetails.nearest_town_2, submitData.landDetails.nearest_town_distance_2);
     }
     if (submitData.landDetails?.nearest_town_3) {
-      submitData.nearest_town_3 = packTown(ntState, ntDistrict3, submitData.landDetails.nearest_town_3);
+      submitData.nearest_town_3 = packTown(ntState, ntDistrict3, submitData.landDetails.nearest_town_3, submitData.landDetails.nearest_town_distance_3);
     }
     if (submitData.landDetails) {
       delete submitData.landDetails.nearest_town_state;
@@ -599,6 +602,9 @@ const AddLand = () => {
       delete submitData.landDetails.nearest_town_1;
       delete submitData.landDetails.nearest_town_2;
       delete submitData.landDetails.nearest_town_3;
+      delete submitData.landDetails.nearest_town_distance_1;
+      delete submitData.landDetails.nearest_town_distance_2;
+      delete submitData.landDetails.nearest_town_distance_3;
     }
 
     // Get token from localStorage (assuming JWT is stored here)
@@ -1632,6 +1638,18 @@ const AddLand = () => {
               ))}
             </select>
           </div>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label className="land-label">Distance (KM)</label>
+            <input 
+              type="number"
+              step="0.1"
+              placeholder="e.g. 10.5"
+              className="land-input"
+              value={formData.landDetails.nearest_town_distance_1 || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, landDetails: { ...prev.landDetails, nearest_town_distance_1: e.target.value } }))}
+              disabled={!formData.landDetails.nearest_town_1}
+            />
+          </div>
         </div>
       </div>
 
@@ -1670,6 +1688,18 @@ const AddLand = () => {
               ))}
             </select>
           </div>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label className="land-label">Distance (KM)</label>
+            <input 
+              type="number"
+              step="0.1"
+              placeholder="e.g. 10.5"
+              className="land-input"
+              value={formData.landDetails.nearest_town_distance_2 || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, landDetails: { ...prev.landDetails, nearest_town_distance_2: e.target.value } }))}
+              disabled={!formData.landDetails.nearest_town_2}
+            />
+          </div>
         </div>
       </div>
 
@@ -1707,6 +1737,18 @@ const AddLand = () => {
                 <option key={town.id} value={town.name}>{town.name}</option>
               ))}
             </select>
+          </div>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label className="land-label">Distance (KM)</label>
+            <input 
+              type="number"
+              step="0.1"
+              placeholder="e.g. 10.5"
+              className="land-input"
+              value={formData.landDetails.nearest_town_distance_3 || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, landDetails: { ...prev.landDetails, nearest_town_distance_3: e.target.value } }))}
+              disabled={!formData.landDetails.nearest_town_3}
+            />
           </div>
         </div>
       </div>

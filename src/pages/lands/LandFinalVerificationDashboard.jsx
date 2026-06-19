@@ -156,16 +156,19 @@ const LandFinalVerificationDashboard = () => {
           land.landDetails.nearest_town_state = unpacked?.state || '';
           land.landDetails.nearest_town_district = unpacked?.district || '';
           land.landDetails.nearest_town_1 = unpacked?.town || '';
+          land.landDetails.nearest_town_distance_1 = unpacked?.distance || '';
         }
         if (land.nearest_town_2) {
           const unpacked = unpackTown(land.nearest_town_2);
           land.landDetails.nearest_town_district_2 = unpacked?.district || '';
           land.landDetails.nearest_town_2 = unpacked?.town || '';
+          land.landDetails.nearest_town_distance_2 = unpacked?.distance || '';
         }
         if (land.nearest_town_3) {
           const unpacked = unpackTown(land.nearest_town_3);
           land.landDetails.nearest_town_district_3 = unpacked?.district || '';
           land.landDetails.nearest_town_3 = unpacked?.town || '';
+          land.landDetails.nearest_town_distance_3 = unpacked?.distance || '';
         }
         return land;
       });
@@ -328,9 +331,9 @@ const LandFinalVerificationDashboard = () => {
   // Update land data (PUT)
   const updateLand = async (id, data) => {
     setUpdating(true);
-    const packTown = (state, district, town) => {
+    const packTown = (state, district, town, distance) => {
       if (!town) return null;
-      return JSON.stringify({ state: state || '', district: district || '', town });
+      return JSON.stringify({ state: state || '', district: district || '', town, distance: distance || '' });
     };
     const state = data.landDetails?.nearest_town_state || '';
     const district1 = data.landDetails?.nearest_town_district || '';
@@ -342,9 +345,9 @@ const LandFinalVerificationDashboard = () => {
         ...data,
         trees: buildTreesArray(data.landDetails),
         shed: buildShedArray(data.landDetails),
-        nearest_town_1: data.landDetails?.nearest_town_1 ? packTown(state, district1, data.landDetails.nearest_town_1) : data.nearest_town_1,
-        nearest_town_2: data.landDetails?.nearest_town_2 ? packTown(state, district2, data.landDetails.nearest_town_2) : data.nearest_town_2,
-        nearest_town_3: data.landDetails?.nearest_town_3 ? packTown(state, district3, data.landDetails.nearest_town_3) : data.nearest_town_3,
+        nearest_town_1: data.landDetails?.nearest_town_1 ? packTown(state, district1, data.landDetails.nearest_town_1, data.landDetails.nearest_town_distance_1) : data.nearest_town_1,
+        nearest_town_2: data.landDetails?.nearest_town_2 ? packTown(state, district2, data.landDetails.nearest_town_2, data.landDetails.nearest_town_distance_2) : data.nearest_town_2,
+        nearest_town_3: data.landDetails?.nearest_town_3 ? packTown(state, district3, data.landDetails.nearest_town_3, data.landDetails.nearest_town_distance_3) : data.nearest_town_3,
       };
       if (payload.landDetails) {
         delete payload.landDetails.nearest_town_state;
@@ -354,6 +357,9 @@ const LandFinalVerificationDashboard = () => {
         delete payload.landDetails.nearest_town_1;
         delete payload.landDetails.nearest_town_2;
         delete payload.landDetails.nearest_town_3;
+        delete payload.landDetails.nearest_town_distance_1;
+        delete payload.landDetails.nearest_town_distance_2;
+        delete payload.landDetails.nearest_town_distance_3;
       }
       const response = await fetch(`${API_BASE_URL}/land/${id}`, {
         method: 'PUT',
@@ -544,16 +550,19 @@ const LandFinalVerificationDashboard = () => {
       clonedData.landDetails.nearest_town_state = unpacked?.state || '';
       clonedData.landDetails.nearest_town_district = unpacked?.district || '';
       clonedData.landDetails.nearest_town_1 = unpacked?.town || '';
+      clonedData.landDetails.nearest_town_distance_1 = unpacked?.distance || '';
     }
     if (clonedData.nearest_town_2) {
       const unpacked = unpackTown(clonedData.nearest_town_2);
       clonedData.landDetails.nearest_town_district_2 = unpacked?.district || '';
       clonedData.landDetails.nearest_town_2 = unpacked?.town || '';
+      clonedData.landDetails.nearest_town_distance_2 = unpacked?.distance || '';
     }
     if (clonedData.nearest_town_3) {
       const unpacked = unpackTown(clonedData.nearest_town_3);
       clonedData.landDetails.nearest_town_district_3 = unpacked?.district || '';
       clonedData.landDetails.nearest_town_3 = unpacked?.town || '';
+      clonedData.landDetails.nearest_town_distance_3 = unpacked?.distance || '';
     }
 
     setEditFormData(clonedData);
