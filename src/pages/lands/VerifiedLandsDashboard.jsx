@@ -695,6 +695,8 @@ const VerifiedLandsDashboard = () => {
     // Normalize arrays
     if (!Array.isArray(clonedData.landDetails.residence)) {
       clonedData.landDetails.residence = [];
+    } else {
+      clonedData.landDetails.residence = clonedData.landDetails.residence.map(r => r === 'developed farm' ? 'developed farm house' : r);
     }
     if (typeof clonedData.landDetails.water_source === 'string') {
       try { clonedData.landDetails.water_source = JSON.parse(clonedData.landDetails.water_source); } catch(e) { clonedData.landDetails.water_source = []; }

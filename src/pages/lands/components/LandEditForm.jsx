@@ -322,7 +322,7 @@ export const LandEditForm = ({
                 <div>
                   <label className="block text-[9px] font-bold text-green-700 uppercase mb-2 tracking-wider">Type of Residence</label>
                   <div className="flex flex-wrap gap-4">
-                    {['developed farm', 'rcc house', 'asbestos shelter', 'hut'].map(opt => (
+                    {['developed farm house', 'rcc house', 'asbestos shelter', 'hut'].map(opt => (
                       <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
                         <div className="relative flex items-center justify-center">
                           <input type="checkbox" checked={(editFormData.landDetails?.residence || []).includes(opt)} onChange={(e) => handleArrayChange('landDetails.residence', opt, e.target.checked)} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-sm checked:bg-white checked:border-orange-500 transition-all cursor-pointer" />
@@ -421,17 +421,16 @@ export const LandEditForm = ({
                     <option value="Red Soil">Red Soil</option>
                     <option value="Black Soil">Black Soil</option>
                     <option value="Sandy Soil">Sandy Soil</option>
-                    <option value="Clay Soil">Clay Soil</option>
-                    <option value="Loamy Soil">Loamy Soil</option>
+                    <option value="Alluvial Soil">Alluvial Soil</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Fencing Status</label>
                   <select value={editFormData.landDetails?.fencing_status || ''} onChange={(e) => handleEditChange('landDetails.fencing_status', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white">
                     <option value="">Select</option>
-                    <option value="Fully Fenced">Fully Fenced</option>
-                    <option value="Partially Fenced">Partially Fenced</option>
-                    <option value="Not Fenced">Not Fenced</option>
+                    <option value="no">no</option>
+                    <option value="partially">partially</option>
+                    <option value="all sides">all sides</option>
                     <option value="All side with gates">All side with gates</option>
                   </select>
                 </div>

@@ -49,7 +49,7 @@ const AGE_OPTIONS = ['Upto 30', '30-50', '50+'];
 const LITERACY_OPTIONS = ['Illiterate', 'Literate', 'High School', 'Graduate'];
 const NATURE_OPTIONS = ['Calm', 'Polite', 'Normal', 'Rude'];
 const ELECTRICITY_OPTIONS = ['single phase', 'three phase'];
-const RESIDENCE_OPTIONS = ['developed farm', 'rcc house', 'asbestos shelter', 'hut'];
+const RESIDENCE_OPTIONS = ['developed farm house', 'rcc house', 'asbestos shelter', 'hut'];
 const WATER_SOURCE_OPTIONS = ['borewell', 'cheruvu', 'canal', 'not available'];
 const COMPLAINT_OPTIONS = [
   'Siblings Issue (own Brother or Sister)',
@@ -493,9 +493,9 @@ const LandVerificationDashboard = () => {
               return parsed;
             }
           } catch (e) {
-            return { state: '', district: '', town: packedStr };
+            return { state: land.state || '', district: land.district || '', town: packedStr };
           }
-          return { state: '', district: '', town: packedStr };
+          return { state: land.state || '', district: land.district || '', town: packedStr };
         };
 
         if (land.nearest_town_1) {
@@ -503,19 +503,19 @@ const LandVerificationDashboard = () => {
           land.landDetails.nearest_town_state = unpacked?.state || '';
           land.landDetails.nearest_town_district = unpacked?.district || '';
           land.landDetails.nearest_town_1 = unpacked?.town || '';
-          land.landDetails.nearest_town_distance_1 = unpacked?.distance || '';
+          land.landDetails.nearest_town_distance_1 = unpacked?.distance || land.nearest_town_1_km || '';
         }
         if (land.nearest_town_2) {
           const unpacked = unpackTown(land.nearest_town_2);
           land.landDetails.nearest_town_district_2 = unpacked?.district || '';
           land.landDetails.nearest_town_2 = unpacked?.town || '';
-          land.landDetails.nearest_town_distance_2 = unpacked?.distance || '';
+          land.landDetails.nearest_town_distance_2 = unpacked?.distance || land.nearest_town_2_km || '';
         }
         if (land.nearest_town_3) {
           const unpacked = unpackTown(land.nearest_town_3);
           land.landDetails.nearest_town_district_3 = unpacked?.district || '';
           land.landDetails.nearest_town_3 = unpacked?.town || '';
-          land.landDetails.nearest_town_distance_3 = unpacked?.distance || '';
+          land.landDetails.nearest_town_distance_3 = unpacked?.distance || land.nearest_town_3_km || '';
         }
         return land;
       });
@@ -1073,6 +1073,24 @@ const LandVerificationDashboard = () => {
       clonedData.landDetails.nearest_road_type = clonedData.landDetails.nearest_road_type.toUpperCase();
     }
     
+    // Normalize soil_type
+    if (clonedData.landDetails.soil_type) {
+      const st = clonedData.landDetails.soil_type.toLowerCase();
+      if (st.includes('red')) clonedData.landDetails.soil_type = 'Red Soil';
+      else if (st.includes('black')) clonedData.landDetails.soil_type = 'Black Soil';
+      else if (st.includes('sand')) clonedData.landDetails.soil_type = 'Sandy Soil';
+      else if (st.includes('alluvial')) clonedData.landDetails.soil_type = 'Alluvial Soil';
+    }
+
+    // Normalize fencing_status
+    if (clonedData.landDetails.fencing_status) {
+      const fs = clonedData.landDetails.fencing_status.toLowerCase();
+      if (fs.includes('gate')) clonedData.landDetails.fencing_status = 'All side with gates';
+      else if (fs.includes('fully') || fs.includes('all')) clonedData.landDetails.fencing_status = 'all sides';
+      else if (fs.includes('partially')) clonedData.landDetails.fencing_status = 'partially';
+      else if (fs.includes('not') || fs === 'no') clonedData.landDetails.fencing_status = 'no';
+    }
+    
     // Normalize village - trim whitespace/tab characters
     if (clonedData.village) {
       clonedData.village = clonedData.village.trim();
@@ -1087,9 +1105,9 @@ const LandVerificationDashboard = () => {
           return parsed;
         }
       } catch (e) {
-        return { state: '', district: '', town: packedStr };
+        return { state: clonedData.state || '', district: clonedData.district || '', town: packedStr };
       }
-      return { state: '', district: '', town: packedStr };
+      return { state: clonedData.state || '', district: clonedData.district || '', town: packedStr };
     };
 
     if (clonedData.nearest_town_1) {
@@ -1097,24 +1115,26 @@ const LandVerificationDashboard = () => {
       clonedData.landDetails.nearest_town_state = unpacked?.state || '';
       clonedData.landDetails.nearest_town_district = unpacked?.district || '';
       clonedData.landDetails.nearest_town_1 = unpacked?.town || '';
-      clonedData.landDetails.nearest_town_distance_1 = unpacked?.distance || '';
+      clonedData.landDetails.nearest_town_distance_1 = unpacked?.distance || clonedData.nearest_town_1_km || '';
     }
     if (clonedData.nearest_town_2) {
       const unpacked = unpackTown(clonedData.nearest_town_2);
       clonedData.landDetails.nearest_town_district_2 = unpacked?.district || '';
       clonedData.landDetails.nearest_town_2 = unpacked?.town || '';
-      clonedData.landDetails.nearest_town_distance_2 = unpacked?.distance || '';
+      clonedData.landDetails.nearest_town_distance_2 = unpacked?.distance || clonedData.nearest_town_2_km || '';
     }
     if (clonedData.nearest_town_3) {
       const unpacked = unpackTown(clonedData.nearest_town_3);
       clonedData.landDetails.nearest_town_district_3 = unpacked?.district || '';
       clonedData.landDetails.nearest_town_3 = unpacked?.town || '';
-      clonedData.landDetails.nearest_town_distance_3 = unpacked?.distance || '';
+      clonedData.landDetails.nearest_town_distance_3 = unpacked?.distance || clonedData.nearest_town_3_km || '';
     }
     
     // Normalize arrays that might come as null from backend
     if (!Array.isArray(clonedData.landDetails.residence)) {
       clonedData.landDetails.residence = [];
+    } else {
+      clonedData.landDetails.residence = clonedData.landDetails.residence.map(r => r === 'developed farm' ? 'developed farm house' : r);
     }
     if (typeof clonedData.landDetails.water_source === 'string') {
       try { clonedData.landDetails.water_source = JSON.parse(clonedData.landDetails.water_source); } catch(e) { clonedData.landDetails.water_source = []; }
@@ -1540,7 +1560,7 @@ const LandVerificationDashboard = () => {
                 <div>
                   <label className="block text-[9px] font-bold text-green-700 uppercase mb-2 tracking-wider">Type of Residence</label>
                   <div className="flex flex-wrap gap-4">
-                    {['developed farm', 'rcc house', 'asbestos shelter', 'hut'].map(opt => (
+                    {['developed farm house', 'rcc house', 'asbestos shelter', 'hut'].map(opt => (
                       <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
                         <div className="relative flex items-center justify-center">
                           <input type="checkbox" checked={(editFormData.landDetails?.residence || []).includes(opt)} onChange={(e) => handleArrayChange('landDetails.residence', opt, e.target.checked)} className="peer appearance-none w-4 h-4 border-2 border-orange-400 rounded-sm checked:bg-white checked:border-orange-500 transition-all cursor-pointer" />
@@ -1623,16 +1643,15 @@ const LandVerificationDashboard = () => {
                     <option value="Red Soil">Red Soil</option>
                     <option value="Black Soil">Black Soil</option>
                     <option value="Sandy Soil">Sandy Soil</option>
-                    <option value="Clay Soil">Clay Soil</option>
-                    <option value="Loamy Soil">Loamy Soil</option>
+                    <option value="Alluvial Soil">Alluvial Soil</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Fencing Status</label>
-                  <select value={editFormData.landDetails?.fencing_status || 'Fully Fenced'} onChange={(e) => handleEditChange('landDetails.fencing_status', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white">
-                    <option value="Fully Fenced">Fully Fenced</option>
-                    <option value="Partially Fenced">Partially Fenced</option>
-                    <option value="Not Fenced">Not Fenced</option>
+                  <select value={editFormData.landDetails?.fencing_status || 'no'} onChange={(e) => handleEditChange('landDetails.fencing_status', e.target.value)} className="w-full border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-green-400 font-medium bg-white">
+                    <option value="no">no</option>
+                    <option value="partially">partially</option>
+                    <option value="all sides">all sides</option>
                     <option value="All side with gates">All side with gates</option>
                   </select>
                 </div>

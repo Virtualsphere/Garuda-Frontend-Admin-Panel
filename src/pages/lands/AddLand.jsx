@@ -100,7 +100,7 @@ const AGE_OPTIONS = ['Upto 30', '30-50', '50+'];
 const LITERACY_OPTIONS = ['Illiterate', 'Literate', 'High School', 'Graduate'];
 const NATURE_OPTIONS = ['Calm', 'Polite', 'Normal', 'Rude'];
 const ELECTRICITY_OPTIONS = ['single phase', 'three phase'];
-const RESIDENCE_OPTIONS = ['developed farm', 'rcc house', 'asbestos shelter', 'hut'];
+const RESIDENCE_OPTIONS = ['developed farm house', 'rcc house', 'asbestos shelter', 'hut'];
 const WATER_SOURCE_OPTIONS = ['borewell', 'cheruvu', 'canal', 'not available'];
 const COMPLAINT_OPTIONS = [
   'Siblings Issue (own Brother or Sister)',
@@ -1235,8 +1235,7 @@ const AddLand = () => {
           <option value="Red Soil">Red Soil</option>
           <option value="Black Soil">Black Soil</option>
           <option value="Sandy Soil">Sandy Soil</option>
-          <option value="Clay Soil">Clay Soil</option>
-          <option value="Loamy Soil">Loamy Soil</option>
+          <option value="Alluvial Soil">Alluvial Soil</option>
         </select>
 
       </div>
@@ -1249,9 +1248,9 @@ const AddLand = () => {
           className="land-select"
         >
           <option value="">Select</option>
-          <option value="Fully Fenced">Fully Fenced</option>
-          <option value="Partially Fenced">Partially Fenced</option>
-          <option value="Not Fenced">Not Fenced</option>
+          <option value="no">no</option>
+          <option value="partially">partially</option>
+          <option value="all sides">all sides</option>
           <option value="All side with gates">All side with gates</option>
         </select>
       </div>
