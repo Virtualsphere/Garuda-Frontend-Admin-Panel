@@ -412,26 +412,18 @@ const styles = {
 };
 
 const FormCard = ({ title, icon: Icon, colorTheme, children }) => {
-  const themes = {
-    red: { bg: 'bg-red-50', border: 'border-t-red-500', text: 'text-red-600', iconBg: 'bg-red-500' },
-    green: { bg: 'bg-green-50', border: 'border-t-green-500', text: 'text-green-600', iconBg: 'bg-green-500' },
-    blue: { bg: 'bg-blue-50', border: 'border-t-blue-500', text: 'text-blue-600', iconBg: 'bg-blue-500' },
-    orange: { bg: 'bg-orange-50', border: 'border-t-orange-500', text: 'text-orange-600', iconBg: 'bg-orange-500' },
-    teal: { bg: 'bg-teal-50', border: 'border-t-teal-500', text: 'text-teal-600', iconBg: 'bg-teal-500' },
-  };
-  const theme = themes[colorTheme] || themes.blue;
-
+  const color = colorTheme || 'blue';
   return (
-    <div className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden border-t-4 ${theme.border}`}>
-      <div className={`pt-4 pb-3 px-6 flex flex-col items-center justify-center border-b border-gray-100 ${theme.bg}`}>
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white mb-2 shadow-sm ${theme.iconBg}`}>
-          <Icon size={16} />
+    <div className={`land-card land-card--${color}`}>
+      <div className={`land-card__header land-card__header--${color}`}>
+        <div className={`land-card__badge land-card__badge--${color}`}>
+          <Icon size={20} />
         </div>
-        <h3 className={`text-[10px] font-bold uppercase tracking-wider ${theme.text}`}>
+        <div className={`land-card__title land-card__title--${color}`}>
           {title}
-        </h3>
+        </div>
       </div>
-      <div className="p-5 space-y-4">
+      <div className="land-card__body">
         {children}
       </div>
     </div>

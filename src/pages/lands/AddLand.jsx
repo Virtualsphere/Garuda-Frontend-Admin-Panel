@@ -9,7 +9,8 @@ import {
   LayoutGrid, UserCheck, CalendarCheck,
   UploadCloud, MapPin, CheckCircle, Save, 
   IndianRupee, Layers, Image as ImageIcon, 
-  Video, Trash2, Camera, Compass, ShieldCheck, Check
+  Video, Trash2, Camera, Compass, ShieldCheck, Check,
+  TreePine, Droplet, Landmark, Building, Clock, AlertTriangle
 } from 'lucide-react';
 import LandVerificationDashboard from './LandVerificationDashboard';
 import VerifiedLandsDashboard from './VerifiedLandsDashboard';
@@ -146,11 +147,10 @@ const createEmptyFormData = () => ({
 });
 
 // Must be defined outside AddLand — defining components inside causes remount on every keystroke.
-const CardWrapper = ({ color, icon, title, watermark, children }) => (
+const CardWrapper = ({ color, icon: Icon, title, children }) => (
   <div className={`land-card land-card--${color}`}>
     <div className={`land-card__header land-card__header--${color}`}>
-      <div className="land-card__watermark">{watermark}</div>
-      <div className={`land-card__badge land-card__badge--${color}`}>{icon}</div>
+      <div className={`land-card__badge land-card__badge--${color}`}>{Icon}</div>
       <div className={`land-card__title land-card__title--${color}`}>{title}</div>
     </div>
     <div className="land-card__body">
@@ -670,7 +670,7 @@ const AddLand = () => {
   // ========================
 
   const renderLandAddressCard = () => (
-    <CardWrapper color="red" icon="📍" title="LAND ADDRESS" watermark="🌍">
+    <CardWrapper color="blue" icon={<MapPin size={20} />} title="LAND ADDRESS">
       <div className="field-row">
         <div>
           <label className="land-label">State</label>
@@ -784,7 +784,7 @@ const AddLand = () => {
   );
 
   const renderAcresPriceCard = () => (
-    <CardWrapper color="green" icon="🏗️" title="ACRES & PRICE" watermark="🌾">
+    <CardWrapper color="orange" icon={<IndianRupee size={20} />} title="ACRES & PRICE">
       <div className="field-row">
         <div>
           <label className="land-label">Acres</label>
@@ -833,7 +833,7 @@ const AddLand = () => {
   );
 
   const renderResidencesShedsCard = () => (
-    <CardWrapper color="green" icon="🏠" title="RESIDENCES & SHEDS" watermark="🏘️">
+    <CardWrapper color="blue" icon={<Home size={20} />} title="RESIDENCES & SHEDS">
       <div className="field-group mb-4">
         <label className="land-label" style={{ marginBottom: '8px', display: 'block' }}>Residence</label>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', padding: '4px 0' }}>
@@ -843,7 +843,7 @@ const AddLand = () => {
                 type="checkbox" 
                 checked={(formData.landDetails.residence || []).includes(opt)}
                 onChange={(e) => handleNestedArrayChange('residence', opt, e.target.checked)}
-                style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#22c55e' }}
+                style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#6366f1' }}
               />
               <span style={{ fontSize: '12px', fontWeight: '500', color: '#475569', textTransform: 'capitalize' }}>{opt}</span>
             </label>
@@ -964,7 +964,7 @@ const AddLand = () => {
   );
 
   const renderUrgencyListingCard = () => (
-    <CardWrapper color="teal" icon="⚡" title="URGENCY & LISTING" watermark="🔔">
+    <CardWrapper color="red" icon={<Clock size={20} />} title="URGENCY & LISTING">
       <div>
         <div className="toggle-row">
           <span className="toggle-row__label">Urgent Sale</span>
@@ -995,7 +995,7 @@ const AddLand = () => {
   );
 
   const renderFarmerDetailsCard = () => (
-    <CardWrapper color="red" icon="👤" title="FARMER DETAILS" watermark="🧑‍🌾">
+    <CardWrapper color="green" icon={<UserCheck size={20} />} title="FARMER DETAILS">
       <div className="field-group">
         <label className="land-label">Name</label>
         <input
@@ -1137,7 +1137,7 @@ const AddLand = () => {
   );
 
   const renderWaterSourceCard = () => (
-    <CardWrapper color="green" icon="💧" title="WATER SOURCE DETAILS" watermark="🌊">
+    <CardWrapper color="blue" icon={<Droplet size={20} />} title="WATER SOURCE DETAILS">
       <div className="field-group mb-4">
         <label className="land-label" style={{ marginBottom: '8px', display: 'block' }}>Water Source</label>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', padding: '4px 0' }}>
@@ -1147,7 +1147,7 @@ const AddLand = () => {
                 type="checkbox" 
                 checked={(formData.landDetails.water_source || []).includes(opt)}
                 onChange={(e) => handleNestedArrayChange('water_source', opt, e.target.checked)}
-                style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#22c55e' }}
+                style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#6366f1' }}
               />
               <span style={{ fontSize: '12px', fontWeight: '500', color: '#475569', textTransform: 'capitalize' }}>{opt}</span>
             </label>
@@ -1189,7 +1189,7 @@ const AddLand = () => {
   );
 
   const renderPathDetailsCard = () => (
-    <CardWrapper color="green" icon="🛤️" title="PATH DETAILS" watermark="🚧">
+    <CardWrapper color="orange" icon={<Compass size={20} />} title="PATH DETAILS">
       <div>
         <label className="land-label">Nearest Road Type</label>
         <select
@@ -1221,7 +1221,7 @@ const AddLand = () => {
   );
 
   const renderLandDetailsCard = () => (
-    <CardWrapper color="green" icon="✅" title="LAND DETAILS" watermark="🌿">
+    <CardWrapper color="teal" icon={<FileText size={20} />} title="LAND DETAILS">
       <div className="field-group">
         <label className="land-label">Soil Type</label>
         <select
@@ -1274,7 +1274,7 @@ const AddLand = () => {
   );
 
   const renderTreesCard = () => (
-    <CardWrapper color="orange" icon="⚠️" title="TREES" watermark="🌳">
+    <CardWrapper color="green" icon={<TreePine size={20} />} title="TREES">
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
         {[
           { label: 'Mango', field: 'mango_trees_number' },
@@ -1337,10 +1337,10 @@ const AddLand = () => {
   };
 
   const renderGPSCard = () => (
-    <CardWrapper color="blue" icon="📍" title="GPS COORDINATES" watermark="🧭">
+    <CardWrapper color="blue" icon={<MapPin size={20} />} title="GPS COORDINATES">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-        <h4 style={{ margin: 0, fontSize: '10px', fontWeight: 'bold', color: '#1e3a8a', textTransform: 'uppercase' }}>Entry Coordinates</h4>
-        <button type="button" onClick={() => handleGetLocation('entry')} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: '4px', padding: '4px 8px', fontSize: '9px', fontWeight: 'bold', cursor: 'pointer' }}>
+        <h4 style={{ margin: 0, fontSize: '10px', fontWeight: 'bold', color: '#312e81', textTransform: 'uppercase' }}>Entry Coordinates</h4>
+        <button type="button" onClick={() => handleGetLocation('entry')} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#eef2ff', color: '#4f46e5', border: '1px solid #c7d2fe', borderRadius: '6px', padding: '4px 10px', fontSize: '9px', fontWeight: 'bold', cursor: 'pointer' }}>
           <MapPin size={10} /> FETCH LOCATION
         </button>
       </div>
@@ -1354,8 +1354,8 @@ const AddLand = () => {
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', marginTop: '16px' }}>
-        <h4 style={{ margin: 0, fontSize: '10px', fontWeight: 'bold', color: '#1e3a8a', textTransform: 'uppercase' }}>Boundary Coordinates</h4>
-        <button type="button" onClick={() => handleGetLocation('boundary')} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: '4px', padding: '4px 8px', fontSize: '9px', fontWeight: 'bold', cursor: 'pointer' }}>
+        <h4 style={{ margin: 0, fontSize: '10px', fontWeight: 'bold', color: '#312e81', textTransform: 'uppercase' }}>Boundary Coordinates</h4>
+        <button type="button" onClick={() => handleGetLocation('boundary')} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#eef2ff', color: '#4f46e5', border: '1px solid #c7d2fe', borderRadius: '6px', padding: '4px 10px', fontSize: '9px', fontWeight: 'bold', cursor: 'pointer' }}>
           <MapPin size={10} /> FETCH LOCATION
         </button>
       </div>
@@ -1371,7 +1371,7 @@ const AddLand = () => {
   );
 
   const renderMortgageCard = () => (
-    <CardWrapper color="teal" icon="🏦" title="MORTGAGE AVAILABILITY STATUS" watermark="💳">
+    <CardWrapper color="orange" icon={<Building size={20} />} title="MORTGAGE AVAILABILITY STATUS">
       <div className="space-y-4 pt-2">
         <label className="flex items-center gap-2 cursor-pointer">
           <div className="relative flex items-center justify-center w-4 h-4">
@@ -1379,7 +1379,7 @@ const AddLand = () => {
               type="checkbox" 
               checked={formData.mortage_availability_status.includes('CURRENTLY MORTGAGED')} 
               onChange={(e) => handleArrayChange('mortage_availability_status', 'CURRENTLY MORTGAGED', e.target.checked)} 
-              className="peer appearance-none w-4 h-4 border border-gray-300 rounded-[3px] checked:bg-teal-600 checked:border-teal-600 transition-all cursor-pointer m-0" 
+              className="peer appearance-none w-4 h-4 border border-gray-300 rounded-[3px] checked:bg-indigo-600 checked:border-indigo-600 transition-all cursor-pointer m-0" 
             />
             <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none text-white flex items-center justify-center w-full h-full">
               <Check size={12} strokeWidth={4} />
@@ -1407,9 +1407,9 @@ const AddLand = () => {
                       setFormData(prev => ({ ...prev, mortage_availability_status: arr }));
                     }
                   }}
-                  className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-teal-600 transition-all cursor-pointer"
+                  className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-indigo-600 transition-all cursor-pointer"
                 />
-                <div className="absolute w-2 h-2 bg-teal-600 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+                <div className="absolute w-2 h-2 bg-indigo-600 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
               </div>
               <span className="text-[11px] text-gray-700 font-medium">Yes</span>
             </label>
@@ -1427,9 +1427,9 @@ const AddLand = () => {
                       setFormData(prev => ({ ...prev, mortage_availability_status: arr }));
                     }
                   }}
-                  className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-teal-600 transition-all cursor-pointer"
+                  className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-indigo-600 transition-all cursor-pointer"
                 />
-                <div className="absolute w-2 h-2 bg-teal-600 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+                <div className="absolute w-2 h-2 bg-indigo-600 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
               </div>
               <span className="text-[11px] text-gray-700 font-medium">No</span>
             </label>
@@ -1440,7 +1440,7 @@ const AddLand = () => {
   );
 
   const renderComplaintsCard = () => (
-    <CardWrapper color="orange" icon="⚠️" title="COMPLAINTS" watermark="📋">
+    <CardWrapper color="red" icon={<AlertTriangle size={20} />} title="COMPLAINTS">
       <div>
         {COMPLAINT_OPTIONS.map(opt => (
           <label key={opt} className="land-checkbox">
@@ -1457,7 +1457,7 @@ const AddLand = () => {
   );
 
   const renderLandSaleStatusCard = () => (
-    <CardWrapper color="teal" icon="🟢" title="LAND SALE AVAILABLE STATUS" watermark="💰">
+    <CardWrapper color="blue" icon={<Landmark size={20} />} title="LAND SALE AVAILABLE STATUS">
       <div className="space-y-4 pt-2">
         <div className="grid grid-cols-2 gap-y-4 gap-x-2">
           {[{value: 'TOKEN RECEIVED', label: 'Token Received'}, {value: 'AGREEMENT Made', label: 'Agreement Made'}, {value: 'SOLD', label: 'Sold'}].map(opt => (
@@ -1467,7 +1467,7 @@ const AddLand = () => {
                   type="checkbox" 
                   checked={formData.land_sale_available_status.includes(opt.value)} 
                   onChange={(e) => handleArrayChange('land_sale_available_status', opt.value, e.target.checked)} 
-                  className="peer appearance-none w-4 h-4 border border-gray-300 rounded-[3px] checked:bg-teal-600 checked:border-teal-600 transition-all cursor-pointer m-0" 
+                  className="peer appearance-none w-4 h-4 border border-gray-300 rounded-[3px] checked:bg-indigo-600 checked:border-indigo-600 transition-all cursor-pointer m-0" 
                 />
                 <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none text-white flex items-center justify-center w-full h-full">
                   <Check size={12} strokeWidth={4} />
@@ -1497,9 +1497,9 @@ const AddLand = () => {
                       setFormData(prev => ({ ...prev, land_sale_available_status: arr }));
                     }
                   }}
-                  className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-teal-600 transition-all cursor-pointer"
+                  className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-indigo-600 transition-all cursor-pointer"
                 />
-                <div className="absolute w-2 h-2 bg-teal-600 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+                <div className="absolute w-2 h-2 bg-indigo-600 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
               </div>
               <span className="text-[11px] text-gray-700 font-medium">Yes</span>
             </label>
@@ -1517,9 +1517,9 @@ const AddLand = () => {
                       setFormData(prev => ({ ...prev, land_sale_available_status: arr }));
                     }
                   }}
-                  className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-teal-600 transition-all cursor-pointer"
+                  className="peer appearance-none w-4 h-4 border border-gray-300 rounded-full checked:border-indigo-600 transition-all cursor-pointer"
                 />
-                <div className="absolute w-2 h-2 bg-teal-600 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
+                <div className="absolute w-2 h-2 bg-indigo-600 rounded-full opacity-0 peer-checked:opacity-100 pointer-events-none"></div>
               </div>
               <span className="text-[11px] text-gray-700 font-medium">No</span>
             </label>
@@ -1530,7 +1530,7 @@ const AddLand = () => {
   );
 
   const renderSuggestedFarmerCard = () => (
-    <CardWrapper color="teal" icon="🏠" title="SUGGESTED FARMER DETAILS" watermark="👨‍🌾">
+    <CardWrapper color="green" icon={<UserCheck size={20} />} title="SUGGESTED FARMER DETAILS">
       <div className="field-group">
         <label className="land-label">Name</label>
         <input type="text" className="land-input" placeholder="Farmer Name" />
@@ -1552,7 +1552,7 @@ const AddLand = () => {
   );
 
   const renderDocumentsCard = () => (
-    <CardWrapper color="green" icon="📄" title="DOCUMENTS" watermark="📁">
+    <CardWrapper color="teal" icon={<FileText size={20} />} title="DOCUMENTS">
       {DOC_TYPES.map(docType => (
         <div key={docType} className="field-group">
           <label className="land-label">{docType.replace('_', ' ')}</label>
@@ -1584,7 +1584,7 @@ const AddLand = () => {
   );
 
   const renderNearestTownsCard = () => (
-    <CardWrapper color="teal" icon="📍" title="NEAREST TOWNS" watermark="📍">
+    <CardWrapper color="blue" icon={<MapPin size={20} />} title="NEAREST TOWNS">
       <div className="field-group">
         <label className="land-label">State</label>
         <select
@@ -1603,8 +1603,8 @@ const AddLand = () => {
       </div>
 
       {/* Block 1: District + Primary Urban Hub */}
-      <div style={{ border: '1px solid #ccfbf1', borderRadius: '8px', padding: '12px', background: 'rgba(204, 251, 241, 0.15)', marginTop: '8px' }}>
-        <div style={{ fontSize: '9px', fontWeight: 700, color: '#0d9488', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Primary Town</div>
+      <div style={{ border: '1px solid #e0e7ff', borderRadius: '8px', padding: '12px', background: 'rgba(224, 231, 255, 0.15)', marginTop: '8px' }}>
+        <div style={{ fontSize: '9px', fontWeight: 700, color: '#4f46e5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Primary Town</div>
         <div className="field-row">
           <div>
             <label className="land-label">District</label>
@@ -1653,8 +1653,8 @@ const AddLand = () => {
       </div>
 
       {/* Block 2: District 2 + Secondary Node */}
-      <div style={{ border: '1px solid #ccfbf1', borderRadius: '8px', padding: '12px', background: 'rgba(204, 251, 241, 0.15)', marginTop: '8px' }}>
-        <div style={{ fontSize: '9px', fontWeight: 700, color: '#0d9488', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Secondary Town</div>
+      <div style={{ border: '1px solid #e0e7ff', borderRadius: '8px', padding: '12px', background: 'rgba(224, 231, 255, 0.15)', marginTop: '8px' }}>
+        <div style={{ fontSize: '9px', fontWeight: 700, color: '#4f46e5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Secondary Town</div>
         <div className="field-row">
           <div>
             <label className="land-label">District</label>
@@ -1703,8 +1703,8 @@ const AddLand = () => {
       </div>
 
       {/* Block 3: District 3 + Tertiary Node */}
-      <div style={{ border: '1px solid #ccfbf1', borderRadius: '8px', padding: '12px', background: 'rgba(204, 251, 241, 0.15)', marginTop: '8px' }}>
-        <div style={{ fontSize: '9px', fontWeight: 700, color: '#0d9488', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Tertiary Town</div>
+      <div style={{ border: '1px solid #e0e7ff', borderRadius: '8px', padding: '12px', background: 'rgba(224, 231, 255, 0.15)', marginTop: '8px' }}>
+        <div style={{ fontSize: '9px', fontWeight: 700, color: '#4f46e5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Tertiary Town</div>
         <div className="field-row">
           <div>
             <label className="land-label">District</label>
@@ -1755,7 +1755,7 @@ const AddLand = () => {
   );
 
   const renderPhotosVideoCard = () => (
-    <CardWrapper color="green" icon="📸" title="LAND PHOTOS & VIDEO" watermark="🖼️">
+    <CardWrapper color="orange" icon={<Camera size={20} />} title="LAND PHOTOS & VIDEO">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {/* Media List */}
         {formData.media.length > 0 && (
@@ -1901,30 +1901,29 @@ const AddLand = () => {
             <div className="land-column">
               {renderLandAddressCard()}
               {renderFarmerDetailsCard()}
+              {renderWaterSourceCard()}
+              {renderPathDetailsCard()}
               {renderDocumentsCard()}
-              {renderPhotosVideoCard()}
             </div>
 
             {/* COLUMN 2 — Center */}
             <div className="land-column">
               {renderAcresPriceCard()}
-              {renderResidencesShedsCard()}
-              {renderWaterSourceCard()}
-              {renderPathDetailsCard()}
               {renderLandDetailsCard()}
+              {renderResidencesShedsCard()}
               {renderGPSCard()}
               {renderTreesCard()}
-
               {renderComplaintsCard()}
+              {renderPhotosVideoCard()}
             </div>
 
             {/* COLUMN 3 — Right */}
             <div className="land-column">
               {renderUrgencyListingCard()}
-              {renderMortgageCard()}
               {renderLandSaleStatusCard()}
-              {activeNavItem !== 'Edit data' && renderSuggestedFarmerCard()}
+              {renderMortgageCard()}
               {renderNearestTownsCard()}
+              {activeNavItem !== 'Edit data' && renderSuggestedFarmerCard()}
               {renderPhotoGridCard()}
             </div>
           </div>
