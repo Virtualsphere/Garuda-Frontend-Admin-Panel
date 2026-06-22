@@ -458,6 +458,25 @@ const LandFinalVerificationDashboard = () => {
     });
   };
 
+  // Automatically calculate total_value when acres, guntas, or price change
+  useEffect(() => {
+    if (!editFormData || !editFormData.landDetails) return;
+    const acres = parseFloat(editFormData.landDetails.total_acres) || 0;
+    const guntas = parseFloat(editFormData.landDetails.guntas) || 0;
+    const price = parseFloat(editFormData.landDetails.price_per_acres) || 0;
+    const expectedTotal = (acres + (guntas / 40.0)) * price;
+    
+    if (editFormData.landDetails.total_value !== expectedTotal) {
+      setEditFormData(prev => ({
+        ...prev,
+        landDetails: {
+          ...prev.landDetails,
+          total_value: expectedTotal
+        }
+      }));
+    }
+  }, [editFormData?.landDetails?.total_acres, editFormData?.landDetails?.guntas, editFormData?.landDetails?.price_per_acres]);
+
   // Initialize edit form when editing starts
   const startEditing = async (land) => {
     // Fetch full land details (the list endpoint may not include tree/relations data)
@@ -1023,6 +1042,7 @@ const LandFinalVerificationDashboard = () => {
                         value={editFormData.landDetails?.price_per_acres || 0}
                         onChange={(e) => handleEditChange('landDetails.price_per_acres', parseFloat(e.target.value))}
                         className="w-full border rounded-lg p-2"
+                        placeholder="e.g. 500000"
                       />
                     </div>
                     <div>

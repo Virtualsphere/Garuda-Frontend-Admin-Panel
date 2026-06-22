@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { 
   Search, 
@@ -1209,6 +1209,25 @@ const LandVerificationDashboard = () => {
     }
   };
 
+  // Automatically calculate total_value when acres, guntas, or price change
+  useEffect(() => {
+    if (!editFormData || !editFormData.landDetails) return;
+    const acres = parseFloat(editFormData.landDetails.total_acres) || 0;
+    const guntas = parseFloat(editFormData.landDetails.guntas) || 0;
+    const price = parseFloat(editFormData.landDetails.price_per_acres) || 0;
+    const expectedTotal = (acres + (guntas / 40.0)) * price;
+    
+    if (editFormData.landDetails.total_value !== expectedTotal) {
+      setEditFormData(prev => ({
+        ...prev,
+        landDetails: {
+          ...prev.landDetails,
+          total_value: expectedTotal
+        }
+      }));
+    }
+  }, [editFormData?.landDetails?.total_acres, editFormData?.landDetails?.guntas, editFormData?.landDetails?.price_per_acres]);
+
   // Cancel editing and go back to phone verification list
   const cancelEditing = () => {
     setIsEditing(false);
@@ -1537,8 +1556,8 @@ const LandVerificationDashboard = () => {
                 </div>
               </div>
               <div className="mt-4">
-                <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Price per Acre (Lakhs)</label>
-                <input type="number" value={editFormData.landDetails?.price_per_acres || 0} onChange={(e) => handleEditChange('landDetails.price_per_acres', parseFloat(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm text-orange-500 font-bold outline-none focus:border-green-400" />
+                <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Price per Acre (₹)</label>
+                <input type="number" value={editFormData.landDetails?.price_per_acres || 0} onChange={(e) => handleEditChange('landDetails.price_per_acres', parseFloat(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm text-orange-500 font-bold outline-none focus:border-green-400" placeholder="e.g. 500000" />
               </div>
               
               <div className="mt-4">

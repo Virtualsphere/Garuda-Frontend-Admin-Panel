@@ -200,6 +200,25 @@ const AddLand = () => {
     fetchLocations();
   }, []);
 
+  // Automatically calculate total_value
+  useEffect(() => {
+    if (!formData.landDetails) return;
+    const acres = parseFloat(formData.landDetails.total_acres) || 0;
+    const guntas = parseFloat(formData.landDetails.guntas) || 0;
+    const price = parseFloat(formData.landDetails.price_per_acres) || 0;
+    const expectedTotal = (acres + (guntas / 40.0)) * price;
+    
+    if (formData.landDetails.total_value !== expectedTotal) {
+      setFormData(prev => ({
+        ...prev,
+        landDetails: {
+          ...prev.landDetails,
+          total_value: expectedTotal
+        }
+      }));
+    }
+  }, [formData.landDetails?.total_acres, formData.landDetails?.guntas, formData.landDetails?.price_per_acres]);
+
   const fetchLocations = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/location`);
