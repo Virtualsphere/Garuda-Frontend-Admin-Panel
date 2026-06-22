@@ -411,26 +411,18 @@ const styles = {
 };
 
 const FormCard = ({ title, icon: Icon, colorTheme, children }) => {
-  const themes = {
-    red: { bg: 'bg-red-50', border: 'border-t-red-500', text: 'text-red-600', iconBg: 'bg-red-500' },
-    green: { bg: 'bg-green-50', border: 'border-t-green-500', text: 'text-green-600', iconBg: 'bg-green-500' },
-    blue: { bg: 'bg-blue-50', border: 'border-t-blue-500', text: 'text-blue-600', iconBg: 'bg-blue-500' },
-    orange: { bg: 'bg-orange-50', border: 'border-t-orange-500', text: 'text-orange-600', iconBg: 'bg-orange-500' },
-    teal: { bg: 'bg-teal-50', border: 'border-t-teal-500', text: 'text-teal-600', iconBg: 'bg-teal-500' },
-  };
-  const theme = themes[colorTheme] || themes.blue;
-
+  const color = colorTheme || 'blue';
   return (
-    <div className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden border-t-4 ${theme.border}`}>
-      <div className={`pt-4 pb-3 px-6 flex flex-col items-center justify-center border-b border-gray-100 ${theme.bg}`}>
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white mb-2 shadow-sm ${theme.iconBg}`}>
-          <Icon size={16} />
+    <div className={`land-card land-card--${color}`}>
+      <div className={`land-card__header land-card__header--${color}`}>
+        <div className={`land-card__badge land-card__badge--${color}`}>
+          <Icon size={20} />
         </div>
-        <h3 className={`text-[10px] font-bold uppercase tracking-wider ${theme.text}`}>
+        <div className={`land-card__title land-card__title--${color}`}>
           {title}
-        </h3>
+        </div>
       </div>
-      <div className="p-5 space-y-4">
+      <div className="land-card__body">
         {children}
       </div>
     </div>
@@ -804,6 +796,25 @@ const LandPhysicalVerificationDashboard = () => {
       return newData;
     });
   };
+
+  // Automatically calculate total_value when acres, guntas, or price change
+  useEffect(() => {
+    if (!editFormData || !editFormData.landDetails) return;
+    const acres = parseFloat(editFormData.landDetails.total_acres) || 0;
+    const guntas = parseFloat(editFormData.landDetails.guntas) || 0;
+    const price = parseFloat(editFormData.landDetails.price_per_acres) || 0;
+    const expectedTotal = (acres + (guntas / 40.0)) * price;
+    
+    if (editFormData.landDetails.total_value !== expectedTotal) {
+      setEditFormData(prev => ({
+        ...prev,
+        landDetails: {
+          ...prev.landDetails,
+          total_value: expectedTotal
+        }
+      }));
+    }
+  }, [editFormData?.landDetails?.total_acres, editFormData?.landDetails?.guntas, editFormData?.landDetails?.price_per_acres]);
 
   // Initialize edit form when editing starts
   const startEditing = async (land) => {
@@ -1286,8 +1297,8 @@ const LandPhysicalVerificationDashboard = () => {
                 </div>
               </div>
               <div className="mt-4">
-                <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Price per Acre (Lakhs)</label>
-                <input type="number" value={editFormData.landDetails?.price_per_acres || 0} onChange={(e) => handleEditChange('landDetails.price_per_acres', parseFloat(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm text-orange-500 font-bold outline-none focus:border-green-400" />
+                <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Price per Acre (₹)</label>
+                <input type="number" value={editFormData.landDetails?.price_per_acres || 0} onChange={(e) => handleEditChange('landDetails.price_per_acres', parseFloat(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm text-orange-500 font-bold outline-none focus:border-green-400" placeholder="e.g. 500000" />
               </div>
 
               <div className="mt-4">
