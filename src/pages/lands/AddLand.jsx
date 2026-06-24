@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import LandVerificationDashboard from './LandVerificationDashboard';
 import VerifiedLandsDashboard from './VerifiedLandsDashboard';
+import TraineeObservationDashboard from './TraineeObservationDashboard';
 
 const INITIAL_FARMER_DETAILS = {
   name: '',
@@ -1887,6 +1888,8 @@ const AddLand = () => {
         <LandVerificationDashboard />
       ) : activeNavItem === 'Verified Lands' ? (
         <VerifiedLandsDashboard />
+      ) : activeNavItem === 'Trainee observation' ? (
+        <TraineeObservationDashboard />
       ) : (
         <>
           {/* Page Header */}
