@@ -828,7 +828,7 @@ const AddLand = () => {
         </div>
       </div>
       <div className="field-group">
-        <label className="land-label">Price Per Acre (In Lakhs)</label>
+        <label className="land-label">Price per Acre in lacs</label>
         <input
           type="number"
           name="landDetails.price_per_acres"
@@ -839,12 +839,21 @@ const AddLand = () => {
         />
       </div>
       <div className="field-group">
-        <label className="land-label">Total Value (₹)</label>
+        <label className="land-label">Total Value in cr</label>
         <input
           type="number"
           name="landDetails.total_value"
-          value={formData.landDetails.total_value}
-          onChange={handleInputChange}
+          value={formData.landDetails.total_value ? formData.landDetails.total_value / 100 : ''}
+          onChange={(e) => {
+            const val = parseFloat(e.target.value);
+            handleInputChange({
+              target: {
+                name: 'landDetails.total_value',
+                value: isNaN(val) ? '' : val * 100,
+                type: 'number'
+              }
+            });
+          }}
           className="land-input"
           placeholder="Enter Total Value"
         />

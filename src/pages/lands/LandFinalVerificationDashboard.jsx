@@ -700,7 +700,7 @@ const LandFinalVerificationDashboard = () => {
               </button>
               <button
                 onClick={() => updateLand(selectedLand.id, editFormData)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                className="px-4 py-2 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 shadow-sm shadow-orange-500/30 flex items-center gap-2"
                 disabled={updating}
               >
                 {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -950,60 +950,66 @@ const LandFinalVerificationDashboard = () => {
                   <div>
                     <label className="block text-sm font-medium mb-1">Ownership Type</label>
                     <select
-                      value={editFormData.farmerDetails?.ownership_type || 'Ancestral'}
+                      value={editFormData.farmerDetails?.ownership_type || ''}
                       onChange={(e) => handleEditChange('farmerDetails.ownership_type', e.target.value)}
                       className="w-full border rounded-lg p-2"
                     >
+                      <option value="">Select</option>
                       {OWNERSHIP_TYPE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Locality</label>
                     <select
-                      value={editFormData.farmerDetails?.locality || 'Local'}
+                      value={editFormData.farmerDetails?.locality || ''}
                       onChange={(e) => handleEditChange('farmerDetails.locality', e.target.value)}
                       className="w-full border rounded-lg p-2"
                     >
+                      <option value="">Select</option>
                       {LOCALITY_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Ownership Status</label>
                     <select
-                      value={editFormData.farmerDetails?.ownership_status || 'Own'}
+                      value={editFormData.farmerDetails?.ownership_status || ''}
                       onChange={(e) => handleEditChange('farmerDetails.ownership_status', e.target.value)}
                       className="w-full border rounded-lg p-2"
                     >
+                      <option value="">Select</option>
                       {OWNERSHIP_STATUS_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Age</label>
                     <select
-                      value={editFormData.farmerDetails?.age || 'Upto 30'}
+                      value={editFormData.farmerDetails?.age || ''}
                       onChange={(e) => handleEditChange('farmerDetails.age', e.target.value)}
                       className="w-full border rounded-lg p-2"
                     >
+                      <option value="">Select</option>
                       {AGE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Literacy</label>
                     <select
-                      value={editFormData.farmerDetails?.literacy || 'Illiterate'}
+                      value={editFormData.farmerDetails?.literacy || ''}
                       onChange={(e) => handleEditChange('farmerDetails.literacy', e.target.value)}
                       className="w-full border rounded-lg p-2"
                     >
+                      <option value="">Select</option>
                       {LITERACY_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Nature</label>
                     <select
-                      value={editFormData.farmerDetails?.nature || 'Calm'}
+                      value={editFormData.farmerDetails?.nature || ''}
                       onChange={(e) => handleEditChange('farmerDetails.nature', e.target.value)}
                       className="w-full border rounded-lg p-2"
                     >
+                      <option value="">Select</option>
                       {NATURE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                     </select>
                   </div>
@@ -1036,7 +1042,7 @@ const LandFinalVerificationDashboard = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">Price per Acre (₹)</label>
+                      <label className="block text-sm font-medium mb-1">Price per Acre in lacs</label>
                       <input
                         type="number"
                         value={editFormData.landDetails?.price_per_acres || 0}
@@ -1046,11 +1052,11 @@ const LandFinalVerificationDashboard = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">Total Value (₹)</label>
+                      <label className="block text-sm font-medium mb-1">Total Value in cr</label>
                       <input
                         type="number"
-                        value={editFormData.landDetails?.total_value || 0}
-                        onChange={(e) => handleEditChange('landDetails.total_value', parseFloat(e.target.value))}
+                        value={(editFormData.landDetails?.total_value / 100) || 0}
+                        onChange={(e) => handleEditChange('landDetails.total_value', parseFloat(e.target.value) * 100)}
                         className="w-full border rounded-lg p-2"
                       />
                     </div>
@@ -1961,7 +1967,7 @@ const LandFinalVerificationDashboard = () => {
           <div className="sticky bottom-0 bg-white border-t p-4 flex justify-end">
             <button
               onClick={() => startEditing(selectedLand)}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              className="px-6 py-2 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 shadow-md shadow-orange-500/30 flex items-center gap-2"
             >
               <Edit className="w-4 h-4" />
               Edit Land
@@ -1996,7 +2002,7 @@ const LandFinalVerificationDashboard = () => {
                   }}
                   className={`px-4 py-2 rounded-lg capitalize ${
                     statusFilter === status
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-md shadow-orange-500/30'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -2137,7 +2143,7 @@ const LandFinalVerificationDashboard = () => {
                           onClick={() => setCurrentPage(pageNum)}
                           className={`px-3 py-1 rounded ${
                             currentPage === pageNum
-                              ? 'bg-blue-600 text-white'
+                              ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-md shadow-orange-500/30'
                               : 'hover:bg-gray-100'
                           }`}
                         >
