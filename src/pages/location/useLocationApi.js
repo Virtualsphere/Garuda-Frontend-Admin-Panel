@@ -30,7 +30,6 @@ export default function useLocationApi() {
   const [districts, setDistricts] = useState([]);
   const [mandals, setMandals]     = useState([]);
   const [villages, setVillages]   = useState([]);
-  const [sectors, setSectors]     = useState([]);
   const [towns, setTowns]         = useState([]);
   const [roadsPaths, setRoadsPaths] = useState([]);
 
@@ -122,16 +121,6 @@ export default function useLocationApi() {
     } finally {
       setLoading(false);
     }
-  };
-
-  /** Sectors — currently uses mock data. Replace with API call when backend is ready. */
-  const fetchSectors = async () => {
-    setSectors([
-      { id: 1, name: 'Parveda Sector', code: 'PRV', clustering: '1 Units Mapped', lifecycle: 'LIVE', dotColor: '#22c55e' },
-      { id: 2, name: 'Mokila Sector',  code: 'MKL', clustering: '1 Units Mapped', lifecycle: 'LIVE', dotColor: '#3b82f6' },
-      { id: 3, name: 'Chilkur Sector', code: 'CLK', clustering: '0 Units Mapped', lifecycle: 'LIVE', dotColor: '#f97316' },
-      { id: 4, name: 'Chevella Sector', code: 'CHV', clustering: '2 Units Mapped', lifecycle: 'LIVE', dotColor: '#8b5cf6' },
-    ]);
   };
 
   /** Roads & Paths — currently uses mock data. Replace with API call when backend is ready. */
@@ -353,12 +342,12 @@ export default function useLocationApi() {
   // ═══════════════════════════════════════════════════════════
   return {
     // Data
-    states, districts, mandals, villages, sectors, towns, roadsPaths,
+    states, districts, mandals, villages, towns, roadsPaths,
     loading, error,
 
     // Fetch
     fetchStates, fetchDistricts, fetchMandals, fetchVillages, fetchTowns,
-    fetchSectors, fetchRoadsPaths,
+    fetchRoadsPaths,
 
     // CRUD Create
     createState, createDistrict, createMandal, createVillage, createTown,

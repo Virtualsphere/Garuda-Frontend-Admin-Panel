@@ -83,19 +83,6 @@ export default function ContextFilters({
     );
   }
 
-  // ─── Sectors Tab ──────────────────────────────────────────
-  if (activeTab === 'sectors') {
-    return (
-      <div className="loc-context-card">
-        <div className="loc-context-card__fields">
-          {renderSelect('STATE FILTER', stateContext, onStateChange, states, 'All States')}
-          {renderSelect('DISTRICT FILTER', districtContext, onDistrictChange, districts, 'All Districts', !stateContext)}
-        </div>
-        {(stateContext || districtContext) && renderClear('CLEAR')}
-      </div>
-    );
-  }
-
   // ─── Villages Tab ─────────────────────────────────────────
   if (activeTab === 'villages') {
     return (

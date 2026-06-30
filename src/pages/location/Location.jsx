@@ -69,7 +69,6 @@ export default function Location() {
     else if (activeTab === 'mandals' && !districtContext) api.clearMandals();
     else if (activeTab === 'villages' && mandalContext) api.fetchVillages(mandalContext);
     else if (activeTab === 'villages' && !mandalContext) api.clearVillages();
-    else if (activeTab === 'sectors') api.fetchSectors();
     else if (activeTab === 'roads-paths') api.fetchRoadsPaths();
   }, [activeTab]);
 
@@ -253,7 +252,6 @@ export default function Location() {
           districts={api.districts}
           towns={api.towns}
           mandals={api.mandals}
-          sectors={api.sectors}
           villages={api.villages}
           roadsPaths={api.roadsPaths}
           stateContext={stateContext}

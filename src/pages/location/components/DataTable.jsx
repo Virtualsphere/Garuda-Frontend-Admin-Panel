@@ -17,7 +17,7 @@ import { Edit, Trash2, MapPin, ChevronRight, Search, Route, AlertCircle } from '
 export default function DataTable({
   activeTab, loading,
   // Data arrays
-  states, districts, towns, mandals, sectors, villages, roadsPaths,
+  states, districts, towns, mandals, villages, roadsPaths,
   // Context state (to decide what empty message to show)
   stateContext, districtContext, mandalContext,
   // Search & filter (roads-paths only)
@@ -210,44 +210,6 @@ export default function DataTable({
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // SECTORS TABLE
-  // ═══════════════════════════════════════════════════════════
-  if (activeTab === 'sectors') {
-    return (
-      <div className="loc-table-wrap">
-        <table className="loc-table">
-          <thead>
-            <tr>
-              <th>SECTOR NAME</th>
-              <th>CODE</th>
-              <th>CLUSTERING</th>
-              <th>LIFECYCLE</th>
-              <th style={{ textAlign: 'right' }}>MANAGEMENT</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sectors.map((sector) => (
-              <tr key={sector.id}>
-                <td>
-                  <span className="loc-sector-name">
-                    <span className="loc-sector-dot" style={{ background: sector.dotColor }}></span>
-                    {sector.name}
-                  </span>
-                </td>
-                <td><span className="loc-code-badge">{sector.code}</span></td>
-                <td className="loc-table__meta">{sector.clustering}</td>
-                <td><span className="loc-badge loc-badge--live">{sector.lifecycle}</span></td>
-                <td className="loc-table__actions">
-                  <button className="loc-action-btn loc-action-btn--outline">
-                    <MapPin size={14} /> ATTACH VILLAGES
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     );
   }
 
@@ -264,7 +226,6 @@ export default function DataTable({
           <thead>
             <tr>
               <th>VILLAGE NAME</th>
-              <th>SECTOR ALLOTMENT</th>
               <th>MAPPED AREA (HA)</th>
               <th style={{ textAlign: 'right' }}>MANAGEMENT</th>
             </tr>
@@ -273,7 +234,6 @@ export default function DataTable({
             {villages.map((v) => (
               <tr key={v.id}>
                 <td className="loc-table__name">{v.name}</td>
-                <td className="loc-table__meta">Not Assigned</td>
                 <td className="loc-table__meta loc-table__meta--blue">Calculated on commit</td>
                 <td className="loc-table__actions">
                   <button onClick={() => onEdit(v)} className="loc-action-btn loc-action-btn--icon" title="Edit"><Edit size={14} /></button>

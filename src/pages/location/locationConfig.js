@@ -21,7 +21,6 @@ export const TABS = [
   { id: 'districts',   label: 'Districts',     icon: Landmark },
   { id: 'towns',       label: 'Towns',         icon: Building2 },
   { id: 'mandals',     label: 'Mandals',       icon: Landmark },
-  { id: 'sectors',     label: 'Sectors',       icon: Target   },
   { id: 'villages',    label: 'Villages',      icon: MapPin   },
   { id: 'roads-paths', label: 'Roads & paths', icon: Route    },
 ];
@@ -33,7 +32,6 @@ export const TAB_CONFIG = {
   districts:    { title: 'REGISTRY: DISTRICTS',            subtitle: 'ADMINISTRATIVE DISTRICTS AND TERRITORIAL BOUNDARIES',    icon: Landmark  },
   towns:        { title: 'REGISTRY: TOWNS',                subtitle: 'URBAN ADMINISTRATIVE CENTERS AND MUNICIPALITIES',        icon: Building2 },
   mandals:      { title: 'REGISTRY: MANDALS',              subtitle: 'ADMINISTRATIVE MANDALS AND TERRITORIAL CLUSTERING',      icon: Globe     },
-  sectors:      { title: 'REGISTRY: SECTORS',              subtitle: 'CLUSTERING AND TERRITORIAL INTELLIGENCE',                icon: Target    },
   villages:     { title: 'REGISTRY: VILLAGES',             subtitle: 'VILLAGE DRAFTING AND TERRITORIAL CLUSTERING',            icon: Globe     },
   'roads-paths': { title: 'INFRASTRUCTURE: ROADS & PATHS', subtitle: 'CONNECTIVITY AND ACCESSIBILITY MANAGEMENT',             icon: Route     },
 };
@@ -46,7 +44,6 @@ export const FORM_CONFIG = {
   districts: { label: 'NEW DISTRICT NAME', placeholder: 'e.g. Rangareddy',       codeLabel: '3-CHAR ID',   codePlaceholder: 'RRD', codeMax: 3, btnLabel: 'ADD DISTRICT', btnColor: 'orange' },
   towns:     { label: 'NEW TOWN NAME',     placeholder: 'e.g. Shamshabad Town',  codeLabel: '3-CHAR ID',   codePlaceholder: 'SBT', codeMax: 3, btnLabel: 'ADD TOWN',     btnColor: 'orange' },
   mandals:   { label: 'NEW MANDAL NAME',   placeholder: 'e.g. Shankarpally',     codeLabel: '3-CHAR ID',   codePlaceholder: 'SKP', codeMax: 3, btnLabel: 'ADD MANDAL',   btnColor: 'orange' },
-  sectors:   { label: 'NEW SECTOR NAME',   placeholder: 'e.g. North Zone',       codeLabel: '3-CHAR ID',   codePlaceholder: 'SKP', codeMax: 3, btnLabel: 'ADD SECTOR',   btnColor: 'green'  },
   villages:  { label: 'NEW VILLAGE REGISTRY', placeholder: 'Enter village name...', codeLabel: null,        codePlaceholder: null,  codeMax: 0, btnLabel: 'ADD VILLAGE',  btnColor: 'orange' },
 };
 

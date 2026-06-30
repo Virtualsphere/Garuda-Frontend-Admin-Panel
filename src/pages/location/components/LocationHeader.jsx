@@ -25,14 +25,7 @@ export default function LocationHeader({ config, activeTab, viewMode, onViewMode
 
       {/* Right: View Toggle + optional action button */}
       <div className="loc-header__right">
-        {activeTab === 'sectors' ? (
-          <ViewToggle viewMode={viewMode} onViewModeChange={onViewModeChange}
-            options={[
-              { mode: 'list', label: 'LIST', icon: <List size={14} /> },
-              { mode: 'map',  label: 'ALLOTMENT', icon: <LayoutGrid size={14} /> },
-            ]}
-          />
-        ) : activeTab === 'roads-paths' ? (
+        {activeTab === 'roads-paths' ? (
           <>
             <ViewToggle viewMode={viewMode} onViewModeChange={onViewModeChange}
               options={[
