@@ -843,7 +843,7 @@ const AddLand = () => {
         <input
           type="number"
           name="landDetails.total_value"
-          value={formData.landDetails.total_value ? formData.landDetails.total_value / 100 : ''}
+          value={formData.landDetails.total_value ? Number((formData.landDetails.total_value / 100).toFixed(2)) : ''}
           onChange={(e) => {
             const val = parseFloat(e.target.value);
             handleInputChange({

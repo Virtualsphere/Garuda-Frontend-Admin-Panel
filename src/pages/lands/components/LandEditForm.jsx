@@ -329,12 +329,12 @@ export const LandEditForm = ({
               </div>
               <div className="mt-4">
                 <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Price per Acre in lacs</label>
-                <input type="number" value={editFormData.landDetails?.price_per_acres || ''} onChange={(e) => handleEditChange('landDetails.price_per_acres', parseFloat(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm text-orange-500 font-bold outline-none focus:border-green-400" placeholder="e.g. 500000" />
+                <input type="number" value={editFormData.landDetails?.price_per_acres || ''} onChange={(e) => handleEditChange('landDetails.price_per_acres', parseFloat(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm text-orange-500 font-bold outline-none focus:border-green-400" placeholder="e.g. 5 for 5 lakhs" />
               </div>
               
               <div className="mt-4">
                 <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Total Value in cr</label>
-                <input type="number" value={(editFormData.landDetails?.total_value / 100) || ''} onChange={(e) => handleEditChange('landDetails.total_value', parseFloat(e.target.value) * 100)} className="w-full border border-gray-200 rounded-lg p-2 text-sm text-orange-500 font-bold outline-none focus:border-green-400" placeholder="Enter Total Value" />
+                <input type="number" value={editFormData.landDetails?.total_value ? Number((editFormData.landDetails.total_value / 100).toFixed(2)) : ''} onChange={(e) => handleEditChange('landDetails.total_value', parseFloat(e.target.value) * 100)} className="w-full border border-gray-200 rounded-lg p-2 text-sm text-orange-500 font-bold outline-none focus:border-green-400" placeholder="Enter Total Value" />
               </div>
             </FormCard>
 

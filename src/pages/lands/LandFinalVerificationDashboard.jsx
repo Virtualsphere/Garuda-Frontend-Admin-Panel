@@ -91,11 +91,12 @@ const StatusBadge = ({ status }) => {
 // Format price helper
 const formatPrice = (price) => {
   if (!price) return 'N/A';
+  const adjustedPrice = (Number(price) || 0) * 100000;
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
     maximumFractionDigits: 0
-  }).format(price);
+  }).format(adjustedPrice);
 };
 
 // Main Component
@@ -1048,14 +1049,14 @@ const LandFinalVerificationDashboard = () => {
                         value={editFormData.landDetails?.price_per_acres || 0}
                         onChange={(e) => handleEditChange('landDetails.price_per_acres', parseFloat(e.target.value))}
                         className="w-full border rounded-lg p-2"
-                        placeholder="e.g. 500000"
+                        placeholder="e.g. 5 for 5 lakhs"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Total Value in cr</label>
                       <input
                         type="number"
-                        value={(editFormData.landDetails?.total_value / 100) || 0}
+                        value={editFormData.landDetails?.total_value ? Number((editFormData.landDetails.total_value / 100).toFixed(2)) : 0}
                         onChange={(e) => handleEditChange('landDetails.total_value', parseFloat(e.target.value) * 100)}
                         className="w-full border rounded-lg p-2"
                       />

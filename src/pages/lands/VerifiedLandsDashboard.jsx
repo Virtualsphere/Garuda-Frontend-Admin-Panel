@@ -36,10 +36,11 @@ const getAvatarColor = (name) => {
 // Format price in lakhs
 const formatPriceShort = (price) => {
   if (!price) return '₹0';
-  if (price >= 10000000) return `₹${(price / 10000000).toFixed(1)}Cr`;
-  if (price >= 100000) return `₹${(price / 100000).toFixed(0)}L`;
-  if (price >= 1000) return `₹${(price / 1000).toFixed(0)}K`;
-  return `₹${price}`;
+  const adjustedPrice = (Number(price) || 0) * 100000;
+  if (adjustedPrice >= 10000000) return `₹${(adjustedPrice / 10000000).toFixed(1)}Cr`;
+  if (adjustedPrice >= 100000) return `₹${(adjustedPrice / 100000).toFixed(0)}L`;
+  if (adjustedPrice >= 1000) return `₹${(adjustedPrice / 1000).toFixed(0)}K`;
+  return `₹${adjustedPrice}`;
 };
 
 
