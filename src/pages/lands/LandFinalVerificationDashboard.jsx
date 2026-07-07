@@ -139,6 +139,12 @@ const LandFinalVerificationDashboard = () => {
       // Unpack nearest town data for each land
       landsData = landsData.map(land => {
         if (!land.landDetails) land.landDetails = {};
+        if (land.landDetails.price_per_acres) {
+          land.landDetails.price_per_acres = parseFloat(land.landDetails.price_per_acres) / 100000;
+        }
+        if (land.landDetails.total_value) {
+          land.landDetails.total_value = parseFloat(land.landDetails.total_value) / 100000;
+        }
         const unpackTown = (packedStr) => {
           if (!packedStr) return null;
           try {
@@ -344,6 +350,7 @@ const LandFinalVerificationDashboard = () => {
       const token = localStorage.getItem('token');
       const payload = {
         ...data,
+        landDetails: data.landDetails ? { ...data.landDetails } : {},
         trees: buildTreesArray(data.landDetails),
         shed: buildShedArray(data.landDetails),
         nearest_town_1: data.landDetails?.nearest_town_1 ? packTown(state, district1, data.landDetails.nearest_town_1, data.landDetails.nearest_town_distance_1) : data.nearest_town_1,
@@ -351,6 +358,12 @@ const LandFinalVerificationDashboard = () => {
         nearest_town_3: data.landDetails?.nearest_town_3 ? packTown(state, district3, data.landDetails.nearest_town_3, data.landDetails.nearest_town_distance_3) : data.nearest_town_3,
       };
       if (payload.landDetails) {
+        if (payload.landDetails.price_per_acres) {
+          payload.landDetails.price_per_acres = parseFloat(payload.landDetails.price_per_acres) * 100000;
+        }
+        if (payload.landDetails.total_value) {
+          payload.landDetails.total_value = parseFloat(payload.landDetails.total_value) * 100000;
+        }
         delete payload.landDetails.nearest_town_state;
         delete payload.landDetails.nearest_town_district;
         delete payload.landDetails.nearest_town_district_2;
@@ -369,7 +382,6 @@ const LandFinalVerificationDashboard = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
-
       });
       if (!response.ok) throw new Error('Failed to update land');
       await response.json();
@@ -501,6 +513,14 @@ const LandFinalVerificationDashboard = () => {
     }
 
     const clonedData = JSON.parse(JSON.stringify(fullLand));
+    if (clonedData.landDetails) {
+      if (clonedData.landDetails.price_per_acres) {
+        clonedData.landDetails.price_per_acres = parseFloat(clonedData.landDetails.price_per_acres) / 100000;
+      }
+      if (clonedData.landDetails.total_value) {
+        clonedData.landDetails.total_value = parseFloat(clonedData.landDetails.total_value) / 100000;
+      }
+    }
     
     // Map tree array from backend to landDetails fields if tree array exists
     if (clonedData.tree && Array.isArray(clonedData.tree)) {

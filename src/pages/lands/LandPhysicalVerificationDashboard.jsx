@@ -479,6 +479,12 @@ const LandPhysicalVerificationDashboard = () => {
       // Unpack nearest town data for each land
       landsData = landsData.map(land => {
         if (!land.landDetails) land.landDetails = {};
+        if (land.landDetails.price_per_acres) {
+          land.landDetails.price_per_acres = parseFloat(land.landDetails.price_per_acres) / 100000;
+        }
+        if (land.landDetails.total_value) {
+          land.landDetails.total_value = parseFloat(land.landDetails.total_value) / 100000;
+        }
         const unpackTown = (packedStr) => {
           if (!packedStr) return null;
           try {
@@ -681,6 +687,7 @@ const LandPhysicalVerificationDashboard = () => {
     
     const payload = {
       ...data,
+      landDetails: data.landDetails ? { ...data.landDetails } : {},
       trees: buildTreesArray(data.landDetails),
       shed: buildShedArray(data.landDetails),
       call_verification_status: 'complete',
@@ -692,6 +699,10 @@ const LandPhysicalVerificationDashboard = () => {
     };
     
     if (payload.landDetails) {
+      payload.landDetails.price_per_acres = 5 * 100000; // Always send 5 lakhs (5) to the backend
+      if (payload.landDetails.total_value) {
+        payload.landDetails.total_value = parseFloat(payload.landDetails.total_value) * 100000;
+      }
       delete payload.landDetails.nearest_town_state;
       delete payload.landDetails.nearest_town_district;
       delete payload.landDetails.nearest_town_district_2;
@@ -804,14 +815,15 @@ const LandPhysicalVerificationDashboard = () => {
     if (!editFormData || !editFormData.landDetails) return;
     const acres = parseFloat(editFormData.landDetails.total_acres) || 0;
     const guntas = parseFloat(editFormData.landDetails.guntas) || 0;
-    const price = parseFloat(editFormData.landDetails.price_per_acres) || 0;
+    const price = 5; // Hardcoded to 5 as per user request
     const expectedTotal = (acres + (guntas / 40.0)) * price;
     
-    if (editFormData.landDetails.total_value !== expectedTotal) {
+    if (editFormData.landDetails.total_value !== expectedTotal || editFormData.landDetails.price_per_acres !== 5) {
       setEditFormData(prev => ({
         ...prev,
         landDetails: {
           ...prev.landDetails,
+          price_per_acres: 5,
           total_value: expectedTotal
         }
       }));
@@ -841,6 +853,11 @@ const LandPhysicalVerificationDashboard = () => {
     }
 
     const clonedData = JSON.parse(JSON.stringify(fullLand));
+    if (!clonedData.landDetails) clonedData.landDetails = {};
+    clonedData.landDetails.price_per_acres = 5;
+    if (clonedData.landDetails.total_value) {
+      clonedData.landDetails.total_value = parseFloat(clonedData.landDetails.total_value) / 100000;
+    }
 
     // Map tree array from backend to landDetails fields if tree array exists
     if (clonedData.tree && Array.isArray(clonedData.tree)) {
@@ -1305,7 +1322,7 @@ const LandPhysicalVerificationDashboard = () => {
               </div>
               <div className="mt-4">
                 <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Price per Acre in lacs</label>
-                <input type="number" value={editFormData.landDetails?.price_per_acres || 0} onChange={(e) => handleEditChange('landDetails.price_per_acres', parseFloat(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm text-orange-500 font-bold outline-none focus:border-green-400" placeholder="e.g. 5 for 5 lakhs" />
+                <input type="number" value={5} readOnly className="w-full border border-gray-200 bg-gray-50 rounded-lg p-2 text-sm text-orange-500 font-bold outline-none cursor-not-allowed" />
               </div>
 
               <div className="mt-4">

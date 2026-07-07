@@ -369,6 +369,17 @@ const VerifiedLandsDashboard = () => {
       let landsData = result.data || result;
       if (!Array.isArray(landsData)) landsData = [landsData];
 
+      landsData = landsData.map(land => {
+        if (!land.landDetails) land.landDetails = {};
+        if (land.landDetails.price_per_acres) {
+          land.landDetails.price_per_acres = parseFloat(land.landDetails.price_per_acres) / 100000;
+        }
+        if (land.landDetails.total_value) {
+          land.landDetails.total_value = parseFloat(land.landDetails.total_value) / 100000;
+        }
+        return land;
+      });
+
       setLands(landsData);
     } catch (error) {
       console.error('Error fetching verified lands:', error);
@@ -594,6 +605,14 @@ const VerifiedLandsDashboard = () => {
     }
 
     const clonedData = JSON.parse(JSON.stringify(fullLand));
+    if (clonedData.landDetails) {
+      if (clonedData.landDetails.price_per_acres) {
+        clonedData.landDetails.price_per_acres = parseFloat(clonedData.landDetails.price_per_acres) / 100000;
+      }
+      if (clonedData.landDetails.total_value) {
+        clonedData.landDetails.total_value = parseFloat(clonedData.landDetails.total_value) / 100000;
+      }
+    }
     
     // Map tree array from backend to landDetails fields if tree array exists
     if (clonedData.tree && Array.isArray(clonedData.tree)) {
@@ -810,7 +829,19 @@ const VerifiedLandsDashboard = () => {
     setUpdatingAction('save');
     try {
       const token = localStorage.getItem('token');
-      const dataWithTrees = { ...editFormData, trees: buildTreesArray(editFormData.landDetails) };
+      const payload = {
+        ...editFormData,
+        landDetails: editFormData.landDetails ? { ...editFormData.landDetails } : {},
+      };
+      if (payload.landDetails) {
+        if (payload.landDetails.price_per_acres) {
+          payload.landDetails.price_per_acres = parseFloat(payload.landDetails.price_per_acres) * 100000;
+        }
+        if (payload.landDetails.total_value) {
+          payload.landDetails.total_value = parseFloat(payload.landDetails.total_value) * 100000;
+        }
+      }
+      const dataWithTrees = { ...payload, trees: buildTreesArray(payload.landDetails) };
       const response = await fetch(`${API_BASE_URL}/land/${selectedLand.id}`, {
         method: 'PUT',
         headers: {
