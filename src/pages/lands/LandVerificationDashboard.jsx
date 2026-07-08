@@ -82,13 +82,28 @@ const getAvatarColor = (name) => {
 
 // Format price in lakhs
 const formatPriceShort = (price) => {
-  if (!price) return '₹0';
-  const adjustedPrice = (Number(price) || 0) * 100000;
-  if (adjustedPrice >= 10000000) return `₹${(adjustedPrice / 10000000).toFixed(1)}Cr`;
-  if (adjustedPrice >= 100000) return `₹${(adjustedPrice / 100000).toFixed(0)}L`;
-  if (adjustedPrice >= 1000) return `₹${(adjustedPrice / 1000).toFixed(0)}K`;
-  return `₹${adjustedPrice}`;
+  const valueInLakhs = Number(price) || 0;
+  if (valueInLakhs === 0) return '₹0';
+  if (valueInLakhs >= 100) {
+    return `₹${(valueInLakhs / 100).toFixed(2)} Cr`;
+  } else {
+    return `₹${valueInLakhs.toFixed(2)} L`;
+  }
 };
+
+// Calculate total price based on unit
+const calculateTotalValue = (acresVal, guntasVal, priceVal, priceUnit) => {
+  const acres = parseFloat(acresVal) || 0;
+  const guntas = parseFloat(guntasVal) || 0;
+  const price = parseFloat(priceVal) || 0;
+  const unit = priceUnit || 'acre';
+  if (unit === 'gunta') {
+    return (acres * 40.0 + guntas) * price;
+  } else {
+    return (acres + (guntas / 40.0)) * price;
+  }
+};
+
 
 // Status badge component (kept for modals)
 const StatusBadge = ({ status, type }) => {
@@ -123,13 +138,7 @@ const StatusBadge = ({ status, type }) => {
 
 // Format price helper
 const formatPrice = (price) => {
-  if (!price) return 'N/A';
-  const adjustedPrice = (Number(price) || 0) * 100000;
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0
-  }).format(adjustedPrice);
+  return formatPriceShort(price);
 };
 
 // ============================================
@@ -480,10 +489,12 @@ const LandVerificationDashboard = () => {
       landsData = landsData.map(land => {
         if (!land.landDetails) land.landDetails = {};
         if (land.landDetails.price_per_acres) {
-          land.landDetails.price_per_acres = parseFloat(land.landDetails.price_per_acres) / 100000;
+          const val = parseFloat(land.landDetails.price_per_acres);
+          land.landDetails.price_per_acres = val > 1000 ? val / 100000 : val;
         }
         if (land.landDetails.total_value) {
-          land.landDetails.total_value = parseFloat(land.landDetails.total_value) / 100000;
+          const val = parseFloat(land.landDetails.total_value);
+          land.landDetails.total_value = val > 1000 ? val / 100000 : val;
         }
         const unpackTown = (packedStr) => {
           if (!packedStr) return null;
@@ -992,10 +1003,12 @@ const LandVerificationDashboard = () => {
     const clonedData = JSON.parse(JSON.stringify(fullLand));
     if (clonedData.landDetails) {
       if (clonedData.landDetails.price_per_acres) {
-        clonedData.landDetails.price_per_acres = parseFloat(clonedData.landDetails.price_per_acres) / 100000;
+        const val = parseFloat(clonedData.landDetails.price_per_acres);
+        clonedData.landDetails.price_per_acres = val > 1000 ? val / 100000 : val;
       }
       if (clonedData.landDetails.total_value) {
-        clonedData.landDetails.total_value = parseFloat(clonedData.landDetails.total_value) / 100000;
+        const val = parseFloat(clonedData.landDetails.total_value);
+        clonedData.landDetails.total_value = val > 1000 ? val / 100000 : val;
       }
     }
     
@@ -1246,7 +1259,7 @@ const LandVerificationDashboard = () => {
     const acres = parseFloat(editFormData.landDetails.total_acres) || 0;
     const guntas = parseFloat(editFormData.landDetails.guntas) || 0;
     const price = parseFloat(editFormData.landDetails.price_per_acres) || 0;
-    const expectedTotal = (acres + (guntas / 40.0)) * price;
+    const expectedTotal = calculateTotalValue(acres, guntas, price, 'acre');
     
     if (editFormData.landDetails.total_value !== expectedTotal) {
       setEditFormData(prev => ({
@@ -1591,10 +1604,10 @@ const LandVerificationDashboard = () => {
                 </div>
               </div>
               <div className="mt-4">
-                <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Price per Acre in lacs</label>
+                <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Price per Acre (Lakhs)</label>
                 <input type="number" value={editFormData.landDetails?.price_per_acres || 0} onChange={(e) => handleEditChange('landDetails.price_per_acres', parseFloat(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm text-orange-500 font-bold outline-none focus:border-green-400" placeholder="e.g. 5 for 5 lakhs" />
               </div>
-              
+
               <div className="mt-4">
                 <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Total Value in cr</label>
                 <input type="number" value={editFormData.landDetails?.total_value ? Number((editFormData.landDetails.total_value / 100).toFixed(2)) : ''} onChange={(e) => handleEditChange('landDetails.total_value', parseFloat(e.target.value) * 100)} className="w-full border border-gray-200 rounded-lg p-2 text-sm text-orange-500 font-bold outline-none focus:border-green-400" placeholder="Enter Total Value" />

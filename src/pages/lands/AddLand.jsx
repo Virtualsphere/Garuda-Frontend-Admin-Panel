@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BASE_URL } from '../../url/BaseUrl';
+import { calculateTotalValue } from './utils/helpers';
 import { fixUrl } from '../../utils/fixUrl';
 import {
   Home, ChevronRight, Maximize2,
@@ -31,6 +32,7 @@ const INITIAL_FARMER_DETAILS = {
 const INITIAL_LAND_DETAILS = {
   total_acres: 0,
   guntas: 0,
+  price_unit: 'acre',
   price_per_acres: '',
   total_value: 0,
   nearest_road_type: '',
@@ -207,7 +209,7 @@ const AddLand = () => {
     const acres = parseFloat(formData.landDetails.total_acres) || 0;
     const guntas = parseFloat(formData.landDetails.guntas) || 0;
     const price = parseFloat(formData.landDetails.price_per_acres) || 0;
-    const expectedTotal = (acres + (guntas / 40.0)) * price;
+    const expectedTotal = calculateTotalValue(acres, guntas, price, 'acre');
     
     if (formData.landDetails.total_value !== expectedTotal) {
       setFormData(prev => ({
@@ -615,6 +617,12 @@ const AddLand = () => {
       submitData.nearest_town_3 = packTown(ntState, ntDistrict3, submitData.landDetails.nearest_town_3, submitData.landDetails.nearest_town_distance_3);
     }
     if (submitData.landDetails) {
+      if (submitData.landDetails.price_per_acres) {
+        submitData.landDetails.price_per_acres = parseFloat(submitData.landDetails.price_per_acres) * 100000;
+      }
+      if (submitData.landDetails.total_value) {
+        submitData.landDetails.total_value = parseFloat(submitData.landDetails.total_value) * 100000;
+      }
       delete submitData.landDetails.nearest_town_state;
       delete submitData.landDetails.nearest_town_district;
       delete submitData.landDetails.nearest_town_district_2;
@@ -828,14 +836,14 @@ const AddLand = () => {
         </div>
       </div>
       <div className="field-group">
-        <label className="land-label">Price per Acre in lacs</label>
+        <label className="land-label">Price per Acre (Lakhs)</label>
         <input
           type="number"
           name="landDetails.price_per_acres"
           value={formData.landDetails.price_per_acres}
           onChange={handleInputChange}
           className="land-input"
-          placeholder="e.g 5 for 5 lakhs"
+          placeholder="e.g. 5 for 5 lakhs"
         />
       </div>
       <div className="field-group">

@@ -15,7 +15,7 @@ import {
   AGE_OPTIONS, LITERACY_OPTIONS, NATURE_OPTIONS, MEDIA_CATEGORIES,
   MORTGAGE_STATUS_OPTIONS, WATER_SOURCE_OPTIONS
 } from '../utils/constants';
-import { getAvatarColor, formatPriceShort, formatPrice, StatusBadge } from '../utils/helpers';
+import { getAvatarColor, formatPriceShort, formatPrice, StatusBadge, calculateTotalValue } from '../utils/helpers';
 import NearestTownsFields from './NearestTownsFields';
 
 export const LandEditForm = ({
@@ -58,7 +58,7 @@ export const LandEditForm = ({
       const acres = parseFloat(editFormData.landDetails.total_acres) || 0;
       const guntas = parseFloat(editFormData.landDetails.guntas) || 0;
       const price = parseFloat(editFormData.landDetails.price_per_acres) || 0;
-      const expectedTotal = (acres + (guntas / 40.0)) * price;
+      const expectedTotal = calculateTotalValue(acres, guntas, price, 'acre');
       
       if (editFormData.landDetails.total_value !== expectedTotal) {
         setEditFormData(prev => ({
@@ -328,7 +328,7 @@ export const LandEditForm = ({
                 </div>
               </div>
               <div className="mt-4">
-                <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Price per Acre in lacs</label>
+                <label className="block text-[9px] font-bold text-green-700 uppercase mb-1 tracking-wider">Price per Acre (Lakhs)</label>
                 <input type="number" value={editFormData.landDetails?.price_per_acres || ''} onChange={(e) => handleEditChange('landDetails.price_per_acres', parseFloat(e.target.value))} className="w-full border border-gray-200 rounded-lg p-2 text-sm text-orange-500 font-bold outline-none focus:border-green-400" placeholder="e.g. 5 for 5 lakhs" />
               </div>
               

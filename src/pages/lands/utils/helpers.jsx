@@ -16,25 +16,34 @@ export const getAvatarColor = (name) => {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 };
 
-// Format price in lakhs
+// Format price in lakhs (short/long unified)
 export const formatPriceShort = (price) => {
-  if (!price) return '₹0';
-  const adjustedPrice = (Number(price) || 0) * 100000;
-  if (adjustedPrice >= 10000000) return `₹${(adjustedPrice / 10000000).toFixed(1)}Cr`;
-  if (adjustedPrice >= 100000) return `₹${(adjustedPrice / 100000).toFixed(0)}L`;
-  if (adjustedPrice >= 1000) return `₹${(adjustedPrice / 1000).toFixed(0)}K`;
-  return `₹${adjustedPrice}`;
+  const valueInLakhs = Number(price) || 0;
+  if (valueInLakhs === 0) return '₹0';
+  if (valueInLakhs >= 100) {
+    return `₹${(valueInLakhs / 100).toFixed(2)} Cr`;
+  } else {
+    return `₹${valueInLakhs.toFixed(2)} L`;
+  }
+};
+
+// Calculate total price in lakhs based on unit (per acre or per gunta)
+export const calculateTotalValue = (acresVal, guntasVal, priceVal, priceUnit) => {
+  const acres = parseFloat(acresVal) || 0;
+  const guntas = parseFloat(guntasVal) || 0;
+  const price = parseFloat(priceVal) || 0;
+  const unit = priceUnit || 'acre'; // default to per acre
+  
+  if (unit === 'gunta') {
+    return (acres * 40.0 + guntas) * price;
+  } else {
+    return (acres + (guntas / 40.0)) * price;
+  }
 };
 
 // Format price full
 export const formatPrice = (price) => {
-  if (!price) return '0';
-  const adjustedPrice = (Number(price) || 0) * 100000;
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0
-  }).format(adjustedPrice);
+  return formatPriceShort(price);
 };
 
 // Status badge component

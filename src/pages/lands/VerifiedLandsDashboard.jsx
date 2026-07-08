@@ -35,12 +35,13 @@ const getAvatarColor = (name) => {
 
 // Format price in lakhs
 const formatPriceShort = (price) => {
-  if (!price) return '₹0';
-  const adjustedPrice = (Number(price) || 0) * 100000;
-  if (adjustedPrice >= 10000000) return `₹${(adjustedPrice / 10000000).toFixed(1)}Cr`;
-  if (adjustedPrice >= 100000) return `₹${(adjustedPrice / 100000).toFixed(0)}L`;
-  if (adjustedPrice >= 1000) return `₹${(adjustedPrice / 1000).toFixed(0)}K`;
-  return `₹${adjustedPrice}`;
+  const valueInLakhs = Number(price) || 0;
+  if (valueInLakhs === 0) return '₹0';
+  if (valueInLakhs >= 100) {
+    return `₹${(valueInLakhs / 100).toFixed(2)} Cr`;
+  } else {
+    return `₹${valueInLakhs.toFixed(2)} L`;
+  }
 };
 
 
@@ -372,10 +373,12 @@ const VerifiedLandsDashboard = () => {
       landsData = landsData.map(land => {
         if (!land.landDetails) land.landDetails = {};
         if (land.landDetails.price_per_acres) {
-          land.landDetails.price_per_acres = parseFloat(land.landDetails.price_per_acres) / 100000;
+          const val = parseFloat(land.landDetails.price_per_acres);
+          land.landDetails.price_per_acres = val > 1000 ? val / 100000 : val;
         }
         if (land.landDetails.total_value) {
-          land.landDetails.total_value = parseFloat(land.landDetails.total_value) / 100000;
+          const val = parseFloat(land.landDetails.total_value);
+          land.landDetails.total_value = val > 1000 ? val / 100000 : val;
         }
         return land;
       });
@@ -607,10 +610,12 @@ const VerifiedLandsDashboard = () => {
     const clonedData = JSON.parse(JSON.stringify(fullLand));
     if (clonedData.landDetails) {
       if (clonedData.landDetails.price_per_acres) {
-        clonedData.landDetails.price_per_acres = parseFloat(clonedData.landDetails.price_per_acres) / 100000;
+        const val = parseFloat(clonedData.landDetails.price_per_acres);
+        clonedData.landDetails.price_per_acres = val > 1000 ? val / 100000 : val;
       }
       if (clonedData.landDetails.total_value) {
-        clonedData.landDetails.total_value = parseFloat(clonedData.landDetails.total_value) / 100000;
+        const val = parseFloat(clonedData.landDetails.total_value);
+        clonedData.landDetails.total_value = val > 1000 ? val / 100000 : val;
       }
     }
     
@@ -1088,7 +1093,7 @@ const renderInlineEditForm = () => {
                       {/* Unit Profile */}
                       <td style={styles.td}>
                         <div style={styles.unitProfile}>
-                          {acres} AC • {formatPriceShort(pricePerAcre)}/AC
+                          {acres} AC • {formatPriceShort(pricePerAcre)}/{land.landDetails?.price_unit === 'gunta' ? 'GTA' : 'AC'}
                         </div>
                       </td>
 
